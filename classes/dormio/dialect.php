@@ -6,7 +6,7 @@
 */
 class Dormio_Dialect {
   static $_cache = array();
-
+  
   static function factory($lang) {
     switch($lang) {
       case 'sqlsrv':

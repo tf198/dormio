@@ -19,7 +19,7 @@ class Dormio_Queryset {
 
   function __construct($meta, $dialect='generic') {
     $this->_meta = is_object($meta) ? $meta : Dormio_Meta::get($meta);
-    $this->dialect = (is_object($dialect)) ? $dialect : Dormio_Dialect::factory($dialect);
+    $this->dialect = is_object($dialect) ? $dialect : Dormio_Dialect::factory($dialect);
     
     // add the base table and its primary key
     $this->query['from'] = "{{$this->_meta->table}}";

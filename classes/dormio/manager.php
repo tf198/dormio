@@ -14,7 +14,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   */
   function __construct($meta, $db) {
     $this->_db = $db;
-    parent::__construct($meta, $db->getAttribute(PDO::ATTR_DRIVER_NAME));
+    parent::__construct($meta, Dormio_Factory::instance()->dialect);
   }
   
   /**

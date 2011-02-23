@@ -7,7 +7,7 @@ class Dormio_Model {
   private $_data = array();
   public $_updated = array();
   private $_related = array();
-  private $_db, $_stmt, $_dialect, $_objects;
+  private $_db, $_stmt, $_objects;
   public $_meta, $_id=false; // need to be accessed by the manager
   
   // overridable meta fields for sub classes
@@ -15,10 +15,9 @@ class Dormio_Model {
   
   static $logger = null;
 
-  function __construct(PDO $db, $dialect=null) {
+  function __construct(PDO $db) {
     $this->_db = $db;
     $this->_meta = Dormio_Meta::get(get_class($this));
-    $this->_dialect = (is_object($dialect)) ? $dialect : Dormio_Dialect::factory($db->getAttribute(PDO::ATTR_DRIVER_NAME));
   }
   
   /**
@@ -43,7 +42,7 @@ class Dormio_Model {
     if(!$this->_stmt) {
       $fields = implode(', ', $this->_meta->prefixedSqlFields());
       $sql = "SELECT {$fields} FROM {{$this->_meta->table}} WHERE {{$this->_meta->table}}.{{$this->_meta->pk}} = ?";
-      $this->_stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
+      $this->_stmt = $this->_db->prepare(Dormio_Factory::instance()->dialect->quoteIdentifiers($sql));
     }
     $this->_stmt->execute(array($id));
     $data = $this->_stmt->fetch(PDO::FETCH_ASSOC);
@@ -121,7 +120,7 @@ class Dormio_Model {
       case 'onetoone':
       case 'onetoone_rev':
         // relations that return a single object
-        if(!isset($this->_related[$name])) $this->_related[$name] = new $spec['model']($this->_db, $this->_dialect);
+        if(!isset($this->_related[$name])) $this->_related[$name] = new $spec['model']($this->_db);
    
         $id = $this->_getData($spec['sql_column']);
         isset(self::$logger) && self::$logger->log("Preparing {$spec['model']}({$id})");
@@ -193,7 +192,7 @@ class Dormio_Model {
     $values = implode(', ', array_fill(0, count($this->_updated), '?'));
     $sql = "INSERT INTO {{$this->_meta->table}} ({$fields}) VALUES ({$values})";
     $params = array_values($this->_updated);
-    $stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
+    $stmt = $this->_db->prepare(Dormio_Factory::instance()->dialect->quoteIdentifiers($sql));
     if($stmt->execute($params) !=1) throw new Dormio_Model_Exception('Insert failed');
     //$this->_insert = false;
     $this->_updated[$this->_meta->pk] = $this->_id = $this->_db->lastInsertId();
@@ -206,7 +205,7 @@ class Dormio_Model {
     $params[] = $this->ident();
     $pairs = implode(', ', $pairs);
     $sql = "UPDATE {{$this->_meta->table}} SET {$pairs} WHERE {{$this->_meta->pk}} = ?";
-    $stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
+    $stmt = $this->_db->prepare(Dormio_Factory::instance()->dialect->quoteIdentifiers($sql));
     if($stmt->execute($params) !=1) throw new Dormio_Model_Exception('Insert failed');
     $this->_merge();
   }

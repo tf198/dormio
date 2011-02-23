@@ -10,7 +10,8 @@ abstract class TestOfDB extends UnitTestCase{
     $this->db = new MockPDO('sqlite::memory:');
     $this->load("sql/test_schema.sql");
     
-    $this->pom = new Dormio_Factory($this->db);
+    Dormio_Factory::init($this->db);
+    $this->pom = Dormio_Factory::instance();
   }
   
   function load($name) {

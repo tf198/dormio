@@ -3,7 +3,9 @@ class Dormio_Autoload {
   static $path;
 
   static function autoload($klass) {
-    if(strtolower(substr($klass, 0, 4))=='pom_') require self::$path . "/" . substr($klass, 4) . ".php";
+    if(strtolower(substr($klass, 0, 7))=='dormio_') {
+      require self::$path . "/" . substr($klass, 7) . ".php";
+    }
   }
 }
 Dormio_Autoload::$path = dirname(__FILE__);
