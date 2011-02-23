@@ -3,7 +3,7 @@ require_once('simpletest/autorun.php');
 require_once('bantam_bootstrap.php');
 
 $mod_path = realpath(dirname(__FILE__) . '/..');
-Bantam::instance()->add_paths(array($mod_path));
+Bantam::instance()->addPaths(array($mod_path));
 
 class AllTests extends TestSuite {
 	function AllTests() {
