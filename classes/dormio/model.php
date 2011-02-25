@@ -122,8 +122,8 @@ class Dormio_Model {
     
     // need to do this first so any aggregate results appear
     // might speed up everyday access as well to bypass resolve/check proceedure
-    //$key = $this->_dataIndex($name);
-    //if(isset($this->_data[$key])) return $this->_data[$key];
+    $key = $this->_dataIndex($name);
+    if(isset($this->_data[$key])) return $this->_data[$key];
     
     
     $this->_meta->resolve($name, $spec, $meta);
