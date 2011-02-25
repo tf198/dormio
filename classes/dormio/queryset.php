@@ -45,7 +45,7 @@ class Dormio_Queryset {
   function field($path, $alias=null) {
     $o = clone $this;
     $p = $o->_resolvePath($path);
-    if(!$alias) $alias = "{$p[0]->table}_{$p[1]}";
+    if(!$alias) $alias = str_replace('__', '_', $path);
     $o->query['select'][] = "{{$p[0]->table}}.{{$p[1]}} AS {{$o->_meta->table}_{$alias}}";
     return $o;
   }

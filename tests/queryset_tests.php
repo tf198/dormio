@@ -82,7 +82,7 @@ class TestOfSQL extends UnitTestCase{
   function testField() {
     $blogs = new Dormio_Queryset('Blog');
     $this->assertEqual($blogs->field('comments__title')->select(),
-      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "comment"."title" AS "blog_comment_title" FROM "blog" INNER JOIN "comment" ON "blog"."blog_id"="comment"."blog_id"', array()));
+      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "comment"."title" AS "blog_comments_title" FROM "blog" INNER JOIN "comment" ON "blog"."blog_id"="comment"."blog_id"', array()));
   }
  
   function testFilter() {
