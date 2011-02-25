@@ -73,7 +73,7 @@ class Dormio_Connection {
 					$config['parameters']
 				);
 				self::$db[$which]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        if($driver=='mysql') $self::$db[$which]->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+        if($driver=='mysql') self::$db[$which]->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
 			bEvent::run('profile','dormio.load');
 		}
 		return self::$db[$which];
