@@ -18,10 +18,6 @@ class TestOfSQL extends UnitTestCase{
     } catch(Dormio_Meta_Exception $e) { $this->pass(); }
   }
   
-  function testSelect() {
-    $blogs = new Dormio_Queryset('Blog');
-  }
-  
   function testResolve() {
     $blogs = new Dormio_Queryset('Blog');
     $this->assertEqual($blogs->_resolveField('title'), '{blog}.{title}');
@@ -81,6 +77,12 @@ class TestOfSQL extends UnitTestCase{
       array('INNER JOIN {blog_tag} ON {tag}.{tag_id}={blog_tag}.{the_tag_id}', 'INNER JOIN {blog} ON {blog_tag}.{the_blog_id}={blog}.{blog_id}'));
     $this->assertEqual($tags->with('comment_set')->query['join'], // manytomany_rev
       array('INNER JOIN {comment_tag} ON {tag}.{tag_id}={comment_tag}.{tag_id}', 'INNER JOIN {comment} ON {comment_tag}.{comment_id}={comment}.{comment_id}'));
+  }
+ 
+  function testField() {
+    $blogs = new Dormio_Queryset('Blog');
+    $this->assertEqual($blogs->field('comments__title')->select(),
+      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "comment"."title" AS "blog_comment_title" FROM "blog" INNER JOIN "comment" ON "blog"."blog_id"="comment"."blog_id"', array()));
   }
  
   function testFilter() {
