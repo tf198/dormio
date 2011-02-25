@@ -163,6 +163,7 @@ class Dormio_Queryset {
     
     // if manytomany redispatch in two queries
     if(isset($spec['through'])) {
+      if($type!='INNER') trigger_error("Trying to {$type} JOIN onto {$spec['model']} - may have unexpected results", E_USER_WARNING);
       $mid = $this->_addJoin($left, strtolower($spec['through']) . "_set", "INNER");
       // need to traverse the mid columns to find the model as the name may be different
       return $this->_addJoin($mid, $mid->accessorFor($spec['model']), "INNER");

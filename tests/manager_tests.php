@@ -214,12 +214,11 @@ class TestOfManager extends TestOfDB{
     $this->assertEqual($i, 3);
     
     // it makes no sense to use with on manytomany fields
-    try {
-      $set = $blogs->with('tags');
-      //$this->fail();
-    } catch(Dormio_Queryset_Exception $e) {
-      $this->assertEqual($e->getMessage(), 'Unable to LEFT JOIN to tag');
-    }
+    // it should generate a warning
+    $this->expectError();
+    $set = $blogs->with('tags');
+    $this->assertQueryset($set, 'title',
+      array('Andy Blog 1', 'Andy Blog 1', 'Andy Blog 2'));
     
     // doesn't de-dup automatically
     $set = $blogs->where('{tags__tag} IN (?, ?)', array('Yellow', 'Indigo'));
@@ -235,6 +234,18 @@ class TestOfManager extends TestOfDB{
     $set = $users->field('profile__age', 'age');
     $this->assertQueryset($set, 'age',
       array(23, 46, null));
+      
+    // with followed by filter
+    $set = $comments->with('blog')->filter('blog__title', '=', 'Andy Blog 1');
+    $this->assertQueryset($set, 'title',
+      array('Andy Comment 1 on Andy Blog 1', 'Bob Comment 1 on Andy Blog 1'));
+      
+    // filter followed by with
+    $set = $comments->filter('blog__title', '=', 'Andy Blog 1')->with('blog');
+    $this->assertQueryset($set, 'title',
+      array('Andy Comment 1 on Andy Blog 1', 'Bob Comment 1 on Andy Blog 1'));
+      
+    
   }
 }
 ?>
