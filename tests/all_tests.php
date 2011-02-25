@@ -15,6 +15,7 @@ class AllTests extends TestSuite {
     $this->addFile("{$path}/queryset_tests.php");
     $this->addFile("{$path}/model_tests.php");
     $this->addFile("{$path}/manager_tests.php");
+    $this->addFile("{$path}/factory_tests.php");
    }
 }
 ?>
