@@ -70,7 +70,7 @@ class TestOfModel extends TestOfDB{
     $blog = new Blog($this->db);
     
     $blog->load(1);
-    $this->assertEqual($blog->delete(), 8);
+    $this->assertEqual($blog->delete(), 9);
     $blog->load(2);
     $this->assertEqual($blog->delete(), 2);
     
@@ -93,7 +93,7 @@ class TestOfModel extends TestOfDB{
     // Eager
     $blogs = new Dormio_Manager('Blog', $this->db);
     $b1 = $blogs->with('the_user')->get(1);
-    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "blog" INNER JOIN "user" ON "blog"."the_blog_user"="user"."user_id" WHERE "blog"."blog_id" = ? LIMIT 2', array(array('1'))));
+    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "blog" LEFT JOIN "user" ON "blog"."the_blog_user"="user"."user_id" WHERE "blog"."blog_id" = ? LIMIT 2', array(array('1'))));
     // all done in a single hit here
     $this->assertEqual($b1->the_user->name, 'Andy');
     
@@ -119,10 +119,11 @@ class TestOfModel extends TestOfDB{
     $this->load("sql/test_data.sql");
     
     $users = new Dormio_Manager('User', $this->db);
-    $expected_users = array('Andy', 'Bob');
+    $expected_users = array('Andy', 'Bob', 'Charles');
     $expected_blogs = array(
       array('Andy Blog 1', 'Andy Blog 2'),
       array('Bob Blog 1'),
+      array(),
     );
     $i_users = 0;
     foreach($users as $user) {
@@ -134,12 +135,12 @@ class TestOfModel extends TestOfDB{
       $this->assertEqual($i_blogs, count($expected_blogs[$i_users]));
       $i_users++;
     }
-    $this->assertEqual($i_users, 2);
+    $this->assertEqual($i_users, 3);
     
     // the initial queryset
     $this->assertEqual($this->db->digest(), array('SELECT "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "user"', array(array())));
     // only one prepared statement with two execution sets.  Params evaluate to false now as they are a reference
-    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" WHERE "blog"."the_blog_user" = ?', array(array(false), array(false))));
+    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" WHERE "blog"."the_blog_user" = ?', array(array(false), array(false), array(false))));
     
     $this->assertDigestedAll();
   }
@@ -178,7 +179,7 @@ class TestOfModel extends TestOfDB{
     
     $expected = array('Yellow', 'Indigo');
     $this->assertQueryset($iter, 'tag', $expected);
-    $this->assertEqual($this->db->digest(), array('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag" FROM "tag" INNER JOIN "blog_tag" ON "tag"."tag_id"="blog_tag"."the_tag_id" WHERE "blog_tag"."the_blog_id" = ?', array(array('1'))));
+    $this->assertSQL('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag" FROM "tag" INNER JOIN "blog_tag" ON "tag"."tag_id"="blog_tag"."the_tag_id" WHERE "blog_tag"."the_blog_id" = ?', 1);
     
     // do a test on one with normal fields
     $c1 = new Comment($this->db);
@@ -186,7 +187,7 @@ class TestOfModel extends TestOfDB{
     
     $expected = array('Orange', 'Violet');
     $this->assertQueryset($c1->tags, 'tag', $expected);
-    $this->assertEqual($this->db->digest(), array('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag" FROM "tag" INNER JOIN "comment_tag" ON "tag"."tag_id"="comment_tag"."tag_id" WHERE "comment_tag"."comment_id" = ?', array(array(2))));
+    $this->assertSQL('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag" FROM "tag" INNER JOIN "comment_tag" ON "tag"."tag_id"="comment_tag"."tag_id" WHERE "comment_tag"."comment_id" = ?', 2);
     
     $this->assertDigestedAll();
   }
@@ -200,12 +201,12 @@ class TestOfModel extends TestOfDB{
     // overriden fields
     $expected = array('Andy Blog 2');
     $this->assertQueryset($tag->blog_set, 'title', $expected);
-    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" INNER JOIN "blog_tag" ON "blog"."blog_id"="blog_tag"."the_blog_id" WHERE "blog_tag"."the_tag_id" = ?', array(array(4))));
+    $this->assertSQL('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" INNER JOIN "blog_tag" ON "blog"."blog_id"="blog_tag"."the_blog_id" WHERE "blog_tag"."the_tag_id" = ?', 4);
     
     // default fields
     $expected = array('Andy Comment 1 on Andy Blog 1', 'Andy Comment 1 on Bob Blog 1');
     $this->assertQueryset($tag->comment_set, 'title', $expected);
-    $this->assertEqual($this->db->digest(), array('SELECT "comment"."comment_id" AS "comment_comment_id", "comment"."title" AS "comment_title", "comment"."the_comment_user" AS "comment_the_comment_user", "comment"."blog_id" AS "comment_blog_id" FROM "comment" INNER JOIN "comment_tag" ON "comment"."comment_id"="comment_tag"."comment_id" WHERE "comment_tag"."tag_id" = ?', array(array('4'))));
+    $this->assertSQL('SELECT "comment"."comment_id" AS "comment_comment_id", "comment"."title" AS "comment_title", "comment"."the_comment_user" AS "comment_the_comment_user", "comment"."blog_id" AS "comment_blog_id" FROM "comment" INNER JOIN "comment_tag" ON "comment"."comment_id"="comment_tag"."comment_id" WHERE "comment_tag"."tag_id" = ?', 4);
     
     $this->assertDigestedAll();
   }

@@ -1,5 +1,6 @@
 INSERT INTO user VALUES (1, 'Andy');
 INSERT INTO user VALUES (2, 'Bob');
+INSERT INTO user VALUES (3, 'Charles');
 
 INSERT INTO blog VALUES (1, 'Andy Blog 1', 1);
 INSERT INTO blog VALUES (2, 'Andy Blog 2', 1);
@@ -28,3 +29,4 @@ INSERT INTO comment_tag VALUES (1, 2, 2);
 INSERT INTO comment_tag VALUES (2, 1, 4);
 INSERT INTO comment_tag VALUES (3, 3, 4);
 INSERT INTO comment_tag VALUES (4, 2, 7);
+INSERT INTO comment_tag VALUES (5, 1, 5);

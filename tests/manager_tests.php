@@ -34,7 +34,7 @@ class TestOfManager extends TestOfDB{
     
     // eager load
     $blog = $blogs->with('the_user')->get(1);
-    $this->assertSQL('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "blog" INNER JOIN "user" ON "blog"."the_blog_user"="user"."user_id" WHERE "blog"."blog_id" = ? LIMIT 2', 1);
+    $this->assertSQL('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "blog" LEFT JOIN "user" ON "blog"."the_blog_user"="user"."user_id" WHERE "blog"."blog_id" = ? LIMIT 2', 1);
     $this->assertEqual($blog->the_user->name, 'Andy');
     
     // complex query and pk
@@ -95,7 +95,8 @@ class TestOfManager extends TestOfDB{
     
     $blogs = new Dormio_Manager('Blog', $this->db);
     $set = $blogs->filter('title', '=', 'Andy Blog 1');
-    $this->assertEqual($set->delete(), 8);
+    // 1 blog with 2 tags and 2 comments with 4 comment tags between them
+    $this->assertEqual($set->delete(), 9);
     //var_dump($this->db->stack);
   }
   
@@ -182,6 +183,58 @@ class TestOfManager extends TestOfDB{
     $this->assertSQL('DELETE FROM "blog_tag" WHERE "blog_tag"."the_blog_id" = ? AND "blog_tag"."the_tag_id" = ?', 2, 4);
     
     $this->assertDigestedAll();
+  }
+  
+  function testJoinSanity() {
+    $this->load("sql/test_data.sql");
+  
+    $blogs = $this->pom->manager('Blog');
+    $comments = $this->pom->manager('Comment');
+    $users = $this->pom->manager('User');
+  
+    // want to get all comments with tagged as Green
+    $set = $comments->filter('tags__tag', '=', 'Green');
+    $this->assertQueryset($set, 'title', 
+      array('Andy Comment 1 on Andy Blog 1', 'Andy Comment 1 on Bob Blog 1'));
+      
+    // want to get all blogs where the comment is tagged as Green
+    $set = $blogs->filter('comments__tags__tag', '=', 'Green');
+    $this->assertQueryset($set, 'title', 
+      array('Andy Blog 1', 'Bob Blog 1'));
+    
+    // need to get all users and their associated profiles
+    // note user 3 doesn't have a profile attached
+    $set = $users->with('profile');
+    $expected = array("23", "46", null);
+    $i=0;
+    foreach($set as $user) {
+      if($user->profile->ident()) $this->assertEqual($user->profile->age, $expected[$i]);
+      $i++;
+    }
+    $this->assertEqual($i, 3);
+    
+    // it makes no sense to use with on manytomany fields
+    try {
+      $set = $blogs->with('tags');
+      //$this->fail();
+    } catch(Dormio_Queryset_Exception $e) {
+      $this->assertEqual($e->getMessage(), 'Unable to LEFT JOIN to tag');
+    }
+    
+    // doesn't de-dup automatically
+    $set = $blogs->where('{tags__tag} IN (?, ?)', array('Yellow', 'Indigo'));
+    $this->assertQueryset($set, 'title',
+      array('Andy Blog 1', 'Andy Blog 1'));
+    
+    // use distinct
+    $set = $set->distinct();
+    $this->assertQueryset($set, 'title',
+      array('Andy Blog 1'));
+      
+    // additional field
+    $set = $users->field('profile__age', 'age');
+    //$this->assertQueryset($set, 'age',
+    //  array(23, 46, null));
   }
 }
 ?>

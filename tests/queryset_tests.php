@@ -6,6 +6,10 @@ Bantam::import('Model_Autoload'); // non-existent but will include all the "mode
 
 class TestOfSQL extends UnitTestCase{
   private $all_blogs = array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog"', array());
+  
+  private $with_join = 'LEFT';
+  private $filter_join = 'INNER';
+  private $field_join = 'LEFT';
 
   function testConstruct() {
     $qs = new Dormio_Queryset('Blog');
@@ -50,32 +54,32 @@ class TestOfSQL extends UnitTestCase{
   function testJoin() {
     $blogs = new Dormio_Queryset('Blog');
     $this->assertEqual($blogs->with('the_user')->query['join'], //foreignkey
-      array('INNER JOIN {user} ON {blog}.{the_blog_user}={user}.{user_id}'));
-    $this->assertEqual($blogs->with('comment_set')->query['join'], // foreignkey_rev
+      array('LEFT JOIN {user} ON {blog}.{the_blog_user}={user}.{user_id}'));
+    $this->assertEqual($blogs->filter('comment_set__title', '=', 'Test')->query['join'], // foreignkey_rev
       array('INNER JOIN {comment} ON {blog}.{blog_id}={comment}.{blog_id}')); 
-    $this->assertEqual($blogs->with('tags')->query['join'], //manytomany
+    $this->assertEqual($blogs->filter('tags__tag', '=', 'Red')->query['join'], //manytomany
       array('INNER JOIN {blog_tag} ON {blog}.{blog_id}={blog_tag}.{the_blog_id}', 'INNER JOIN {tag} ON {blog_tag}.{the_tag_id}={tag}.{tag_id}'));
     
     $comments = new Dormio_Queryset('Comment');
     $this->assertEqual($comments->with('user')->query['join'], // foreignkey
-      array('INNER JOIN {user} ON {comment}.{the_comment_user}={user}.{user_id}'));
+      array('LEFT JOIN {user} ON {comment}.{the_comment_user}={user}.{user_id}'));
     $this->assertEqual($comments->with('blog')->query['join'], // foreignkey
-      array('INNER JOIN {blog} ON {comment}.{blog_id}={blog}.{blog_id}')); 
-    $this->assertEqual($comments->with('tags')->query['join'], // manytomany
+      array('LEFT JOIN {blog} ON {comment}.{blog_id}={blog}.{blog_id}')); 
+    $this->assertEqual($comments->filter('tags__tag', '=', 'Red')->query['join'], // manytomany
       array('INNER JOIN {comment_tag} ON {comment}.{comment_id}={comment_tag}.{comment_id}', 'INNER JOIN {tag} ON {comment_tag}.{tag_id}={tag}.{tag_id}')); 
     
     $profiles = new Dormio_Queryset('Profile');
     $this->assertEqual($profiles->with('user')->query['join'], // onetoone
-      array('INNER JOIN {user} ON {profile}.{user_id}={user}.{user_id}'));
+      array('LEFT JOIN {user} ON {profile}.{user_id}={user}.{user_id}'));
       
     $users = new Dormio_Queryset('User');
     $this->assertEqual($users->with('profile_set')->query['join'], // foreignkey
-      array('INNER JOIN {profile} ON {user}.{user_id}={profile}.{user_id}'));
+      array('LEFT JOIN {profile} ON {user}.{user_id}={profile}.{user_id}'));
       
     $tags = new Dormio_Queryset('Tag');
-    $this->assertEqual($tags->with('blog_set')->query['join'], // manytomany_rev
+    $this->assertEqual($tags->filter('blog_set__title', '=', 'Test')->query['join'], // manytomany_rev
       array('INNER JOIN {blog_tag} ON {tag}.{tag_id}={blog_tag}.{the_tag_id}', 'INNER JOIN {blog} ON {blog_tag}.{the_blog_id}={blog}.{blog_id}'));
-    $this->assertEqual($tags->with('comment_set')->query['join'], // manytomany_rev
+    $this->assertEqual($tags->filter('comment_set__title', '=', 'Test')->query['join'], // manytomany_rev
       array('INNER JOIN {comment_tag} ON {tag}.{tag_id}={comment_tag}.{tag_id}', 'INNER JOIN {comment} ON {comment_tag}.{comment_id}={comment}.{comment_id}'));
   }
  
@@ -164,7 +168,7 @@ class TestOfSQL extends UnitTestCase{
     
     // single
     $this->assertEqual($blogs->with('the_user')->select(),
-      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "blog" INNER JOIN "user" ON "blog"."the_blog_user"="user"."user_id"', array()));
+      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "blog" LEFT JOIN "user" ON "blog"."the_blog_user"="user"."user_id"', array()));
       
     // TODO: need to add more tests here but seems to work
   }
@@ -182,13 +186,13 @@ class TestOfSQL extends UnitTestCase{
     $tags = new Dormio_Queryset('Tag');
     
     // reverse foreign key
-    $this->assertEqual($blogs->with('comment_set')->select(),
-      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user", "comment"."comment_id" AS "comment_comment_id", "comment"."title" AS "comment_title", "comment"."the_comment_user" AS "comment_the_comment_user", "comment"."blog_id" AS "comment_blog_id" FROM "blog" INNER JOIN "comment" ON "blog"."blog_id"="comment"."blog_id"', array()));
+    $this->assertEqual($blogs->filter('comment_set__title', '=', 'Test')->select(),
+      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" INNER JOIN "comment" ON "blog"."blog_id"="comment"."blog_id" WHERE "comment"."title" = ?', array('Test')));
       
     // reverse manytomany
     //var_dump($tags->with('blog_set')->select());
-    $this->assertEqual($tags->with('blog_set')->select(),
-      array('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag", "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "tag" INNER JOIN "blog_tag" ON "tag"."tag_id"="blog_tag"."the_tag_id" INNER JOIN "blog" ON "blog_tag"."the_blog_id"="blog"."blog_id"', array()));
+    $this->assertEqual($tags->filter('blog_set__title', '=', 'Test')->select(),
+      array('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag" FROM "tag" INNER JOIN "blog_tag" ON "tag"."tag_id"="blog_tag"."the_tag_id" INNER JOIN "blog" ON "blog_tag"."the_blog_id"="blog"."blog_id" WHERE "blog"."title" = ?', array('Test')));
   }
 
   function testUpdate() {
@@ -231,7 +235,13 @@ class TestOfSQL extends UnitTestCase{
   function testDelete() {
     $blogs = new Dormio_Queryset('Blog');
     $set = $blogs->filter('pk', '=', 1);
-    $this->assertEqual(count($set->delete()), 4);
+    $sql = $set->delete();
+    $this->assertEqual($sql, array(
+      array('DELETE FROM "blog_tag" WHERE "blog_tag"."blog_tag_id" IN (SELECT "blog_tag"."blog_tag_id" FROM "blog_tag" INNER JOIN "blog" ON "blog_tag"."the_blog_id"="blog"."blog_id" WHERE "blog"."blog_id" = ?)', array(1)),
+      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" INNER JOIN "comment" ON "comment_tag"."comment_id"="comment"."comment_id" WHERE "blog"."blog_id" = ?)', array(1)),
+      array('DELETE FROM "comment" WHERE "comment"."comment_id" IN (SELECT "comment"."comment_id" FROM "comment" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" WHERE "blog"."blog_id" = ?)', array(1)),
+      array('DELETE FROM "blog" WHERE "blog"."blog_id" = ?', array(1)),
+    ));
   }
   
   function testNonMutation() {
