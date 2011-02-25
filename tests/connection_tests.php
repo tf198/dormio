@@ -16,7 +16,7 @@ class TestOfPdoConnection extends UnitTestCase {
 			$this->fail();
 		} catch(Exception $e) {
 			$this->assertIsA($e, 'Exception');
-			$this->assertEqual($e->getMessage(), "Missing required value for 'pdodb.missing'");
+			$this->assertEqual($e->getMessage(), "Missing required value for 'dormio.missing'");
 		}
 		try {
 			$pdo=Dormio_Connection::instance('baddriver');

@@ -52,8 +52,8 @@ class Dormio_Connection {
 	*/
 	public static function &instance($which='default') {
 		if(!isset(self::$db[$which])) {
-			bEvent::run('profile','pdodb.init');
-			$config=bCommon::config('pdodb.'.$which);
+			bEvent::run('profile','dormio.init');
+			$config=bCommon::config('dormio.'.$which);
 				$driver=substr($config['connection'],0,strpos($config['connection'],":"));
 				// use proper PDO driver if available
 				if(array_search($driver,PDO::getAvailableDrivers())!==false) {
@@ -73,7 +73,7 @@ class Dormio_Connection {
 					$config['parameters']
 				);
 				self::$db[$which]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			bEvent::run('profile','pdodb.load');
+			bEvent::run('profile','dormio.load');
 		}
 		return self::$db[$which];
 	}
