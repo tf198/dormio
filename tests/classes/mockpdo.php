@@ -20,7 +20,7 @@ class MockPDO extends PDO {
   }
   
   function digest() {
-    if(count($this->stack)<1) throw new Exception('Statement stack is empty');
+    if(count($this->stack)<1) return false;
     $q = array_shift($this->stack);
     return array( $q[0], $q[1]->stack );
   }
@@ -37,7 +37,7 @@ class MockPDOStatment {
     $this->_stmt = $stmt;
   }
   
-  function execute($params) {
+  function execute($params=array()) {
     array_push($this->stack, $params);
     return $this->_stmt->execute($params);
   }

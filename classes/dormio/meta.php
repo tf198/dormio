@@ -189,9 +189,9 @@ class Dormio_Meta {
   * Instance factory
   * Get a new instance of the underlying model
   */
-  function instance($db) {
+  function instance($db, $dialect) {
     $klass = $this->_klass;
-    return new $klass($db);
+    return new $klass($db, $dialect);
   }
 }
 

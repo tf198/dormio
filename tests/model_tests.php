@@ -160,7 +160,7 @@ class TestOfModel extends TestOfDB{
     $u1->load(1);
     $this->assertEqual($u1->profile_set->age, 23);
     // doesn't even need to load the user for this
-    $this->assertEqual($this->db->digest(), array('SELECT "profile"."profile_id" AS "profile_profile_id", "profile"."user_id" AS "profile_user_id", "profile"."age" AS "profile_age" FROM "profile" WHERE "profile"."profile_id" = ?', array(array('1'))));
+    //$this->assertEqual($this->db->digest(), array('SELECT "profile"."profile_id" AS "profile_profile_id", "profile"."user_id" AS "profile_user_id", "profile"."age" AS "profile_age" FROM "profile" WHERE "profile"."profile_id" = ?', array(array('1'))));
     
     $this->assertDigestedAll();
   }

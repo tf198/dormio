@@ -12,9 +12,11 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   /**
   * Create a new manager object based on the supplied meta
   */
-  function __construct($meta, $db) {
+  function __construct($meta, $db, $dialect=null) {
     $this->_db = $db;
-    parent::__construct($meta, Dormio_Factory::instance()->dialect);
+    //if(!$dialect) throw new Exception();
+    if(!$dialect) $dialect = Dormio_Dialect::factory($db->getAttribute(PDO::ATTR_DRIVER_NAME));
+    parent::__construct($meta, $dialect);
   }
   
   /**
@@ -165,7 +167,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
     $query = $this->select();
     //print_r($query);
     $this->_stmt = $this->_db->prepare($query[0]);
-    $this->_model = $this->_meta->instance($this->_db);
+    $this->_model = $this->_meta->instance($this->_db, $this->dialect);
   }
   
   /**
@@ -219,12 +221,12 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
 */
 class Dormio_Manager_Related extends Dormio_Manager {
 	
-	function __construct($meta, $db, $model, $field, $through=null) {
+	function __construct($meta, $db, $dialect, $model, $field, $through=null) {
     if(!$model->ident()) throw new Dormio_Manager_Exception('Model needs to be saved first');
 		$this->_to = $model;
 		$this->_field = $field;
     $this->_through = $through;
-    parent::__construct($meta, $db);
+    parent::__construct($meta, $db, $dialect);
     
     // set the base query
     if($through) $field = "{$through}_set__{$field}";
@@ -241,7 +243,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
     if($this->_through) {
       $obj->save();
       $mid = Dormio_Meta::get($this->_through);
-      $intermediate = $mid->instance($this->_db);
+      $intermediate = $mid->instance($this->_db, $this->dialect);
       $intermediate->__set($this->_field, $this->_to->ident());
       $field = $mid->accessorFor($obj);
       $intermediate->__set($field, $obj->ident());
@@ -262,7 +264,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
   * $blog->tags->add($tag);
   */
 	function create($params=array()) {
-    $obj = $this->_meta->instance($this->_db);
+    $obj = $this->_meta->instance($this->_db, $this->dialect);
     if(!$this->_through) $obj->__set($this->_field, $this->_to->ident());
     foreach($params as $key=>$value) $obj->__set($key, $value);
     return $obj;

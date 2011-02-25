@@ -4,10 +4,11 @@
 * All models should subclass this
 */
 class Dormio_Model {
+  static $_cache_ref = null;
   private $_data = array();
   public $_updated = array();
   private $_related = array();
-  private $_db, $_stmt, $_objects;
+  private $_db, $_stmt, $_objects, $_dialect;
   public $_meta, $_id=false; // need to be accessed by the manager
   
   // overridable meta fields for sub classes
@@ -15,9 +16,11 @@ class Dormio_Model {
   
   static $logger = null;
 
-  function __construct(PDO $db) {
+  function __construct(PDO $db, $dialect=null) {
     $this->_db = $db;
     $this->_meta = Dormio_Meta::get(get_class($this));
+    //if(!$dialect) throw new Exception();
+    $this->_dialect = ($dialect) ? $dialect : Dormio_Dialect::factory($db->getAttribute(PDO::ATTR_DRIVER_NAME));
   }
   
   /**
@@ -29,28 +32,39 @@ class Dormio_Model {
     } else {
       foreach($data as $key=>$value) $this->_setData($key, $value);
     }
-    //$this->_qualified = $qualified;
     $pk = $this->_dataIndex($this->_meta->pk);
     //if(!isset($this->_data[$pk])) throw new Dormio_Model_Exception('No primary key in hydration data');
-    $this->_id = (isset($this->_data[$pk])) ? $this->_data[$pk] : false;
+    $this->_id = (isset($this->_data[$pk])) ? (int)$this->_data[$pk] : false;
   }
   
   function _rehydrate() {
-    $id = $this->ident();
-    if(!$id) throw new Dormio_Model_Exception('No primary key set');
-    isset(self::$logger) && self::$logger->log("Rehydrating {$this->_klass}({$id})");
-    if(!$this->_stmt) {
-      $fields = implode(', ', $this->_meta->prefixedSqlFields());
-      $sql = "SELECT {$fields} FROM {{$this->_meta->table}} WHERE {{$this->_meta->table}}.{{$this->_meta->pk}} = ?";
-      $this->_stmt = $this->_db->prepare(Dormio_Factory::instance()->dialect->quoteIdentifiers($sql));
-    }
-    $this->_stmt->execute(array($id));
-    $data = $this->_stmt->fetch(PDO::FETCH_ASSOC);
+    if(!$this->_id) throw new Dormio_Model_Exception('No primary key set');
+    isset(self::$logger) && self::$logger->log("Rehydrating {$this->_meta->_klass}({$this->_id})");
+    $stmt = $this->_hydrateStmt();
+    $stmt->execute(array($this->_id));
+    $data = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
     if($data) {
       $this->_hydrate($data, true);
     } else {
-      throw new Dormio_Model_Exception('No result found for primary key ' . $id);
+      //var_dump($stmt);
+      throw new Dormio_Model_Exception('No result found for primary key ' . $this->_id);
     }
+  }
+  
+  /**
+  * Cache the hydration stmts to improve pk lookups
+  */
+  function _hydrateStmt() {
+    // slightly cheekily we store proceedures on the actual pdo object
+    // tried a static cache but causes problems if you change db handle
+    if(!isset($this->_db->_stmt_cache)) $this->_db->_stmt_cache = array();
+    if(!isset($this->_db->_stmt_cache[$this->_meta->_klass])) {
+      $fields = implode(', ', $this->_meta->prefixedSqlFields());
+      $sql = "SELECT {$fields} FROM {{$this->_meta->table}} WHERE {{$this->_meta->table}}.{{$this->_meta->pk}} = ?";
+      $this->_db->_stmt_cache[$this->_meta->_klass] = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
+    }
+    return $this->_db->_stmt_cache[$this->_meta->_klass];
   }
   
   /**
@@ -120,7 +134,7 @@ class Dormio_Model {
       case 'onetoone':
       case 'onetoone_rev':
         // relations that return a single object
-        if(!isset($this->_related[$name])) $this->_related[$name] = new $spec['model']($this->_db);
+        if(!isset($this->_related[$name])) $this->_related[$name] = new $spec['model']($this->_db, $this->_dialect);
    
         $id = $this->_getData($spec['sql_column']);
         isset(self::$logger) && self::$logger->log("Preparing {$spec['model']}({$id})");
@@ -148,7 +162,7 @@ class Dormio_Model {
           $through = null;
         }
         $field = $target->accessorFor($this);
-        $manager = new Dormio_Manager_Related($spec['model'], $this->_db, $this, $field, $through);
+        $manager = new Dormio_Manager_Related($spec['model'], $this->_db, $this->_dialect, $this, $field, $through);
         $this->_related[$name] = $manager;
         return $this->_related[$name];
       default:
@@ -192,7 +206,7 @@ class Dormio_Model {
     $values = implode(', ', array_fill(0, count($this->_updated), '?'));
     $sql = "INSERT INTO {{$this->_meta->table}} ({$fields}) VALUES ({$values})";
     $params = array_values($this->_updated);
-    $stmt = $this->_db->prepare(Dormio_Factory::instance()->dialect->quoteIdentifiers($sql));
+    $stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     if($stmt->execute($params) !=1) throw new Dormio_Model_Exception('Insert failed');
     //$this->_insert = false;
     $this->_updated[$this->_meta->pk] = $this->_id = $this->_db->lastInsertId();
@@ -205,7 +219,7 @@ class Dormio_Model {
     $params[] = $this->ident();
     $pairs = implode(', ', $pairs);
     $sql = "UPDATE {{$this->_meta->table}} SET {$pairs} WHERE {{$this->_meta->pk}} = ?";
-    $stmt = $this->_db->prepare(Dormio_Factory::instance()->dialect->quoteIdentifiers($sql));
+    $stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     if($stmt->execute($params) !=1) throw new Dormio_Model_Exception('Insert failed');
     $this->_merge();
   }
