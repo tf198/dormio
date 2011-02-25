@@ -9,6 +9,7 @@
 class Dormio_Queryset {
   public $query = array(
     'select' => array(), // automatically added fields
+    'modifiers' => null,
     'from' => null, // string - the base table name
     'join' => null, // array - join criteria
     'where' => null, // array of items that are AND'ed together
@@ -43,10 +44,17 @@ class Dormio_Queryset {
   }
   
   function field($path, $alias=null) {
+    // this needs to left join
     $o = clone $this;
     $p = $o->_resolvePath($path);
     if(!$alias) $alias = str_replace('__', '_', $path);
     $o->query['select'][] = "{{$p[0]->table}}.{{$p[1]}} AS {{$o->_meta->table}_{$alias}}";
+    return $o;
+  }
+  
+  function distinct() {
+    $o = clone $this;
+    $o->query['modifiers'][] = "DISTINCT";
     return $o;
   }
   
@@ -60,7 +68,7 @@ class Dormio_Queryset {
   function with() {
     $o = clone $this;
     foreach(func_get_args() as $table) {
-      $spec = $o->_resolve(explode('__', $table));
+      $spec = $o->_resolve(explode('__', $table), 'LEFT');
       $o->_addFields($spec);
     }
     return $o;

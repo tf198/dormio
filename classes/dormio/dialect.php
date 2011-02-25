@@ -46,6 +46,10 @@ class Dormio_Dialect_Generic {
   
   function select($spec) {
     $spec['select'] = array_unique($spec['select']);
+    if(isset($spec['modifiers'])) {
+      $spec['select'][0] = implode(' ', $spec['modifiers']) . ' ' . $spec['select'][0];
+      $spec['modifiers'] = null;
+    }
     if(isset($spec['join'])) {
       $spec['from'] = $spec['from'] . " " . implode(' ',$spec['join']);
       $spec['join'] = null;
@@ -99,7 +103,7 @@ class Dormio_Dialect_MySQL extends Dormio_Dialect_Generic {
 
 class Dormio_Dialect_MSSQL extends Dormio_Dialect_Generic {
   function select($spec) {
-    if(isset($spec['limit'])) $spec['select'][0] = "TOP {$spec['limit']} {$spec['select'][0]}";
+    if(isset($spec['limit'])) $spec['modifiers'][] = "TOP {$spec['limit']}";
     $spec['limit'] = null;
     if(isset($spec['offset'])) throw new Dormio_Dialect_Exception('Offset not supported by MSSQL');
     return parent::select($spec);
