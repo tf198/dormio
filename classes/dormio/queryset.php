@@ -46,7 +46,7 @@ class Dormio_Queryset {
   function field($path, $alias=null) {
     // this needs to left join
     $o = clone $this;
-    $p = $o->_resolvePath($path);
+    $p = $o->_resolvePath($path, 'LEFT');
     if(!$alias) $alias = str_replace('__', '_', $path);
     $o->query['select'][] = "{{$p[0]->table}}.{{$p[1]}} AS {{$o->_meta->table}_{$alias}}";
     return $o;
@@ -90,8 +90,8 @@ class Dormio_Queryset {
   /**
   * Resolves path to the format "{table}.{column} AS {table_column}"
   */
-  function _resolvePrefixed($item) {
-    $p = $this->_resolvePath($item);
+  function _resolvePrefixed($item, $type=null) {
+    $p = $this->_resolvePath($item, $type);
     return "{{$p[0]->table}}.{{$p[1]}} AS {{$p[0]->table}_{$p[1]}}";
   }
   
@@ -110,12 +110,12 @@ class Dormio_Queryset {
   /**
   * Resolves path to the format "{table}.{column}"
   */
-  function _resolveField($path) {
-    $p = $this->_resolvePath($path);
+  function _resolveField($path, $type=null) {
+    $p = $this->_resolvePath($path, $type);
     return "{{$p[0]->table}}.{{$p[1]}}";
   }
   
-  function _resolveLocal($fields) {
+  function _resolveLocal($fields, $type=null) {
     $result = array();
     foreach($fields as $field) {
       if(!isset($this->_meta->columns[$field])) throw new Dormio_Queryset_Exception('No such local field: ' . $field);
@@ -128,11 +128,11 @@ class Dormio_Queryset {
   * Resolves paths to parent meta and field
   * @return array($parent_meta, $field);
   */
-  function _resolvePath($path, $strip_pk=true) {
+  function _resolvePath($path, $type=null, $strip_pk=true) {
     $parts = explode('__', $path);
     $field = array_pop($parts);
     if($strip_pk && $field=='pk' && $parts) $field = array_pop($parts);
-    $spec = $this->_resolve($parts);
+    $spec = $this->_resolve($parts, $type);
     if(!isset($spec->columns[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
     return array($spec, $spec->columns[$field]['sql_column']);
   }
@@ -143,7 +143,7 @@ class Dormio_Queryset {
   * @param  $type   string  The type of join to perform [LEFT]
   * @return object          The top level meta object
   */
-  function _resolve($parts, $type='INNER') {
+  function _resolve($parts, $type=null) {
     $spec = $this->_meta;
     for($i=0,$c=count($parts); $i<$c; $i++) $spec = $this->_addJoin($spec, $parts[$i], $type);
     return $spec;
@@ -156,7 +156,8 @@ class Dormio_Queryset {
     }
   }
   
-  function _addJoin($left, $field, $type) {
+  function _addJoin($left, $field, $type=null) {
+    if(!$type) $type='INNER';
     // get our spec and meta
     $left->resolve($field, $spec, $meta);
     

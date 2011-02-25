@@ -100,6 +100,10 @@ class Dormio_Model {
     return $this->_objects;
   }
   
+  function data() {
+    return $this->_data;
+  }
+  
   /**
   * Accessor for all data
   * All internal functions should use this as it takes care of qualifying the
@@ -123,7 +127,7 @@ class Dormio_Model {
     // need to do this first so any aggregate results appear
     // might speed up everyday access as well to bypass resolve/check proceedure
     $key = $this->_dataIndex($name);
-    if(isset($this->_data[$key])) return $this->_data[$key];
+    if(array_key_exists($key, $this->_data)) return $this->_data[$key];
     
     
     $this->_meta->resolve($name, $spec, $meta);

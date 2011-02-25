@@ -233,8 +233,8 @@ class TestOfManager extends TestOfDB{
       
     // additional field
     $set = $users->field('profile__age', 'age');
-    //$this->assertQueryset($set, 'age',
-    //  array(23, 46, null));
+    $this->assertQueryset($set, 'age',
+      array(23, 46, null));
   }
 }
 ?>
