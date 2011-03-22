@@ -3,8 +3,10 @@ class Dormio_Autoload {
   static $path;
 
   static function autoload($klass) {
-    if(strtolower(substr($klass, 0, 7))=='dormio_') {
-      require self::$path . "/" . substr($klass, 7) . ".php";
+    $klass = strtolower($klass);
+    if(substr($klass, 0, 7)=='dormio_') {
+      $file = self::$path . "/" . str_replace('_', '/', substr($klass, 7)) . ".php";
+      if(file_exists($file)) include($file);
     }
   }
 }

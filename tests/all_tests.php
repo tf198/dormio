@@ -1,9 +1,6 @@
 <?
 require_once('simpletest/autorun.php');
-require_once('bantam_bootstrap.php');
-
-$mod_path = realpath(dirname(__FILE__) . '/..');
-Bantam::instance()->addPaths(array($mod_path));
+require_once('bootstrap.php');
 
 class AllTests extends TestSuite {
 	function AllTests() {
@@ -16,6 +13,6 @@ class AllTests extends TestSuite {
     $this->addFile("{$path}/model_tests.php");
     $this->addFile("{$path}/manager_tests.php");
     $this->addFile("{$path}/factory_tests.php");
-   }
+  }
 }
 ?>

@@ -1,10 +1,11 @@
 <?
 /**
-* PDO singleton with auto config and fake driver support
+* Create a PDO connection based on a config array
+* Includes fake PDO driver support (for sqlsvr driver)
 *
 * @author Tris Forster <tris@tfconsulting.com.au>
 * @version 0.3
-* @package bantam
+* @package dormio
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
 *
 * This program is free software: you can redistribute it and/or modify
@@ -22,61 +23,49 @@
 */
 
 /**
-* PDO singleton with auto config and fake driver support
+* Create a PDO connection based on a config array
+* Includes fake PDO driver support (for sqlsvr driver)
 *
 * @author Tris Forster <tris@tfconsulting.com.au>
 * @version 0.3
-* @package bantam
-* @depends Common, Event
+* @package dormio
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
 */
 class Dormio_Connection {
-	/**
-	* PDO instance
-	* @var	PDO	$db
-	*/
-	private static $db=array();
-	
-	private function __construct() {} // cant instansiate
 	
 	/**
 	* Get a PDO instance
-	* Requires config/pdodb.php:
-	* $config['default']=array(
+	* $config = array(
 	*   'connection' => 'dsn:hostspec',
 	*   'username' => 'username', // optional
 	*   'password' => 'password', // optional
 	*   'parameters' => array()  // optional
 	* )
-	* @param		string	$which	the database config to use
+	* @param    array   $config	the config to use
+  * @return   PDO     a database connection
 	*/
-	public static function &instance($which='default') {
-		if(!isset(self::$db[$which])) {
-			bEvent::run('profile','dormio.init');
-			$config=bCommon::config('dormio.'.$which);
-				$driver=substr($config['connection'],0,strpos($config['connection'],":"));
-				// use proper PDO driver if available
-				if(array_search($driver,PDO::getAvailableDrivers())!==false) {
-					$classname = 'PDO';
-				// try to fall back on fake driver
-				} else {
-					$classname = "PDODB_Driver_{$driver}";
-					if(!class_exists($classname)) throw new PDOException("No driver available for {$driver}");
-				}
-				if(!isset($config['username'])) $config['username']=false;
-				if(!isset($config['password'])) $config['password']=false;
-				if(!isset($config['parameters'])) $config['parameters']=array();
-				self::$db[$which]=new $classname(
-					$config['connection'],
-					$config['username'],
-					$config['password'],
-					$config['parameters']
-				);
-				self::$db[$which]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        if($driver=='mysql') self::$db[$which]->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
-			bEvent::run('profile','dormio.load');
+	public static function &instance($config) {
+		$driver=substr($config['connection'],0,strpos($config['connection'],":"));
+		// use proper PDO driver if available
+		if(array_search($driver,PDO::getAvailableDrivers())!==false) {
+			$classname = 'PDO';
+		// try to fall back on fake driver
+		} else {
+			$classname = "PDODB_Driver_{$driver}";
+			if(!class_exists($classname)) throw new PDOException("No driver available for {$driver}");
 		}
-		return self::$db[$which];
+		if(!isset($config['username'])) $config['username']=false;
+		if(!isset($config['password'])) $config['password']=false;
+		if(!isset($config['parameters'])) $config['parameters']=array();
+		$db = new $classname(
+			$config['connection'],
+			$config['username'],
+			$config['password'],
+			$config['parameters']
+		);
+		$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    if($driver=='mysql') $db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+		return $db;
 	}
 }
 ?>

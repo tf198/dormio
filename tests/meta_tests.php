@@ -1,8 +1,6 @@
 <?
 require_once('simpletest/autorun.php');
-require_once('bantam_bootstrap.php');
-
-Bantam::import('Model_Blog');
+require_once('bootstrap.php');
 
 class TestOfMeta extends UnitTestCase{
 

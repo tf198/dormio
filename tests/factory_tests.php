@@ -1,20 +1,16 @@
 <?
 require_once('simpletest/autorun.php');
-require_once('bantam_bootstrap.php');
+require_once('bootstrap.php');
 
 
 class TestOfFactory extends UnitTestCase {
-  function testDefault() {
-    $dormio = Dormio_Factory::instance();
-    $this->assertIsA($dormio, 'Dormio_Factory');
+  function setUp() {
+    $this->pdo = new MockPDO('sqlite::memory:');
+    $this->factory = new Dormio_Factory($this->pdo);
   }
-  
-  function testBad() {
-    try {
-      $dormio = Dormio_Factory::instance('rubbish');
-      $this->fail();
-    } catch(Exception $e) {
-      $this->assertEqual($e->getMessage(), "Missing required value for 'dormio.rubbish'");
-    }
+
+  function testDefault() {
+    $this->assertIsA($this->factory->get('Blog'), 'Blog');
+    $this->assertIsA($this->factory->manager('Blog'), 'Dormio_Manager');
   }
 }

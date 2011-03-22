@@ -1,8 +1,6 @@
 <?
 require_once('simpletest/autorun.php');
-require_once('bantam_bootstrap.php');
-
-Bantam::import('Model_Autoload'); // non-existent but will include all the "model"."php" classes
+require_once('bootstrap.php');
 
 class TestOfSQL extends UnitTestCase{
   private $all_blogs = array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog"', array());

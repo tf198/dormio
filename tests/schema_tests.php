@@ -1,6 +1,6 @@
 <?
 require_once('simpletest/autorun.php');
-require_once('bantam_bootstrap.php');
+require_once('bootstrap.php');
 
 class Client extends Dormio_Model {
   static $meta = array (

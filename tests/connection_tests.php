@@ -1,25 +1,22 @@
 <?
 require_once('simpletest/autorun.php');
-require_once('bantam_bootstrap.php');
+require_once('bootstrap.php');
 
+global $config;
+include(TEST_PATH . '/config/dormio.php');
 
 class TestOfPdoConnection extends UnitTestCase {
 	public function testDefaultConnection() {
-		$default=Dormio_Connection::instance();
+    global $config;
+    $default=Dormio_Connection::instance($config['default']);
 		$this->assertIsA($default, 'PDO');
 		$this->assertEqual($default->getAttribute(PDO::ATTR_DRIVER_NAME), 'sqlite');
 	}
 	
 	public function testBadConnections() {
+    global $config;
 		try {
-			$pdo=Dormio_Connection::instance('missing');
-			$this->fail();
-		} catch(Exception $e) {
-			$this->assertIsA($e, 'Exception');
-			$this->assertEqual($e->getMessage(), "Missing required value for 'dormio.missing'");
-		}
-		try {
-			$pdo=Dormio_Connection::instance('baddriver');
+			$pdo=Dormio_Connection::instance($config['baddriver']);
 			$this->fail();
 		} catch(Exception $e) {
 			$this->assertIsA($e, 'PDOException');
@@ -27,7 +24,7 @@ class TestOfPdoConnection extends UnitTestCase {
 		}
 		if(isset($GLOBALS['_run_long_tests'])) {
 			try {
-				$pdo=Dormio_Connection::instance('noconnect');
+				$pdo=Dormio_Connection::instance($config['noconnect']);
 				$this->fail();
 			} catch(Exception $e) {
 				$this->assertIsA($e, 'PDOException');

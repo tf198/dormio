@@ -1,9 +1,6 @@
 <?
 require_once('simpletest/autorun.php');
-require_once('bantam_bootstrap.php');
-
-Bantam::import('MockPDO', true);
-Bantam::import('Model_Autoload', false);
+require_once('bootstrap.php');
 
 abstract class TestOfDB extends UnitTestCase{
   function setUp() {
@@ -14,7 +11,7 @@ abstract class TestOfDB extends UnitTestCase{
   }
   
   function load($name) {
-    $lines = file(Bantam::$app_path . '/' . $name);
+    $lines = file(TEST_PATH . '/' . $name);
     if(!$lines) throw new Exception('Failed to load file: ' . $name);
     foreach($lines as $sql) {
       try {
