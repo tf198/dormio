@@ -1,8 +1,5 @@
 <?
-$loader = Bantam::instance();
-$file = $loader->find('3rd party/phorms/src/Phorms/init.php', true);
-if(!$file) throw new Exception("Unable to find Phorms library");
-require_once($file);
+require_once(dirname(__FILE__) .'/../../3rd Party/phorms/src/Phorms/init.php');
 
 class Dormio_Form extends Phorms_Forms_Form{
 
