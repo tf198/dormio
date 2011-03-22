@@ -99,7 +99,7 @@ class TestOfPDOSchemaFactory extends UnitTestCase{
 		$sql=$schema->renameTable('new_client');
 		$this->assertEqual($sql[0], 'ALTER TABLE "client" RENAME TO "new_client"');
 		$sql=$schema->dropTable();
-		$this->assertEqual($sql[0], 'DROP TABLE "new_client"');
+		$this->assertEqual($sql[0], 'DROP TABLE IF EXISTS "new_client"');
 	}
 	
 	public function testColumnOps() {

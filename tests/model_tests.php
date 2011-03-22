@@ -36,9 +36,9 @@ class TestOfModel extends TestOfDB{
     $this->load('sql/test_data.sql');
     
     $blog = $this->pom->get('Blog');
-    $this->assertEqual((string)$blog, '<blog:>');
+    $this->assertEqual((string)$blog, '[blog:]');
     $blog = $this->pom->get('Blog', 3);
-    $this->assertEqual((string)$blog, '<blog:3>');
+    $this->assertEqual((string)$blog, '[blog:3]');
     
     // custom toString on comment
     $comment = $this->pom->get('Comment', 1);
@@ -47,7 +47,7 @@ class TestOfModel extends TestOfDB{
     
     // bad display string
     $comment = $this->pom->get('Comment', 76);
-    $this->assertEqual((string)$comment, '<comment:No result found for primary key 76>');
+    $this->assertEqual((string)$comment, '[comment:No result found for primary key 76]');
     $this->db->digest();
     
     $this->assertDigestedAll();
@@ -138,9 +138,10 @@ class TestOfModel extends TestOfDB{
     $this->assertEqual($i_users, 3);
     
     // the initial queryset
-    $this->assertEqual($this->db->digest(), array('SELECT "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "user"', array(array())));
-    // only one prepared statement with two execution sets.  Params evaluate to false now as they are a reference
-    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" WHERE "blog"."the_blog_user" = ?', array(array(false), array(false), array(false))));
+    $this->assertSQL('SELECT "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "user"');
+    // only one prepared statement with two execution sets.  Params evaluate to 3 now as they are a reference
+    //var_dump($this->db->digest());
+    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" WHERE "blog"."the_blog_user" = ?', array(array(3), array(3), array(3))));
     
     $this->assertDigestedAll();
   }

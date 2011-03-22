@@ -16,6 +16,7 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 				return 'INTEGER PRIMARY KEY AUTOINCREMENT';
 			case 'integer':
 			case 'boolean':
+      case 'foreignkey':
 				return 'INTEGER';
 			case 'float':
 			case 'double':
@@ -93,8 +94,8 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 		return parent::dropColumn($columnname);
 	}
 	
-	/*public function createIndex($index_name, $index_spec) {
+	public function createIndex($index_name, $index_spec) {
 		return array();
-	}*/
+	}
 }
 ?>

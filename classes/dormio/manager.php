@@ -137,7 +137,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
       $stmt = $this->_db->prepare($query[0]);
       $stmt->execute($query[1]);
       $c = $stmt->rowCount();
-      $stmt->closeCursor();
+      //$stmt->closeCursor();
       return $c;
     } catch(PDOException $e) {
       throw new Dormio_Exception("Failed to execute: {$query[0]}\n{$e}");
@@ -164,6 +164,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   * Compile the current query and store the PDOStatment for execution
   */
   private function _evaluate() {
+    if($this->_stmt) throw new Dormio_Manager_Exception('Statement already compiled');
     $query = $this->select();
     //print_r($query);
     $this->_stmt = $this->_db->prepare($query[0]);
@@ -175,36 +176,48 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   * Actual execution is done here
   */
   function rewind() {
+    //print "REWIND\n";
     if(!$this->_stmt) $this->_evaluate();
     $this->_stmt->execute($this->params);
+    $this->_data = $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
+    $this->_iter = new ArrayIterator($this->_data);
+    $this->_iter->rewind();
     $this->_model->clear();
-    $this->next();
-    return $this->current();
+    //$this->next();
+    //return $this->current();
   }
   
   /**
   * Advance the iterator
   */
   function next() {
-    $data = $this->_stmt->fetch(PDO::FETCH_ASSOC);
-    if($data) {
-      $this->_model->_hydrate($data, true); // dont need to clear as should be the same fields each time
-    } else {
-      $this->_model->clear();
-    }
+    //print "NEXT\n";
+    //$data = $this->_stmt->fetch(PDO::FETCH_ASSOC);
+    $this->_iter->next();
   }
   
   /**
   * Is there a current model
   */
   function valid() {
-    return ($this->_model->ident());
+    //print "VALID\n";
+    //return ($this->_model->ident());
+    return $this->_iter->valid();
   }
   
   /**
   * Returns the current model
   */
   function current() {
+    //print "CURRENT\n";
+    $data = $this->_iter->current();
+    if($data) {
+      $this->_model->_hydrate($data, true); // dont need to clear as should be the same fields each time
+    } else {
+      $this->_model->clear();
+      $this->_data = null;
+      $this->_iter = null;
+    }
     return $this->_model;
   }
   
@@ -212,7 +225,9 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   * Returns the current model ident, or false
   */
   function key() {
-    return $this->_model->ident();
+    //print "KEY\n";
+    //return $this->_model->ident();
+    return $this->_iter->key();
   }
 }
 

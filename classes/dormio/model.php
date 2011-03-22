@@ -100,6 +100,14 @@ class Dormio_Model {
     return $this->_objects;
   }
   
+  /**
+  * Get the manager for a related model
+  */
+  function manager($field) {
+    $this->_meta->resolve($field, $spec, $meta);
+    return new Dormio_Manager($spec['model'], $this->_db, $this->_dialect);
+  }
+  
   function data() {
     return $this->_data;
   }
@@ -234,22 +242,22 @@ class Dormio_Model {
     $this->_updated = array();
   }
   
-  function delete() {
+  function delete($preview=false) {
     if($this->_stmt) $this->_stmt->closeCursor(); // can prevent transaction committing
     $objects = $this->objects();
     $sql = $objects->deleteById($this->ident());
-    return $objects->batchExecute($sql);
+    return ($preview) ? $sql : $objects->batchExecute($sql);
   }
   
   function display() {
-    return "<{$this->_meta->_klass}:{$this->ident()}>";
+    return "[{$this->_meta->_klass}:{$this->ident()}]";
   }
   
   function __toString() {
     try {
-      return $this->display();
+      return (string)$this->display();
     } catch(Exception $e) {
-      return "<{$this->_meta->_klass}:{$e->getMessage()}>";
+      return "[{$this->_meta->_klass}:{$e->getMessage()}]";
     }
   }
 }

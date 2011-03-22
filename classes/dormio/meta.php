@@ -21,6 +21,7 @@ class Dormio_Meta {
     $this->columns = $this->_spec['fields'];
     $this->table = $this->_spec['table'];
     $this->pk = $this->_spec['fields']['pk']['sql_column'];
+    $this->verbose = isset($spec['verbose']) ? $spec['verbose'] : self::title($this->_klass);
   }
   
   /**
@@ -45,6 +46,7 @@ class Dormio_Meta {
     $columns['pk'] = array('type' => 'ident', 'sql_column' => $model . "_id", 'is_field' => true);
     if(!isset($meta['fields'])) throw new Dormio_Meta_Exception("Missing required 'fields' on meta");
     foreach($meta['fields'] as $key=>$spec) {
+      isset($spec['verbose']) || $spec['verbose'] = self::title($key);
       if(isset($spec['model'])) { // relations
         $spec['model'] = strtolower($spec['model']); // all meta references are lower case
         switch($spec['type']) {
@@ -100,6 +102,10 @@ class Dormio_Meta {
     return $table;
   }
   
+  public static function title($str) {
+    return ucwords(str_replace('_', ' ', $str));
+  }
+  
   /**
   * Returns a table schema for the model without all the relation stuff
   */
@@ -123,6 +129,14 @@ class Dormio_Meta {
     $result = array();
     foreach($schema['columns'] as $spec) $result[] = $spec['sql_column'];
     return $result;
+  }
+  
+  /**
+  * Get an array of field names
+  */
+  function fields() {
+    $schema = $this->schema();
+    return array_keys($schema['columns']);
   }
   
   /**

@@ -24,7 +24,7 @@ class Dormio_Schema {
 		if(class_exists($classname, true)) {
 			return new $classname($spec);
 		} else {
-			throw new Dormio_Schema_Exception("No PDOSchema driver file found for '{$lang}'");
+			throw new Dormio_Schema_Exception("No Dormio_Schema driver file found for '{$lang}'");
 		}
 	}
 }
@@ -63,6 +63,10 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 		if(!isset($spec['columns'])) throw new Dormio_Schema_Exception("Require 'columns' key");
 		$this->spec=$spec;
 	}
+  
+  public function schema() {
+    return $this->spec;
+  }
 	
 	public function quoteIdentifier($identifier) {
 		return '`'.str_replace('`','``',$identifier).'`';
@@ -100,6 +104,8 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 				return 'DATE';
 			case 'timestamp':
 				return 'TIMESTAMP';
+      case 'foreignkey':
+        return 'INTEGER';
 			default:
 				throw new Dormio_Schema_Exception('No such type: '.$colspec['type']);
 		}
@@ -124,8 +130,9 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 	}
 	
 	// Table operations
-	public function createTable() {
-		$sql=array("CREATE TABLE {$this->quoteIdentifier($this->spec['table'])} (".implode(', ',$this->getColumns($this->spec)).")");
+	public function createTable($drop=false) {
+    $sql = ($drop) ? $this->dropTable() : array();
+		$sql[] = "CREATE TABLE {$this->quoteIdentifier($this->spec['table'])} (".implode(', ',$this->getColumns($this->spec)).")";
 		if(isset($this->spec['indexes'])) {
 			foreach($this->spec['indexes'] as $index_name=>$index_spec) {
 				$sql=array_merge($sql, $this->createIndex($index_name, $index_spec));
@@ -193,7 +200,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 	}
 	
 	public function dropTable() {
-		$sql="DROP TABLE {$this->quoteIdentifier($this->spec['table'])}";
+		$sql="DROP TABLE IF EXISTS {$this->quoteIdentifier($this->spec['table'])}";
 		return array($sql);
 	}
 	
