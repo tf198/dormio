@@ -1,6 +1,6 @@
 <?
 /**
-* Kohana implementatation of PDO singleton with auto config and fake driver support
+* Kohana entry point for Dormio
 *
 * @author Tris Forster <tris@tfconsulting.com.au>
 * @version 0.3
@@ -21,13 +21,13 @@
 */
 
 /**
-* Kohana implementation of PDO singleton with auto config and fake driver support
+* Kohana entry point for Dormio
 *
 * @author Tris Forster <tris@tfconsulting.com.au>
 * @version 0.3
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
 */
-class Kohana_PDO {
+class Kohana_Dormio {
 	/**
 	* PDO instance
 	* @var	PDO	$db
@@ -51,28 +51,9 @@ class Kohana_PDO {
 	*/
 	public static function &instance($which='default') {
 		if(!isset(self::$db[$which])) {
-			//Event::run('profile','pdodb.init');
 			$config=Kohana::config('pdodb.'.$which);
 			if(!$config) throw new Kohana_Exception('No PDODB config file found');
-			$driver=substr($config['connection'],0,strpos($config['connection'],":"));
-			// use proper PDO driver if available
-			if(array_search($driver,PDO::getAvailableDrivers())!==false) {
-				$classname='PDO';
-			} else { // try to fall back on fake driver through autoloader
-				$classname = "PDODB_Driver_{$driver}";
-			}
-			isset($config['username']) OR $config['username']=false;
-			isset($config['password']) OR $config['password']=false;
-			isset($config['parameters']) OR $config['parameters']=array();
-			
-			self::$db[$which]=new $classname(
-				$config['connection'],
-				$config['username'],
-				$config['password'],
-				$config['parameters']
-			);
-			self::$db[$which]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			//Event::run('profile','pdodb.load');
+      self::$db[$which] = Dormio_Factory::PDO($config);
 		}
 		return self::$db[$which];
 	}
