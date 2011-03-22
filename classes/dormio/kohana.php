@@ -27,7 +27,7 @@
 * @version 0.3
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
 */
-class Kohana_Dormio {
+class Dormio_Kohana {
 	/**
 	* PDO instance
 	* @var	PDO	$db
