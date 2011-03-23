@@ -2,21 +2,60 @@ Dormio
 ======
 
 **Note that Dormio is currently pre-alpha - feel free to play but dont use it
-for anything important**
+for anything important.  The API is likely to change - you have been warned**
 
-Introduction
-------------
-(or why another PHP ORM?)
+Introduction (or why another PHP ORM?)
+--------------------------------------
  
 1) Because Django has shown us how object persistence should work.
+2) Because I dont think you should have to run an OpCache for a decent featureset.
 
-2) Because I dont think you should have to run an OpCache.
+Design Principles
+~~~~~~~~~~~~~~~~~
 
-3) I dont like XML or YAML config.
+* DRY - models, schemas and forms all driven from one lightweight meta class
+* Built directly on PDO - no separate abstraction layer
+* Embrace the exception - PDO will tell you pretty quick if there is a problem so there is no need for DB refelection
+* Config in PHP - no XML or YAML config or compilation
+* Memory concious - no features loaded unless required
+* PHP 5.X compatible
+
+TODO
+~~~~
+
+* Tests for other DB drivers
+* Use full PHP open tags
  
 Features
 --------
 
+Model definition
+~~~~~~~~~~~~~~~~
+::
+    class Blog extends Dormio_Model {
+      static function getMeta() {
+        return array(
+          'title' => array('type' => 'string', 'max_length' => 30),
+          'author' => array('type' => 'foreignkey', 'model' => 'User'),
+        );
+      }
+    }
+
+Basic usage
+~~~~~~~~~~~
+::
+    $pdo = new PDO('sqlite::memory:'); // works on raw PDO objects
+    $dormio = new Dormio_Factory($pdo);
+    
+    $blog = $dormio->get('Blog');
+    $blog->title = 'Test Blog 1';
+    $blog->author = 23; // or could pass it a User object
+    $blog->save();
+    
+    // lazy loading of related objects
+    $blog = $dormio->get('Blog', 46);
+    foreach($blog->comment_set as $comment) echo "{$comment->title}\n";
+    
 Intelligent queries
 ~~~~~~~~~~~~~~~~~~~~
 Reducing the number of queries required to render a page.  The query API is mostly lifted straight
@@ -24,9 +63,15 @@ from Django.::
 
     // automatic joins for queries
     $blogs = $dormio->manager('Blog')->filter('author__profile__fav_colour', '=', 'green');
+    foreach($blogs as $blog) echo "{$blog->title}\n";
     
     // eager loading - will only require one query
     $comments = $dormio->manager('Comments')->filter('timestamp', '>', time()-3600)->with('blog')->limit(10);
+    foreach($comments as $comment) echo "{$comment->blog->title}: {$comment->title}\n";
+    
+    // filtering of related objects
+    $blog = $dormio->get('Blog', 23);
+    foreach($blog->comment_set->filter('author', '=', $blog->author) as $comment) echo "{$comment->title}\n";
     
 Automatic Forms
 ~~~~~~~~~~~~~~~~
