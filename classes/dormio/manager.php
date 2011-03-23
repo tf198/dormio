@@ -126,7 +126,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Execute a single query
+  * Execute a single sql statement
   *
   * @param  $query    The query in the form array('SQL', array('param1', ...))
   * @return int       The number of affected rows
