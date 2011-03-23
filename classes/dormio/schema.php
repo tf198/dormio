@@ -3,6 +3,8 @@
 * Factory for SQL implementation specific schema management
 * Abstracts tables as basic PHP arrays.
 * Key features: automatic upgrade path, driver specific options
+* @package dormio
+* @subpackage schema
 */
 class Dormio_Schema {
 	

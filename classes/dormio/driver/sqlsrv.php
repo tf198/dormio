@@ -3,10 +3,6 @@
 * PDO wrapper for Microsofts SQLServer driver 
 * A class wrapper for the sqlsrv set of functions to emulate PDO behavior
 *
-* @author Tris Forster <tris+svn@tfconsulting.com.au>
-* @copyright Copyright (c) 2009, Tristan Forster
-* @licence http://opensource.org/licenses/lgpl-3.0.html LGPLv3
-*
 * Copyright (C) 2009 Tris Forster
 *
 * This program is free software: you can redistribute it and/or modify
@@ -22,7 +18,13 @@
 * You should have received a copy of the GNU Lesser General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
+* @author Tris Forster <tris.git@tfconsulting.com.au>
+* @copyright Copyright (c) 2009, Tristan Forster
+* @licence http://opensource.org/licenses/lgpl-3.0.html LGPLv3
+* @package  dormio
+* @subpackage driver
 */
+
 /**
 * Class to emulate a PDO object for sqlsrv functions
 *
@@ -31,11 +33,11 @@
 *
 * Thanks to Raymond Irvine <xwisdom (at) yahoo ! com>, for fixes to a couple of the regexs
 *
-* @author Tris Forster <tris+svn@tfconsulting.com.au>
-* @copyright Copyright (c) 2009, Tristan Forster
-* @licence http://opensource.org/licenses/lgpl-3.0.html LGPLv3
+* @author Tris Forster <tris.svn@tfconsulting.com.au>
+* @package dormio
+* @subpackage driver
 */
-class PDO_Driver_sqlsrv {
+class Dormio_Driver_SQLSVR {
 	private $dbh=null;
 	private $errors=null;
 	public static $attributes=array(
@@ -255,6 +257,9 @@ class PDO_Driver_sqlsrv {
 
 /**
 * Class to emulate a PDOStatement for sqlsrv functions
+* @author Tris Forster <tris.git@tfconsulting.com.au>
+* @package dormio
+* @subpackage driver
 */
 class sqlsrv_pdo_statement{
 	private $stmt=null;

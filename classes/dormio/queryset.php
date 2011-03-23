@@ -1,12 +1,33 @@
 <?
 /**
-* Class to programatically generate SQL based on table meta information
 * Very similar to django queryset but several methods have slightly different
 * args due to lack of **kwargs
 * Aims to be as lightweight as possible as it gets cloned on each action but
 * while retaining a comprehensive field selector interface
+* @package dormio
+*/
+/**
+* Class to programatically generate SQL based on table meta information.
+*
+* Most methods accept either a field key (as defined in your getMeta() method) or
+* a descriptor which traces relations across the tables.
+* e.g. 'blog__title' on a Comment queryset refers to the title field on the associated blog model
+* Reverse relations can either be accessed by field, for example blog has a reverse field defined for its
+* comments, or by adding _set to the model name so the same can be achieved by calling 'comment_set'.
+* This also works for onetoone relations e.g. 'author__profile_set__fav_colour' on a Blog queryset will traverse
+* the intermediate tables to get to the fav_colour field on the Profile model.
+*
+* Django users will notice the blatent plagerism here, the main difference being the filter() method, where Django
+* would use qs->filter(age__gt=16) Dormio uses a separate operator $qs->filter('age', '>', 16);
+*
+* @example models.php The models refered to in these examples
+* @package dormio
+* @subpackage queryset
 */
 class Dormio_Queryset {
+  /**
+  * @ignore
+  */
   public $query = array(
     'select' => array(), // automatically added fields
     'modifiers' => null,
@@ -18,6 +39,11 @@ class Dormio_Queryset {
     'offset' => null, // int
   );
 
+  /**
+  * Create a new Queryset
+  * @param  string|Dormio_Meta  $meta   A meta object or the name of a model
+  * @param  string|Dormio_Dialect $dialect  A dialect object or the name of one e.g. sqlite
+  */
   function __construct($meta, $dialect='generic') {
     $this->_meta = is_object($meta) ? $meta : Dormio_Meta::get($meta);
     $this->dialect = is_object($dialect) ? $dialect : Dormio_Dialect::factory($dialect);
@@ -30,10 +56,27 @@ class Dormio_Queryset {
     $this->params = array();
   }
   
+  /**
+  * Add the primary key field to the query
+  */
   function _selectIdent() {
     $this->query['select'] = array("{{$this->_meta->table}}.{{$this->_meta->pk}}");
   }
   
+  /**
+  * Filter based on an operator.
+  * Operators can be '=', '<', '>', '>=', '<=', 'IN', 'LIKE'.
+  * Multiple filters are AND'd together.
+  * <code>
+  * $qs->filter('age', '>=', '18);
+  * $qs->filter('author__profile_set__fav_colour', 'IN', array('red', 'green', 'blue'));
+  * </code>
+  * @param  string  $key    Field descriptor
+  * @param  string  $op     Comparison operator
+  * @param  mixed   $value  variable to compare to 
+  * @return Dormio_Queryset Cloned copy of the queryset
+  * @todo validate IN and LIKE behaviour
+  */
   function filter($key, $op, $value) {
     $o = clone $this;
     $f = $o->_resolveField($key);
@@ -52,12 +95,27 @@ class Dormio_Queryset {
     return $o;
   }
   
+  /**
+  * Makes the query DISTINCT.
+  * @return Dormio_Queryset Cloned copy of the queryset
+  */
   function distinct() {
     $o = clone $this;
     $o->query['modifiers'][] = "DISTINCT";
     return $o;
   }
   
+  /**
+  * Add an arbetary where clause.
+  * will be AND'd together with previous clauses.
+  * Field names in {} will be expanded correctly, including across joins
+  * <code>
+  * $qs->where('{author__username}=? OR {title}=?', array('bob', 'Test blog'));
+  * </code>
+  * @param  string  $clause   The WHERE clause to be added
+  * @param  array   $params   Substitution parameters for query
+  * @return Dormio_Queryset Cloned copy of the queryset
+  */
   function where($clause, $params) {
     $o = clone $this;
     $o->query['where'][] = $o->_resolveString($clause);
@@ -65,6 +123,12 @@ class Dormio_Queryset {
     return $o;
   }
   
+  /**
+  * Do an eager join with another table.
+  * Performs LEFT join
+  * @param  string  $table   One or more tables to join
+  * @return Dormio_Queryset Cloned copy of the queryset
+  */
   function with() {
     $o = clone $this;
     foreach(func_get_args() as $table) {
@@ -74,6 +138,12 @@ class Dormio_Queryset {
     return $o;
   }
   
+  /**
+  * Limit the results.
+  * @param  int   $limit  Records to return
+  * @param  int   $offset Optional number of records to skip
+  * @return Dormio_Queryset Cloned copy of the queryset
+  */
   function limit($limit, $offset=false) {
     $o = clone $this;
     $o->query['limit'] = $limit;
@@ -81,6 +151,11 @@ class Dormio_Queryset {
     return $o;
   }
   
+  /**
+  * Order the results.
+  * @param  string  $field  One or more fields to order by
+  * @return Dormio_Queryset Cloned copy of the queryset
+  */
   function orderBy() {
     $o = clone $this;
     foreach(func_get_args() as $path) $o->query['order_by'][] = $o->_resolveField($path);
@@ -88,7 +163,8 @@ class Dormio_Queryset {
   }
   
   /**
-  * Resolves path to the format "{table}.{column} AS {table_column}"
+  * Resolves path to the format "{table}.{column} AS {table_column}".
+  * @internal
   */
   function _resolvePrefixed($item, $type=null) {
     $p = $this->_resolvePath($item, $type);
@@ -96,25 +172,35 @@ class Dormio_Queryset {
   }
   
   /**
-  * Resolves bracketed terms in a string
+  * Resolves bracketed terms in a string.
   * eg "{comment__blog__title} = ?" becomes "{blog}.{title} = ?"
   * Joins will be added automatically as required
+  * @internal
   */
   function _resolveString($str) {
     return preg_replace_callback('/\{([a-z_]+)\}/', array($this, '_resolveStringCallback'), $str);
   }
+  /**
+  * @ignore
+  */
   function _resolveStringCallback($matches) {
     return $this->_resolveField($matches[1]);
   }
   
   /**
-  * Resolves path to the format "{table}.{column}"
+  * Resolves path to the format "{table}.{column}".
+  * @internal
   */
   function _resolveField($path, $type=null) {
     $p = $this->_resolvePath($path, $type);
     return "{{$p[0]->table}}.{{$p[1]}}";
   }
   
+  /**
+  * Resolves field names to their sql columns.
+  * DOES NOT FOLLOW RELATIONS
+  * @internal
+  */
   function _resolveLocal($fields, $type=null) {
     $result = array();
     foreach($fields as $field) {
@@ -126,7 +212,8 @@ class Dormio_Queryset {
   
   /**
   * Resolves paths to parent meta and field
-  * @return array($parent_meta, $field);
+  * @return array array($parent_meta, $field);
+  * @internal
   */
   function _resolvePath($path, $type=null, $strip_pk=true) {
     $parts = explode('__', $path);
@@ -142,6 +229,7 @@ class Dormio_Queryset {
   * @param  $parts  array   An array of field accessors that can be chained
   * @param  $type   string  The type of join to perform [LEFT]
   * @return object          The top level meta object
+  * @internal
   */
   function _resolve($parts, $type=null) {
     $spec = $this->_meta;
@@ -149,6 +237,11 @@ class Dormio_Queryset {
     return $spec;
   }
   
+  /**
+  * Add all the fields for a table
+  * @param  Dormio_Meta $meta The meta for the table to add
+  * @internal
+  */
   function _addFields($meta) {
     $schema = $meta->schema();
     foreach($schema['columns'] as $key=>$spec) {
@@ -156,6 +249,15 @@ class Dormio_Queryset {
     }
   }
   
+  /**
+  * Takes care of joining tables together by field name.
+  * Defaults to INNER joins unless specified
+  * @param  Dormio_Meta   $left   The lefthand table
+  * @param  string        $field  The field containing the relation
+  * @param  string  $type         The type of join to perform
+  * @return Dormio_Meta   The righthand table which was joined to
+  * @internal
+  */
   function _addJoin($left, $field, $type=null) {
     if(!$type) $type='INNER';
     // get our spec and meta
@@ -183,6 +285,11 @@ class Dormio_Queryset {
     return $right;
   }
   
+  /**
+  * Creates an UPDATE statement based on the current query
+  * @param  array $params   Assoc array of values to set
+  * @return array           array(sql, params)
+  */
   function update($params) {
     $o = clone $this;
     $o->_selectIdent();
@@ -191,12 +298,20 @@ class Dormio_Queryset {
     return array($this->dialect->update($o->query, $update_fields), $update_params);
   }
   
+  /**
+  * Creates an INSERT statement based on the current query
+  * @param  array $params   Assoc array of values to insert
+  * @return array           array(sql, params)
+  */
   function insert($params) {
     // no need to clone as non-destructive
     $update_fields = $this->_resolveLocal(array_keys($params));
     return array($this->dialect->insert($this->query, $update_fields), array_values($params));
   }
   
+  /**
+  * @internal
+  */
   function _deleteSpec() {
     $result = array();
     foreach($this->_meta->columns as $key=>$spec) {
@@ -214,6 +329,12 @@ class Dormio_Queryset {
     return $result;
   }
   
+  /**
+  * Create a DELETE path based on the current query.
+  * Will follow relations where 'on_delete' is set to 'cascade'
+  * @param    array   $resolved   Internal parameter for recursion
+  * @return   array   array( array(sql, params), array(sql, params), ... )
+  */
   function delete($resolved=array()) {
     $sql = array();
     foreach($this->_deleteSpec() as $parts) {
@@ -238,6 +359,13 @@ class Dormio_Queryset {
     return $sql;
   }
   
+  /**
+  * Create the DELETE path for a specific primary key
+  * Will follow relations where 'on_delete' is set to 'cascade'
+  * @param  int   $id   The primary key to delete
+  * @param  string  $query  Internal parameter for recursion
+  * @param  array   $resolved Internal parameter for recursion
+  */
   function deleteById($id, $query='pk', $resolved=array()) {
     $sql = array();
     foreach($this->_deleteSpec() as $parts) {
@@ -262,10 +390,18 @@ class Dormio_Queryset {
     return $sql;
   }
   
+  /**
+  * Creates an SELECT statement based on the current query
+  * @return array           array(sql, params)
+  */
   function select() {
     return array($this->dialect->select($this->query), $this->params);
   }
 }
 
+/**
+* @package dormio
+* @subpackage queryset
+*/
 class Dormio_Queryset_Exception extends Dormio_Exception {}
 ?>

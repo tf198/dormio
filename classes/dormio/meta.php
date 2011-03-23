@@ -3,6 +3,8 @@
 * Class to store meta information about column structure and relationships
 * PHP has no metaclassing so we use singletons instead and the instances
 * create a reference _meta when initialised
+* @package dormio
+* @subpackage meta
 */
 class Dormio_Meta {
   // cache for table meta

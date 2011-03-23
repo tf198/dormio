@@ -26,6 +26,8 @@
 * @author Tris Forster <tris@tfconsulting.com.au>
 * @version 0.3
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
+* @package dormio
+* @subpackage adapter
 */
 class Dormio_Kohana {
 	/**

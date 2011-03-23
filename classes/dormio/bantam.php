@@ -1,10 +1,6 @@
-<?
+<?php
 /**
 * Bantam entry point for Dormio
-*
-* @author Tris Forster <tris@tfconsulting.com.au>
-* @version 0.3
-* @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
@@ -18,14 +14,19 @@
 *
 * You should have received a copy of the GNU Lesser General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/**
-* Bantam entry point for Dormio
 *
 * @author Tris Forster <tris@tfconsulting.com.au>
 * @version 0.3
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
+* @package dormio
+* @subpackage adapter
+*/
+
+/**
+* Bantam entry point for Dormio
+* @author Tris Forster <tris@tfconsulting.com.au>
+* @package dormio
+* @subpackage adapter
 */
 class Dormio_Bantam {
 	/**

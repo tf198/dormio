@@ -1,9 +1,33 @@
-<?
+<?php
 /**
-* Base model class
-* All models should subclass this
+* Django inspired model.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+* @author Tris Forster <tris@tfconsulting.com.au>
+* @version 0.3
+* @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
+* @package dormio
 */
-class Dormio_Model {
+
+/**
+* Base model class.
+* All models should subclass this and implement the getMeta() method
+* @example models.php
+* @package dormio
+*/
+abstract class Dormio_Model {
   static $_cache_ref = null;
   private $_data = array();
   public $_updated = array();
@@ -15,7 +39,12 @@ class Dormio_Model {
   static $meta = array();
   
   static $logger = null;
-
+  
+  /**
+  * Create a new Model instance using the provided PDO connection
+  * @param  PDO   $db   The connection
+  * @param  Dormio_Dialect  $dialect  If provided saves creating a new instance
+  */
   function __construct(PDO $db, $dialect=null) {
     $this->_db = $db;
     $this->_meta = Dormio_Meta::get(get_class($this));
@@ -24,7 +53,17 @@ class Dormio_Model {
   }
   
   /**
+  * Meta array defining fields.
+  * Should contain at least a 'fields' entry
+  * Optional entries are 'indexes', 'table' and 'verbose'
+  * @return   array The meta info for this model
+  * @example models.php
+  */
+  abstract static function getMeta();
+  
+  /**
   * Populate the data
+  * @internal
   */
   function _hydrate($data, $prefixed=false) {
     if($prefixed) {
@@ -37,6 +76,11 @@ class Dormio_Model {
     $this->_id = (isset($this->_data[$pk])) ? (int)$this->_data[$pk] : false;
   }
   
+  /**
+  * Query the database for the current record.
+  * Called when model has been populated with partial data e.g. just PK or joined fields
+  * @internal
+  */
   function _rehydrate() {
     if(!$this->_id) throw new Dormio_Model_Exception('No primary key set');
     isset(self::$logger) && self::$logger->log("Rehydrating {$this->_meta->_klass}({$this->_id})");
@@ -53,7 +97,8 @@ class Dormio_Model {
   }
   
   /**
-  * Cache the hydration stmts to improve pk lookups
+  * Cache the hydration stmts to improve pk lookups.
+  * @internal
   */
   function _hydrateStmt() {
     // slightly cheekily we store proceedures on the actual pdo object
@@ -68,16 +113,18 @@ class Dormio_Model {
   }
   
   /**
-  * Get the key for the data array
-  * Result is dependant on whether the data is qualified
+  * Get the key for the data array.
+  * This is in the format 'table_field'
+  * @param  string  $field  The field name
+  * @return string
+  * @internal
   */
   function _dataIndex($field) {
-    //return ($this->_qualified) ? "{$this->_meta->table}_{$field}" : $field;
     return "{$this->_meta->table}_{$field}";
   }
   
   /**
-  * Empty the current object
+  * Empty the current object.
   */
   function clear() {
     $this->_data = $this->_updated = array();
@@ -85,15 +132,16 @@ class Dormio_Model {
   }
   
   /**
-  * Get the value of the primary key for the current record
-  * Returns false if unbound
+  * Get the value of the primary key for the current record.
+  * @return int|false The primary key or false if unbound
   */
   function ident() {
     return $this->_id;
   }
   
   /**
-  * Get the manager for this model
+  * Get the manager for this model.
+  * @return Dormio_Manager A manager instance
   */
   function objects() {
     if(!isset($this->_objects)) $this->_objects = new Dormio_Manager($this->_meta, $this->_db);
@@ -101,21 +149,28 @@ class Dormio_Model {
   }
   
   /**
-  * Get the manager for a related model
+  * Get the manager for a related model.
+  * @param  string  $field  The field name to resolve
+  * @return Dormio_Manager A manager instance
   */
   function manager($field) {
     $this->_meta->resolve($field, $spec, $meta);
     return new Dormio_Manager($spec['model'], $this->_db, $this->_dialect);
   }
   
+  /**
+  * Retrieve the raw data.
+  * @return array Raw data
+  */
   function data() {
     return $this->_data;
   }
   
   /**
-  * Accessor for all data
+  * Accessor for all data.
   * All internal functions should use this as it takes care of qualifying the
   * indexes and rehydrating the object if required
+  * @internal
   */
   function _getData($column) {
     $key = $this->_dataIndex($column);
@@ -123,12 +178,19 @@ class Dormio_Model {
     return $this->_data[$key];
   }
   
+  /**
+  * Setter for all data.
+  * All internal functions should use this as it takes care of qualifying the
+  * indexes.
+  * @internal
+  */
   function _setData($column, $value) {
     $this->_data[$this->_dataIndex($column)] = $value;
   }
   
   /**
-  * Does the heavy lifting of returning values, related objects and managers
+  * Does the heavy lifting of returning values, related objects and managers.
+  * @internal
   */
   function __get($name) {
     
@@ -185,6 +247,10 @@ class Dormio_Model {
     }
   }
   
+  /**
+  * Magic method for assigning updated values
+  * @internal
+  */
   function __set($name, $value) {
     if($name=='pk') throw new Dormio_Model_Exception("Can't update primary key");
     $spec = $this->_meta->column($name);
@@ -196,8 +262,9 @@ class Dormio_Model {
   }
    
   /**
-  * Load a record by id
+  * Load a record by id.
   * This actually does very little except set the id - it wont be populated until a request is made
+  * @param  int   $id   Record to load
   */
   function load($id) {
     $this->clear();
@@ -206,11 +273,18 @@ class Dormio_Model {
     //$this->_qualified = true;
   }
   
+  /**
+  * Save the record.
+  * Will update or insert as appropriate
+  */
   function save() {
     if(count($this->_updated)==0) return;
     return ($this->ident()===false) ? $this->insert() : $this->update();
   }
   
+  /**
+  * Perform an INSERT of the current record.
+  */
   function insert() {
     $fields = array_keys($this->_updated);
     foreach($fields as &$field) $field = '{' . $field . '}';
@@ -225,6 +299,9 @@ class Dormio_Model {
     $this->_merge();
   }
   
+  /**
+  * Perform an UPDATE of the current record.
+  */
   function update() {
     $params = array_values($this->_updated);
     foreach(array_keys($this->_updated) as $key) $pairs[] = "{{$key}}=?";
@@ -236,12 +313,22 @@ class Dormio_Model {
     $this->_merge();
   }
   
+  /**
+  * Moves updated values accross into the main data array.
+  * Resets the updated array
+  * @internal
+  */
   function _merge() {
     $this->_hydrate($this->_updated, false);
     //$this->_qualified = true;
     $this->_updated = array();
   }
   
+  /**
+  * Deletes a record and all its children.
+  * @param  bool $preview If true returns an array of statements that would be executed instead of running them
+  * @return bool|array   Whether the command succeeded or the commands themselves if previewing
+  */
   function delete($preview=false) {
     if($this->_stmt) $this->_stmt->closeCursor(); // can prevent transaction committing
     $objects = $this->objects();
@@ -249,10 +336,21 @@ class Dormio_Model {
     return ($preview) ? $sql : $objects->batchExecute($sql);
   }
   
+  /**
+  * The text representation of this record.
+  * Used in HTML SELECT elements
+  * @return string The text to display
+  */
   function display() {
     return "[{$this->_meta->_klass}:{$this->ident()}]";
   }
   
+  /**
+  * Human readable representation of the object
+  * Uses the result of the display() method
+  * @see display()
+  * @internal
+  */
   function __toString() {
     try {
       return (string)$this->display();
@@ -262,6 +360,9 @@ class Dormio_Model {
   }
 }
 
-/** Model exception */
+/** 
+* Model exception 
+* @package dormio
+*/
 class Dormio_Model_Exception extends Dormio_Exception {}
 ?>

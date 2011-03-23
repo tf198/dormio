@@ -1,16 +1,25 @@
 <?
 /**
-* Based heavily on django models.Manager functionality
+* Based heavily on django models.Manager functionality.
 * Supports most of the django query language with few modifications.
 * This extends Dormio_Queryset giving it the ability to actually interact with
 * the database.
+* @package dormio
+* @subpackage manager
+*/
+/**
+* @package dormio
+* @subpackage manager
 */
 class Dormio_Manager extends Dormio_Queryset implements Iterator {
   protected $_db = null;
   protected $_stmt = null;
   
   /**
-  * Create a new manager object based on the supplied meta
+  * Create a new manager object based on the supplied meta.
+  * @param  string|Dormio_Meta  $meta The meta class to use
+  * @param  PDO                 $db   A valid PDO instance
+  * @param  Dormio_Dialect      $dialect  The dialect for the $db. If not provided will be created.
   */
   function __construct($meta, $db, $dialect=null) {
     $this->_db = $db;
@@ -20,7 +29,8 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Need to clear the stored statement when we are cloned
+  * Need to clear the stored statement when we are cloned.
+  * @internal
   */
   function __clone() {
     $this->_stmt = null;
@@ -28,9 +38,9 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Get a single object based on the current query
+  * Get a single object based on the current query.
   *
-  * @param  $pk   int   Optional primary key for object
+  * @param  int  $pk   Optional primary key for object
   * @return Dormio_Model   The model
   * @throws Dormio_Manager_Exception   If the query doesn't return one object
   */
@@ -50,14 +60,16 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Get an Aggregation object
+  * Get an Aggregation object.
+  * @return Dormio_Aggregation
   */
   function aggregate() {
     return new Dormio_Aggregation(clone $this);
   }
   
   /**
-  * Get a copy of the current query with no select parameters
+  * Get a copy of the current query with no select parameters.
+  * @return Dormio_Manager
   */
   function clear() {
     $o = clone $this;
@@ -66,13 +78,13 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Bulk Update
+  * Bulk Update.
   * Updates the values of all rows that match the current query to those in $params
-  * e.g $set->filter->('colour', '=', 'Red')->update(array('colour' => 'blue', 'sound' => 'honk'));
+  * e.g <code>$set->filter->('colour', '=', 'Red')->update(array('colour' => 'blue', 'sound' => 'honk'));</code>
   * Will update colour and sound on all rows where colour='Red'
   *
-  * @param  $params   A set of key => values to be updated 
-  * @return int       The number of rows updated
+  * @param  array   $params   A set of key => values to be updated 
+  * @return int               The number of rows updated
   */
   function update($params) {
     $sql = parent::update($params);
@@ -80,13 +92,14 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Bulk insert
-  * Provides a method of efficiently loading a lot of data
-  * 
+  * Bulk insert.
+  * Provides a method of efficiently loading a lot of data e.g. from csv
+  * <code>
   * $stmt = $blogs->insert(array('title', 'user'));
   * $stmt->execute(array('Test 1', 1));
   * $stmt->execute(array('Test 2', 1));
-  *
+  * </code>
+  * @param  array $fields   The field names to be inserted in the correct order
   * @return PDOStatement    A statement suitable for bulk insertion
   * @throws Dormio_Manager_Exception if the statement can't be created
   */
@@ -105,16 +118,22 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   * Bulk delete
   * Deletes rows and related rows based on the current query. Note that this
   * will follow relations where cascade is set.
-  * e.g. $set->filter('age', '<', 16)->delete();
+  * e.g. <code>$set->filter('age', '<', 16)->delete();</code>
   *
-  * @param  $preview  Return the statatements that wiould be executed instead of running
-  * @return int       The number of rows deleted
+  * @param  bool $preview  Return the statatements that wiould be executed instead of running
+  * @return int         The number of rows deleted
   */
   function delete($preview=false) {
     $sql = parent::delete();
     return ($preview) ? $sql : $this->batchExecute($sql);
   }
   
+  /**
+  * Runs a query and returns the first row.
+  * @param  array $query    Query array
+  * @param  int   $fetch    Fetch mode to use
+  * @return array
+  */
   function query($query, $fetch=PDO::FETCH_ASSOC) {
     try {
       $stmt = $this->_db->prepare($query[0]);
@@ -126,11 +145,11 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Execute a single sql statement
+  * Execute a single sql statement.
   *
   * @param  $query    The query in the form array('SQL', array('param1', ...))
   * @return int       The number of affected rows
-  * @throws Dormio_Exception if it cannot execute the query
+  * @throws Dormio_Exception If it cannot execute the query
   */
   function execute($query) {
     try {
@@ -145,10 +164,10 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Execute many queries in a single transaction
+  * Execute many queries in a single transaction.
   *
-  * @param  $sql    An array of queries suitable for passing to execute()
-  * @return int     The total number of affected rows
+  * @param  array   $sql    An array of queries suitable for passing to execute()
+  * @return int             The total number of affected rows
   */
   function batchExecute($sql) {
     $this->_db->beginTransaction();
@@ -161,7 +180,9 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Compile the current query and store the PDOStatment for execution
+  * Compile the current query and store the PDOStatment for execution.
+  * Manager instance cannot be modified after this.
+  * @internal
   */
   private function _evaluate() {
     if($this->_stmt) throw new Dormio_Manager_Exception('Statement already compiled');
@@ -172,8 +193,9 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Rewind the iterator
+  * Rewind the iterator.
   * Actual execution is done here
+  * @internal
   */
   function rewind() {
     //print "REWIND\n";
@@ -188,7 +210,8 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Advance the iterator
+  * Advance the iterator.
+  * @internal
   */
   function next() {
     //print "NEXT\n";
@@ -197,7 +220,8 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Is there a current model
+  * Is there a current model.
+  * @internal
   */
   function valid() {
     //print "VALID\n";
@@ -206,7 +230,8 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Returns the current model
+  * Returns the current model.
+  * @internal
   */
   function current() {
     //print "CURRENT\n";
@@ -222,7 +247,9 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   }
   
   /**
-  * Returns the current model ident, or false
+  * Returns the current model ident, or false.
+  * @return int|false
+  * @internal
   */
   function key() {
     //print "KEY\n";
@@ -232,7 +259,9 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
 }
 
 /**
-* Additional methods where there is a related object
+* Additional methods where there is a related object.
+* @package dormio
+* @subpackage manager
 */
 class Dormio_Manager_Related extends Dormio_Manager {
 	
@@ -251,7 +280,8 @@ class Dormio_Manager_Related extends Dormio_Manager {
 	}
 
   /**
-  * Adds the specified object to the related set
+  * Adds the specified object to the related set.
+  * @param  Dormio_Model $obj  The object to add to the set
   */
 	function add($obj) {
     if($obj->_meta->_klass != $this->_meta->_klass) throw new Dormio_Manager_Exception('Can only add like objects');
@@ -274,9 +304,10 @@ class Dormio_Manager_Related extends Dormio_Manager {
   * Creates a new instance of the related item.
   * Note that manytomany relations are not automatically added, you need
   * to manually call add()
-  * e.g 
+  * <code>
   * $tag = $blog->tags->create(array('tag' => 'Grey'));
   * $blog->tags->add($tag);
+  * </code>
   */
 	function create($params=array()) {
     $obj = $this->_meta->instance($this->_db, $this->dialect);
@@ -286,8 +317,9 @@ class Dormio_Manager_Related extends Dormio_Manager {
 	}
 	
   /**
-  * Remove a specific object from the elated set
+  * Remove a specific object from the elated set.
   * This is only valid for manytomany relations
+  * @param  int|Dormio_Model  $model  The model to remove from the set
   */
 	function remove($model) {
     if(is_object($model)) $model = $model->pk;
@@ -297,6 +329,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
   /**
   * Remove all objects from the related set
   * This is only valid for manytomany relations
+  * @param  int $pk   Can optionally just remove one item
   */
 	function clear($pk=null) {
     if($this->_through) {
@@ -314,5 +347,9 @@ class Dormio_Manager_Related extends Dormio_Manager {
 	} 
 }
 
+/**
+* @package dormio
+* @subpackage manager
+*/
 class Dormio_Manager_Exception extends Dormio_Exception {}
 ?>
