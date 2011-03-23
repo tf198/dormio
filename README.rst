@@ -6,7 +6,7 @@ for anything important**
 
 Introduction
 ------------
- - or why another PHP ORM?
+(or why another PHP ORM?)
  
 1) Because Django has shown us how object persistence should work.
 
@@ -20,7 +20,7 @@ Features
 Intelligent queries
 ~~~~~~~~~~~~~~~~~~~~
 Reducing the number of queries required to render a page.  The query API is mostly lifted straight
-from Django.
+from Django.::
     // automatic joins for queries
     $blogs = $dormio->manager('Blog')->filter('author__profile__fav_colour', '=', 'green');
     
@@ -29,7 +29,7 @@ from Django.
     
 Automatic Forms
 ~~~~~~~~~~~~~~~
-Generate an entire form complete with validation from your model.  Uses the Phorms library.
+Generate an entire form complete with validation from your model.  Uses the Phorms library.::
     $blog = $dormio->get('Blog', 23);
     $form = Dormio_Form($blog);
     
@@ -41,7 +41,7 @@ Generate an entire form complete with validation from your model.  Uses the Phor
 
 Schema Generation
 ~~~~~~~~~~~~~~~~~
-Generate 
+Generate schemas directly from your models. Can even upgrade them for you.::
     $pdo = new PDO('sqlite::memory');
     $sf = Dormio_Schema::factory('Blog', 'sqlite');
     $sf->batchExecute($sf->createTable(), $pdo);
@@ -50,7 +50,7 @@ Blistering performance
 ~~~~~~~~~~~~~~~~~~~~~~
 Everything is kept as light as possible using just a lightweight meta description at the core.  This
 results in code that runs nearly as fast as raw PDO and with a not much greater memory footprint while still
-giving you a full featureset.
+giving you a full featureset.::
 
                       | Insert | findPk | complex| hydrate|  with  |     MB |
                       |--------|--------|--------|--------|--------|--------|
