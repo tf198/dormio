@@ -2,7 +2,8 @@ Dormio
 ======
 
 **Note that Dormio is currently pre-alpha - feel free to play but dont use it
-for anything important.  The API is likely to change - you have been warned**
+for anything important.
+The API is likely to change - you have been warned!**
 
 Introduction (or why another PHP ORM?)
 --------------------------------------
@@ -14,17 +15,13 @@ Design Principles
 ~~~~~~~~~~~~~~~~~
 
 * DRY - models, schemas and forms all driven from one lightweight meta class
+* No framework requirement, but usable in all.
 * Built directly on PDO - no separate abstraction layer
-* Embrace the exception - PDO will tell you pretty quick if there is a problem so there is no need for DB refelection
+* Embrace the Exception - PDO will tell you pretty quick if there is a problem so there is no need for DB refelection
 * Config in PHP - no XML or YAML config or compilation
 * Memory concious - no features loaded unless required
 * PHP 5.X compatible
-
-TODO
-~~~~
-
-* Tests for other DB drivers
-* Use full PHP open tags
+* Well unit tested (or will be...)
  
 Features
 --------
@@ -61,7 +58,8 @@ Basic usage
 Intelligent queries
 ~~~~~~~~~~~~~~~~~~~~
 Reducing the number of queries required to render a page.  The query API is mostly lifted straight
-from Django.::
+from Django.
+::
 
     // automatic joins for queries
     $blogs = $dormio->manager('Blog')->filter('author__profile__fav_colour', '=', 'green');
@@ -77,7 +75,8 @@ from Django.::
     
 Automatic Forms
 ~~~~~~~~~~~~~~~~
-Generate an entire form complete with validation from your model.  Uses the Phorms library.::
+Generate an entire form complete with validation from your model.  Uses the Phorms library.
+::
 
     $blog = $dormio->get('Blog', 23);
     $form = Dormio_Form($blog);
@@ -90,7 +89,8 @@ Generate an entire form complete with validation from your model.  Uses the Phor
 
 Schema Generation
 ~~~~~~~~~~~~~~~~~~
-Generate schemas directly from your models. Can even upgrade them for you.::
+Generate schemas directly from your models. Can even upgrade them for you.
+::
 
     $pdo = new PDO('sqlite::memory');
     $sf = Dormio_Schema::factory('Blog', 'sqlite');
@@ -100,7 +100,8 @@ Blistering performance
 ~~~~~~~~~~~~~~~~~~~~~~
 Everything is kept as light as possible using just a lightweight meta description at the core.  This
 results in code that runs nearly as fast as raw PDO and with a not much greater memory footprint while still
-giving you a full featureset.::
+giving you a full featureset.
+::
 
                       | Insert | findPk | complex| hydrate|  with  |     MB |
                       |--------|--------|--------|--------|--------|--------|
@@ -115,7 +116,7 @@ giving you a full featureset.::
            Doctrine12 |   2445 |   3552 |    655 |   1968 |   2196 |  13.36 |
            
 Obviously benchmarks are not real world, but they do throw out some interesting numbers...
-More info on benchmarks at [https://github.com/tf198/php-orm-benchmark]
+More info on benchmarks at https://github.com/tf198/php-orm-benchmark
 
 Why Dormio?
 -----------
