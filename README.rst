@@ -28,7 +28,7 @@ from Django.::
     $comments = $dormio->manager('Comments')->filter('timestamp', '>', time()-3600)->with('blog')->limit(10);
     
 Automatic Forms
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 Generate an entire form complete with validation from your model.  Uses the Phorms library.::
     $blog = $dormio->get('Blog', 23);
     $form = Dormio_Form($blog);
@@ -40,7 +40,7 @@ Generate an entire form complete with validation from your model.  Uses the Phor
     }
 
 Schema Generation
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 Generate schemas directly from your models. Can even upgrade them for you.::
     $pdo = new PDO('sqlite::memory');
     $sf = Dormio_Schema::factory('Blog', 'sqlite');
