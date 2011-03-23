@@ -32,6 +32,7 @@ Features
 Model definition
 ~~~~~~~~~~~~~~~~
 ::
+
     class Blog extends Dormio_Model {
       static function getMeta() {
         return array(
@@ -44,6 +45,7 @@ Model definition
 Basic usage
 ~~~~~~~~~~~
 ::
+
     $pdo = new PDO('sqlite::memory:'); // works on raw PDO objects
     $dormio = new Dormio_Factory($pdo);
     
