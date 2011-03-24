@@ -24,13 +24,29 @@
 */
 
 /**
-* Autoloader for Dormio classes
-* @author Tris Forster <tris.git@tfconsulting.com.au>
+* Autoloader for Dormio classes.
+* Just needs including somewhere around the top of your application entry point for
+* access to all the Dormio goodies.
+* <code>
+* require_once('path/to/dormio/classes/dormio/autoload.php');
+* Dormio_Autoload::register();
+* </code>
+*
+* @author Tris Forster <tris.701437@tfconsulting.com.au>
 * @package dormio
 */
 class Dormio_Autoload {
-  static $path;
+  /**
+  * Base dormio path
+  * @var string
+  */
+  static $path=null;
 
+  /**
+  * Will autoload classes starting with Dormio_.
+  * 
+  * @param  string  $klass  Class name
+  */
   static function autoload($klass) {
     $klass = strtolower($klass);
     if(substr($klass, 0, 7)=='dormio_') {
@@ -38,7 +54,14 @@ class Dormio_Autoload {
       if(file_exists($file)) include($file);
     }
   }
+  
+  /**
+  * Call to register the autoloader
+  */
+  static function register() {
+    if(self::$path) return;
+    self::$path = dirname(__FILE__);
+    spl_autoload_register(array('Dormio_Autoload','autoload')) or die('Failed to Pom autoloader');
+  }
 }
-Dormio_Autoload::$path = dirname(__FILE__);
-spl_autoload_register(array('Dormio_Autoload','autoload')) or die('Failed to Pom autoloader');
 ?>

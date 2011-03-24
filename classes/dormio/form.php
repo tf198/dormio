@@ -71,6 +71,10 @@ class Dormio_Form extends Phorms_Forms_Form{
   }
 }
 
+/**
+* @package dormio
+* @subpackage form
+*/
 class ForeignKeyField extends Phorms_Fields_ChoiceField {
   function __construct($label, $help, $manager, $validators=array(), $attributes=array()) {
     $choices[0] = 'Select...';

@@ -63,7 +63,7 @@ abstract class Dormio_Model {
   
   /**
   * Populate the data
-  * @internal
+  * @access private
   */
   function _hydrate($data, $prefixed=false) {
     if($prefixed) {
@@ -79,7 +79,7 @@ abstract class Dormio_Model {
   /**
   * Query the database for the current record.
   * Called when model has been populated with partial data e.g. just PK or joined fields
-  * @internal
+  * @access private
   */
   function _rehydrate() {
     if(!$this->_id) throw new Dormio_Model_Exception('No primary key set');
@@ -98,7 +98,7 @@ abstract class Dormio_Model {
   
   /**
   * Cache the hydration stmts to improve pk lookups.
-  * @internal
+  * @access private
   */
   function _hydrateStmt() {
     // slightly cheekily we store proceedures on the actual pdo object
@@ -117,7 +117,7 @@ abstract class Dormio_Model {
   * This is in the format 'table_field'
   * @param  string  $field  The field name
   * @return string
-  * @internal
+  * @access private
   */
   function _dataIndex($field) {
     return "{$this->_meta->table}_{$field}";
@@ -170,7 +170,7 @@ abstract class Dormio_Model {
   * Accessor for all data.
   * All internal functions should use this as it takes care of qualifying the
   * indexes and rehydrating the object if required
-  * @internal
+  * @access private
   */
   function _getData($column) {
     $key = $this->_dataIndex($column);
@@ -182,7 +182,7 @@ abstract class Dormio_Model {
   * Setter for all data.
   * All internal functions should use this as it takes care of qualifying the
   * indexes.
-  * @internal
+  * @access private
   */
   function _setData($column, $value) {
     $this->_data[$this->_dataIndex($column)] = $value;
@@ -190,7 +190,7 @@ abstract class Dormio_Model {
   
   /**
   * Does the heavy lifting of returning values, related objects and managers.
-  * @internal
+  * @access private
   */
   function __get($name) {
     
@@ -249,7 +249,7 @@ abstract class Dormio_Model {
   
   /**
   * Magic method for assigning updated values
-  * @internal
+  * @access private
   */
   function __set($name, $value) {
     if($name=='pk') throw new Dormio_Model_Exception("Can't update primary key");
@@ -316,7 +316,7 @@ abstract class Dormio_Model {
   /**
   * Moves updated values accross into the main data array.
   * Resets the updated array
-  * @internal
+  * @access private
   */
   function _merge() {
     $this->_hydrate($this->_updated, false);
@@ -349,7 +349,7 @@ abstract class Dormio_Model {
   * Human readable representation of the object
   * Uses the result of the display() method
   * @see display()
-  * @internal
+  * @access private
   */
   function __toString() {
     try {
