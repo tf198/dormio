@@ -1,30 +1,30 @@
 <?php
-class MyBlog extends Dormio_Model {
+class Blog extends Dormio_Model {
   static function getMeta() {
     return array(
       'fields' => array(
         'title' => array('type' => 'string', 'max_length' => 30),
         'body' => array('type' => 'text'),
-        'author' => array('type' => 'foreignkey', 'model' => 'MyUser'),
-        'comments' => array('type' => 'reverse', 'model' => 'MyComment'),
+        'author' => array('type' => 'foreignkey', 'model' => 'User'),
+        'comments' => array('type' => 'reverse', 'model' => 'Comment'),
       ),
     );
   }
 }
 
-class MyComment extends Dormio_Model {
+class Comment extends Dormio_Model {
   static function getMeta() {
     return array(
       'fields' => array(
-        'blog' => array('type' => 'foreignkey', 'model' => 'MyBlog'),
+        'blog' => array('type' => 'foreignkey', 'model' => 'Blog'),
         'body' => array('type' => 'text'),
-        'author' => array('type' => 'foreignkey', 'model' => 'MyUser'),
+        'author' => array('type' => 'foreignkey', 'model' => 'User'),
       ),
     );
   }
 }
 
-class MyUser extends Dormio_Model {
+class User extends Dormio_Model {
   static function getMeta() {
     return array(
       'fields' => array(
@@ -35,11 +35,11 @@ class MyUser extends Dormio_Model {
   }
 }
 
-class MyProfile extends Dormio_Model {
+class Profile extends Dormio_Model {
   static function getMeta() {
     return array(
       'fields' => array(
-        'user' => array('type' => 'foreignkey', 'model' => 'MyUser'),
+        'user' => array('type' => 'onetoone', 'model' => 'User'),
         'fav_colour' => array('type' => 'string', 'max_length' => 10),
         'age' => array('type' => 'integer'),
       ),

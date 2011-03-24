@@ -98,9 +98,11 @@ Generate schemas directly from your models. Can even upgrade them for you.
     
 Blistering performance
 ~~~~~~~~~~~~~~~~~~~~~~
-Everything is kept as light as possible using just a lightweight meta description at the core.  This
+Everything is kept as light as possible using just a tiny meta description at the core.  This
 results in code that runs nearly as fast as raw PDO and with a not much greater memory footprint while still
-giving you a full featureset.
+giving you a full featureset. The entire library comprises of under 20 files and currently just sneeks in
+under 1000 lines of code excluding comments etc, and of those only 7 or so are loaded for typical operation with a
+clocking in at about 650 lines of code.  Less is more!
 ::
 
                       | Insert | findPk | complex| hydrate|  with  |     MB |
@@ -116,7 +118,7 @@ giving you a full featureset.
            Doctrine12 |   2445 |   3552 |    655 |   1968 |   2196 |  13.36 |
            
 Obviously benchmarks are not real world, but they do throw out some interesting numbers...
-More info on benchmarks at https://github.com/tf198/php-orm-benchmark
+More info on the benchmarks at https://github.com/tf198/php-orm-benchmark
 
 Why Dormio?
 -----------

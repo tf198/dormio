@@ -1,15 +1,24 @@
 <?php
 require_once('simpletest/autorun.php');
-require_once('bootstrap.php');
+define('TEST_PATH', dirname(__FILE__));
+define('DORMIO_PATH', realpath(TEST_PATH . '/../'));
+
+require_once(DORMIO_PATH . '/classes/dormio/autoload.php');
+require_once(TEST_PATH . '/classes/mockpdo.php');
+
+require_once(TEST_PATH . '/../examples/models.php');
 
 class TestOfExamples extends UnitTestCase{
-  function setUp() {
-    $this->con = new PDO('sqlite::memory:');
-  }
-  
-  function testModels() {
-    require_once dirname(__FILE__) . '/../examples/models.php';
-  }
 
+  /**
+  * Examples from the queryset doc - only care if they compile
+  */
+  function testQueryset() {
+    $comments = new Dormio_Queryset('Comment');
+    $blogs = new Dormio_Queryset('Blog');
+    
+    $set = $blogs->filter('author__profile_set__fav_colour', 'IN', array('red', 'green'));
+    
+  }
 }
 ?>

@@ -125,6 +125,10 @@ class TestOfSQL extends UnitTestCase{
     // two step relation
     $this->assertEqual($comments->filter('blog__the_user__name', '=', 'tris')->select(), 
       array('SELECT "comment"."comment_id" AS "comment_comment_id", "comment"."title" AS "comment_title", "comment"."the_comment_user" AS "comment_the_comment_user", "comment"."blog_id" AS "comment_blog_id" FROM "comment" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" INNER JOIN "user" ON "blog"."the_blog_user"="user"."user_id" WHERE "user"."name" = ?', array('tris')));
+      
+    // IN operator
+    $this->assertEqual($blogs->filter('the_user__name', 'IN', array('Andy', 'Dave'))->select(),
+      array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" INNER JOIN "user" ON "blog"."the_blog_user"="user"."user_id" WHERE "user"."name" IN (?, ?)', array('Andy', 'Dave')));
   }
 
   function testWhere() {

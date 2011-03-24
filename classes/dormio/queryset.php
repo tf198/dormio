@@ -80,9 +80,18 @@ class Dormio_Queryset {
   function filter($key, $op, $value) {
     $o = clone $this;
     $f = $o->_resolveField($key);
-    $o->query['where'][] = "{$f} {$op} ?";
+    $v = '?';
+    if($op == 'IN') {
+      if(!is_array($value)) throw new Dormio_Queryset_Exception('Need array for IN operator');
+      $v = '(' . implode(', ', array_fill(0, count($value), '?')) . ')';
+    }
+    $o->query['where'][] = "{$f} {$op} {$v}";
     if(is_a($value, 'Dormio_Model')) $value = $value->ident();
-    $o->params[] = &$value;
+    if($op == 'IN') {
+      $o->params = array_merge($o->params, $value);
+    } else {
+      $o->params[] = &$value;
+    }
     return $o;
   }
   
