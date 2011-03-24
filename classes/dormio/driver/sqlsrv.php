@@ -1,9 +1,6 @@
-<?
+<?php
 /**
-* PDO wrapper for Microsofts SQLServer driver 
-* A class wrapper for the sqlsrv set of functions to emulate PDO behavior
-*
-* Copyright (C) 2009 Tris Forster
+* PDO Wrapper for SQLSVR
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
@@ -18,10 +15,10 @@
 * You should have received a copy of the GNU Lesser General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
-* @author Tris Forster <tris.git@tfconsulting.com.au>
-* @copyright Copyright (c) 2009, Tristan Forster
-* @licence http://opensource.org/licenses/lgpl-3.0.html LGPLv3
-* @package  dormio
+* @author Tris Forster <tris.701437@tfconsulting.com.au>
+* @version 0.3
+* @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
+* @package dormio
 * @subpackage driver
 */
 
@@ -33,7 +30,6 @@
 *
 * Thanks to Raymond Irvine <xwisdom (at) yahoo ! com>, for fixes to a couple of the regexs
 *
-* @author Tris Forster <tris.svn@tfconsulting.com.au>
 * @package dormio
 * @subpackage driver
 */
@@ -97,7 +93,7 @@ class Dormio_Driver_SQLSVR {
 	/**
 	* Execute an UPDATE or INSERT
 	*
-	* @pararm	string	$tsql	SQL to be executed
+	* @param	  string	$tsql	SQL to be executed
 	* @return	int		Number of rows affected 
 	*/
 	public function exec($tsql) {

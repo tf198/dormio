@@ -1,4 +1,4 @@
-<?
+<?php
 define('TEST_PATH', dirname(__FILE__));
 define('DORMIO_PATH', realpath(TEST_PATH . '/../'));
 

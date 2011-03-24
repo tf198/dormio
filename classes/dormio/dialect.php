@@ -1,8 +1,6 @@
-<?
+<?php
 /**
-* Factory for language specific query generation
-* As lightweight as possible  - just takes care of the special cases
-* Cached as likely to be many instances
+* SQL Dialect factory
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +15,7 @@
 * You should have received a copy of the GNU Lesser General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
-* @author Tris Forster <tris@tfconsulting.com.au>
+* @author Tris Forster <tris.701437@tfconsulting.com.au>
 * @version 0.3
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
 * @package dormio
@@ -25,7 +23,11 @@
 */
 
 /**
-* Base Dialect class
+* Factory for language specific query generation.
+* As lightweight as possible  - just takes care of the special cases
+* Cached as likely to be many instances
+* @package dormio
+* @subpackage dialect
 */
 class Dormio_Dialect {
   static $_cache = array();
@@ -50,8 +52,16 @@ class Dormio_Dialect {
   }
 }
 
+/**
+* @package dormio
+* @subpackage exception
+*/
 class Dormio_Dialect_Exception extends Exception {}
 
+/**
+* @package dormio
+* @subpackage dialect
+*/
 class Dormio_Dialect_Generic {
 
   /**
@@ -118,12 +128,20 @@ class Dormio_Dialect_Generic {
   }
 }
 
+/**
+* @package dormio
+* @subpackage dialect
+*/
 class Dormio_Dialect_MySQL extends Dormio_Dialect_Generic {
   function quoteIdentifiers($sql) {
     return strtr($sql, '{}', '``');
   }
 }
 
+/**
+* @package dormio
+* @subpackage dialect
+*/
 class Dormio_Dialect_MSSQL extends Dormio_Dialect_Generic {
   function select($spec) {
     if(isset($spec['limit'])) $spec['modifiers'][] = "TOP {$spec['limit']}";

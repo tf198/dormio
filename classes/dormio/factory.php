@@ -1,8 +1,6 @@
 <?php
 /**
-* Factory for creating Dormio models and managers
-*
-* Copyright (C) 2009 Tris Forster
+* Dormio Factory.
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
@@ -17,14 +15,22 @@
 * You should have received a copy of the GNU Lesser General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
-* @author Tris Forster <tris.git@tfconsulting.com.au>
+* @author Tris Forster <tris.701437@tfconsulting.com.au>
 * @version 0.3
 * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
 * @package dormio
 */
 
 /**
-* Factory for creating Dormio models and managers
+* Factory for creating Dormio Models and Managers.
+* This is the best way to obtain Models and Managers as it takes care of the connection
+* and dialect selection.
+* <code>
+* $pdo = new PDO('sqlite::memory:');
+* $dormio = new Dormio_Factory($pdo);
+*
+* $blog = $dormio->get('Blog', 23);
+* </code>
 * @author Tris Forster <tris.git@tfconsulting.com.au>
 * @package dormio
 */
@@ -32,6 +38,10 @@ class Dormio_Factory {
   static $_cache = array();
   static $instances = array();
   
+  /**
+  * Construct a new factory.
+  * @param  PDO $db   The connection to use
+  */
   function __construct(PDO $db) {
     // set error mode here so we dont get any silent errors later
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -40,6 +50,12 @@ class Dormio_Factory {
     $this->dialect = Dormio_Dialect::factory($db->getAttribute(PDO::ATTR_DRIVER_NAME));
   }
   
+  /**
+  * Get a model instance, ready to use.
+  * @param  string  $model  The model name
+  * @param  int     $pk     If provided the specified model will be loaded (well, prepared for access...)
+  * @return Dormio_Model
+  */
   function get($model, $pk=null) {
     if(!class_exists($model)) throw new Dormio_Exception('No such model: ' . $model);
     $obj = new $model($this->db, $this->dialect);
@@ -47,19 +63,26 @@ class Dormio_Factory {
     return $obj;
   }
   
+  /**
+  * Get a manager for the named model.
+  * @param  string  $name   The model
+  * @return Dormio_Manager
+  */
   function manager($name) {
     if(!isset(self::$_cache[$name])) self::$_cache[$name] = new Dormio_Manager($name, $this->db, $this->dialect);
     return self::$_cache[$name];
   }
   
   /**
-	* Get a PDO instance
+	* Get a PDO instance based on a config.
+  * <code>
 	* $config = array(
 	*   'connection' => 'dsn:hostspec',
 	*   'username' => 'username', // optional
 	*   'password' => 'password', // optional
 	*   'parameters' => array()  // optional
 	* )
+  * </code>
 	* @param    array   $config	the config to use
   * @return   PDO     a database connection
 	*/

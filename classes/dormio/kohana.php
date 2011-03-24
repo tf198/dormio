@@ -1,10 +1,6 @@
-<?
+<?php
 /**
-* Kohana entry point for Dormio
-*
-* @author Tris Forster <tris@tfconsulting.com.au>
-* @version 0.3
-* @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
+* Dormio adapter for Kohana
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as published by
@@ -18,6 +14,12 @@
 *
 * You should have received a copy of the GNU Lesser General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+* @author Tris Forster <tris.701437@tfconsulting.com.au>
+* @version 0.3
+* @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
+* @package dormio
+* @subpackage adapter
 */
 
 /**
