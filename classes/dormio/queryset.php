@@ -36,6 +36,7 @@
 * would use qs->filter(age__gt=16) Dormio uses a separate operator $qs->filter('age', '>', 16);
 *
 * @example models.php The models refered to in these examples
+* @example usage.php Example usage
 * @package dormio
 */
 class Dormio_Queryset {
@@ -176,12 +177,22 @@ class Dormio_Queryset {
   
   /**
   * Order the results.
+  * You can prefix a field with - for descending
+  * <code> $qs->orderBy('-date', 'name'); </code>
   * @param  string  $field  One or more fields to order by
   * @return Dormio_Queryset Cloned copy of the queryset
   */
   function orderBy() {
     $o = clone $this;
-    foreach(func_get_args() as $path) $o->query['order_by'][] = $o->_resolveField($path);
+    foreach(func_get_args() as $path) {
+      if(substr($path, 0, 1) == '-') {
+        $order = " DESC";
+        $path = substr($path, 1);
+      } else {
+        $order = "";
+      }
+      $o->query['order_by'][] = $o->_resolveField($path) . $order;
+    }
     return $o;
   }
   

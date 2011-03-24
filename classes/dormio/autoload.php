@@ -46,9 +46,13 @@ class Dormio_Autoload {
   */
   static function autoload($klass) {
     $klass = strtolower($klass);
-    if(substr($klass, 0, 7)=='dormio_') {
-      $file = self::$path . "/" . str_replace('_', '/', substr($klass, 7)) . ".php";
-      if(file_exists($file)) include($file);
+    $parts = explode('_', $klass);
+    if(array_shift($parts) == 'dormio') {
+      while(count($parts)>0) {
+        $file = self::$path . '/' . implode('/', $parts) . ".php";
+        if(file_exists($file)) return include_once($file);
+        array_pop($parts);
+      }
     }
   }
   

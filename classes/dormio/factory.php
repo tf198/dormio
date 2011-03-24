@@ -31,7 +31,6 @@
 *
 * $blog = $dormio->get('Blog', 23);
 * </code>
-* @author Tris Forster <tris.git@tfconsulting.com.au>
 * @package dormio
 */
 class Dormio_Factory {

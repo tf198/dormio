@@ -159,7 +159,11 @@ class TestOfSQL extends UnitTestCase{
     // multiple
     $this->assertEqual($users->orderBy('name', 'pk')->select(),
       array('SELECT "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "user" ORDER BY "user"."name", "user"."user_id"', array()));
-      
+    
+    // descending
+    $this->assertEqual($users->orderBy('name', '-pk')->select(),
+      array('SELECT "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "user" ORDER BY "user"."name", "user"."user_id" DESC', array()));
+    
     // related
     $this->assertEqual($blogs->orderBy('the_user__name')->select(),
       array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" INNER JOIN "user" ON "blog"."the_blog_user"="user"."user_id" ORDER BY "user"."name"', array()));

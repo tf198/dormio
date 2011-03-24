@@ -77,7 +77,7 @@ interface Dormio_Schema_Driver {
 * @package dormio
 * @subpackage exception
 */
-class Dormio_Schema_Exception extends RuntimeException {}
+class Dormio_Schema_Exception extends Dormio_Exception {}
 
 /**
 * Generic is actualy MYSQL grammar

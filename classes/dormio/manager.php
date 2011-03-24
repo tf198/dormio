@@ -28,6 +28,7 @@
 * the database.
 * @see Dormio_Queryset
 * @package dormio
+* @example usage.php Example usage
 */
 class Dormio_Manager extends Dormio_Queryset implements Iterator {
   protected $_db = null;

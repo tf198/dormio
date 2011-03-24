@@ -21,5 +21,11 @@ class TestOfExamples extends UnitTestCase{
     $set = $blogs->filter('author__profile_set__fav_colour', 'IN', array('red', 'green'));
     
   }
+  
+  function testUsage() {
+    ob_start();
+    $this->assertTrue(include(TEST_PATH . '/../examples/usage.php'));
+    ob_end_clean();
+  }
 }
 ?>
