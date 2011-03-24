@@ -27,5 +27,12 @@ class TestOfExamples extends UnitTestCase{
     $this->assertTrue(include(TEST_PATH . '/../examples/usage.php'));
     ob_end_clean();
   }
+  
+  function testREADMESchema() {
+    $pdo = new PDO('sqlite::memory:');
+    $meta = Dormio_Meta::get('Blog');
+    $sf = Dormio_Schema::factory('sqlite', $meta->schema());
+    $sf->batchExecute($pdo, $sf->createTable());
+  }
 }
 ?>

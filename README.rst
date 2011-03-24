@@ -5,6 +5,11 @@ Dormio
 for anything important.
 The API is likely to change - you have been warned!**
 
+Documentation
+-------------
+phpDocumentor documentation of the API is available at http://www.tfconsulting.com.au/~tris/dormio/api_docs
+and the best place to start is probably with the example usage https://github.com/tf198/dormio/blob/master/examples/usage.php
+
 Introduction (or why another PHP ORM?)
 --------------------------------------
  
@@ -21,7 +26,8 @@ Design Principles
 * Config in PHP - no XML or YAML config or compilation
 * Memory concious - no features loaded unless required
 * PHP 5.X compatible
-* Well unit tested (or will be...)
+* Well unit tested (SimpleTest)
+* Well documented (phpDocumentor)
  
 Features
 --------
@@ -81,7 +87,7 @@ Generate an entire form complete with validation from your model.  Uses the Phor
     $blog = $dormio->get('Blog', 23);
     $form = Dormio_Form($blog);
     
-    if($form->is_valid()) {
+    if($form->isValid()) {
       $form->save();
     } else {
       echo $form;
@@ -92,9 +98,10 @@ Schema Generation
 Generate schemas directly from your models. Can even upgrade them for you.
 ::
 
-    $pdo = new PDO('sqlite::memory');
-    $sf = Dormio_Schema::factory('Blog', 'sqlite');
-    $sf->batchExecute($sf->createTable(), $pdo);
+    $pdo = new PDO('sqlite::memory:');
+    $meta = Dormio_Meta::get('Blog');
+    $sf = Dormio_Schema::factory('sqlite', $meta->schema());
+    $sf->batchExecute($pdo, $sf->createTable());
     
 Blistering performance
 ~~~~~~~~~~~~~~~~~~~~~~
