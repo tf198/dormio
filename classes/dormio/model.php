@@ -59,7 +59,9 @@ abstract class Dormio_Model {
   * @return   array The meta info for this model
   * @example models.php
   */
-  abstract static function getMeta();
+  static function getMeta() {
+    throw new Dormio_Model_Exception('Unimplemented getMeta() method');
+  }
   
   /**
   * Populate the data
