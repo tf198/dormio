@@ -5,11 +5,9 @@
 * This extends Dormio_Queryset giving it the ability to actually interact with
 * the database.
 * @package dormio
-* @subpackage manager
 */
 /**
 * @package dormio
-* @subpackage manager
 */
 class Dormio_Manager extends Dormio_Queryset implements Iterator {
   protected $_db = null;
@@ -30,7 +28,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   
   /**
   * Need to clear the stored statement when we are cloned.
-  * @internal
+  * @access private
   */
   function __clone() {
     $this->_stmt = null;
@@ -182,7 +180,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   /**
   * Compile the current query and store the PDOStatment for execution.
   * Manager instance cannot be modified after this.
-  * @internal
+  * @access private
   */
   private function _evaluate() {
     if($this->_stmt) throw new Dormio_Manager_Exception('Statement already compiled');
@@ -195,7 +193,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   /**
   * Rewind the iterator.
   * Actual execution is done here
-  * @internal
+  * @access private
   */
   function rewind() {
     //print "REWIND\n";
@@ -211,7 +209,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   
   /**
   * Advance the iterator.
-  * @internal
+  * @access private
   */
   function next() {
     //print "NEXT\n";
@@ -221,7 +219,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   
   /**
   * Is there a current model.
-  * @internal
+  * @access private
   */
   function valid() {
     //print "VALID\n";
@@ -231,7 +229,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   
   /**
   * Returns the current model.
-  * @internal
+  * @access private
   */
   function current() {
     //print "CURRENT\n";
@@ -249,7 +247,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   /**
   * Returns the current model ident, or false.
   * @return int|false
-  * @internal
+  * @access private
   */
   function key() {
     //print "KEY\n";
@@ -349,7 +347,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
 
 /**
 * @package dormio
-* @subpackage manager
+* @subpackage exception
 */
 class Dormio_Manager_Exception extends Dormio_Exception {}
 ?>

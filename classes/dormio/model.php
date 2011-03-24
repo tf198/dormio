@@ -363,6 +363,7 @@ abstract class Dormio_Model {
 /** 
 * Model exception 
 * @package dormio
+* @subpackage exception
 */
 class Dormio_Model_Exception extends Dormio_Exception {}
 ?>

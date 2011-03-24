@@ -260,6 +260,7 @@ class Dormio_Driver_SQLSVR {
 * @author Tris Forster <tris.git@tfconsulting.com.au>
 * @package dormio
 * @subpackage driver
+* @access private
 */
 class sqlsrv_pdo_statement{
 	private $stmt=null;

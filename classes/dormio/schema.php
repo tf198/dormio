@@ -4,7 +4,9 @@
 * Abstracts tables as basic PHP arrays.
 * Key features: automatic upgrade path, driver specific options
 * @package dormio
-* @subpackage schema
+*/
+/**
+* @package dormio
 */
 class Dormio_Schema {
 	
@@ -48,10 +50,16 @@ interface Dormio_Schema_Driver {
 	public function dropIndex($indexname);
 }
 
+/**
+* @package dormio
+* @subpackage exception
+*/
 class Dormio_Schema_Exception extends RuntimeException {}
 
 /**
 * Generic is actualy MYSQL grammar
+* @package dormio
+* @subpackage schema
 */
 class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 	

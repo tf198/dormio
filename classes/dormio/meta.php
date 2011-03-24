@@ -4,7 +4,9 @@
 * PHP has no metaclassing so we use singletons instead and the instances
 * create a reference _meta when initialised
 * @package dormio
-* @subpackage meta
+*/
+/**
+* @package dormio
 */
 class Dormio_Meta {
   // cache for table meta
@@ -211,5 +213,9 @@ class Dormio_Meta {
   }
 }
 
+/**
+* @package dormio
+* @subpackage exception
+*/
 class Dormio_Meta_Exception extends Dormio_Exception {}
 ?>

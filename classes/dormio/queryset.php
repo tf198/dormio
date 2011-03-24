@@ -22,7 +22,6 @@
 *
 * @example models.php The models refered to in these examples
 * @package dormio
-* @subpackage queryset
 */
 class Dormio_Queryset {
   /**
@@ -173,7 +172,7 @@ class Dormio_Queryset {
   
   /**
   * Resolves path to the format "{table}.{column} AS {table_column}".
-  * @internal
+  * @access private
   */
   function _resolvePrefixed($item, $type=null) {
     $p = $this->_resolvePath($item, $type);
@@ -184,7 +183,7 @@ class Dormio_Queryset {
   * Resolves bracketed terms in a string.
   * eg "{comment__blog__title} = ?" becomes "{blog}.{title} = ?"
   * Joins will be added automatically as required
-  * @internal
+  * @access private
   */
   function _resolveString($str) {
     return preg_replace_callback('/\{([a-z_]+)\}/', array($this, '_resolveStringCallback'), $str);
@@ -198,7 +197,7 @@ class Dormio_Queryset {
   
   /**
   * Resolves path to the format "{table}.{column}".
-  * @internal
+  * @access private
   */
   function _resolveField($path, $type=null) {
     $p = $this->_resolvePath($path, $type);
@@ -208,7 +207,7 @@ class Dormio_Queryset {
   /**
   * Resolves field names to their sql columns.
   * DOES NOT FOLLOW RELATIONS
-  * @internal
+  * @access private
   */
   function _resolveLocal($fields, $type=null) {
     $result = array();
@@ -222,7 +221,7 @@ class Dormio_Queryset {
   /**
   * Resolves paths to parent meta and field
   * @return array array($parent_meta, $field);
-  * @internal
+  * @access private
   */
   function _resolvePath($path, $type=null, $strip_pk=true) {
     $parts = explode('__', $path);
@@ -238,7 +237,7 @@ class Dormio_Queryset {
   * @param  $parts  array   An array of field accessors that can be chained
   * @param  $type   string  The type of join to perform [LEFT]
   * @return object          The top level meta object
-  * @internal
+  * @access private
   */
   function _resolve($parts, $type=null) {
     $spec = $this->_meta;
@@ -249,7 +248,7 @@ class Dormio_Queryset {
   /**
   * Add all the fields for a table
   * @param  Dormio_Meta $meta The meta for the table to add
-  * @internal
+  * @access private
   */
   function _addFields($meta) {
     $schema = $meta->schema();
@@ -265,7 +264,7 @@ class Dormio_Queryset {
   * @param  string        $field  The field containing the relation
   * @param  string  $type         The type of join to perform
   * @return Dormio_Meta   The righthand table which was joined to
-  * @internal
+  * @access private
   */
   function _addJoin($left, $field, $type=null) {
     if(!$type) $type='INNER';
@@ -319,7 +318,7 @@ class Dormio_Queryset {
   }
   
   /**
-  * @internal
+  * @access private
   */
   function _deleteSpec() {
     $result = array();
@@ -410,7 +409,7 @@ class Dormio_Queryset {
 
 /**
 * @package dormio
-* @subpackage queryset
+* @subpackage exception
 */
 class Dormio_Queryset_Exception extends Dormio_Exception {}
 ?>
