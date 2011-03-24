@@ -114,18 +114,24 @@ clocking in at about 650 lines of code.  Less is more!
 
                       | Insert | findPk | complex| hydrate|  with  |     MB |
                       |--------|--------|--------|--------|--------|--------|
-               OptPDO |     42 |     46 |     96 |     80 |     65 |   0.54 |
-                  PDO |    105 |    111 |    105 |    108 |    107 |   0.52 |
-            OptDormio |     64 |    103 |    121 |    119 |     72 |   1.01 |
-               Dormio |    313 |    125 |    146 |    200 |    203 |   0.96 |
+               OptPDO |     42 |     46 |     96 |     80 |     65 |   0.54 | < As fast as is possible
+                  PDO |    105 |    111 |    105 |    108 |    107 |   0.52 | 
+            OptDormio |     64 |    103 |    121 |    119 |     72 |   1.01 | < Not that far behind
+               Dormio |    313 |    125 |    146 |    200 |    203 |   0.96 | < Still pretty respectable
              Outlet07 |    792 |     80 |    178 |    416 |    518 |   2.09 |
              Propel14 |   1453 |    601 |    183 |    364 |    397 |   2.98 |
              Propel15 |   1301 |    709 |    231 |    466 |    573 |   7.24 |
     Propel15WithCache |   1183 |    504 |    198 |    374 |    421 |   7.32 |
-           Doctrine12 |   2445 |   3552 |    655 |   1968 |   2196 |  13.36 |
+           Doctrine12 |   2445 |   3552 |    655 |   1968 |   2196 |  13.36 | < Hope you have a beefy box...
            
-Obviously benchmarks are not real world, but they do throw out some interesting numbers...
-More info on the benchmarks at https://github.com/tf198/php-orm-benchmark
+Obviously benchmarks are not real world, but they do throw out some interesting numbers... 
+
+The OptX tests are designed to simulate heavy batch work eg importing from CSV or running many cached queries.
+The standard tests give a better idea of the loading impact the library can have on your system (setup and teardown for each iteration) -
+or some really bad loop based programming :)  I haven't got round to filling in the OptX tests for the other libraries yet
+as I don't have a good knowledge of their internal workings - any volunteers?
+Benchmark source can be found at https://github.com/tf198/php-orm-benchmark and more information on the original benchmarks
+at http://propel.posterous.com/how-fast-is-propel-15
 
 Why Dormio?
 -----------
