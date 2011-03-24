@@ -107,8 +107,8 @@ Blistering performance
 ~~~~~~~~~~~~~~~~~~~~~~
 Everything is kept as light as possible using just a tiny meta description at the core.  This
 results in code that runs nearly as fast as raw PDO and with a not much greater memory footprint while still
-giving you a full featureset. The entire library comprises of under 20 files and currently just sneeks in
-under 1000 lines of code excluding comments etc, and of those only 7 or so are loaded for typical operation with a
+giving you a full featureset. The entire library comprises of only 15 files and currently just sneeks in
+under 1000 lines of code excluding comments/blank lines, and of those only 7 or so are loaded for typical operation 
 clocking in at about 650 lines of code.  Less is more!
 ::
 
