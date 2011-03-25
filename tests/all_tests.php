@@ -12,7 +12,7 @@ class AllTests extends TestSuite {
     $this->addFile("{$path}/model_tests.php");
     $this->addFile("{$path}/manager_tests.php");
     $this->addFile("{$path}/factory_tests.php");
-    //$this->addFile("{$path}/example_tests.php");
+    $this->addFile("{$path}/dialect_tests.php");
   }
 }
 ?>
