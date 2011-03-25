@@ -1,0 +1,28 @@
+Dormio Installation
+===================
+
+Installing from git
+===================
+
+> git clone git://github.com/tf198/dormio.git dormio
+> cd dormio
+> # need to get the Phorms library if you want auto form generation
+> git submodule update --init
+
+Documentation is not included in the repo - you can build it if you have phpDocumentor on
+your system with 
+> make api_docs
+
+Installation from tarball
+=========================
+
+> wget http://???/dormio/dormio-latest.tar.gz
+> tar zxvf dormio-latest.tar.gz
+> mv dormio-X.X.X dormio
+
+Running Examples
+================
+
+> cd dormio
+> php docs/examples/usage.php
+> php docs/examples/forms.php
