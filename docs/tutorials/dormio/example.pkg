@@ -17,7 +17,7 @@
   <title>Setup</title>
   <para>
     In order to use Dormio you need an autoloader.  You may be able to adapt one from an existing
-    framework but if not Dormio provides one.  After that you just need some {@tutorial example.pkg#examples.models models} and a 
+    framework but if not Dormio provides one.  After that you just need some {@tutorial example.pkg#models models} and a 
     PDO connection.
   </para>
   <para>
@@ -58,5 +58,12 @@ if($form->isValid()) {
     ]]></programlisting>
   </para>
   {@example forms.php}
+ </refsect2>
+ <refsect2 id="{@id schema}">
+  <title>Schema Generation</title>
+  <para>
+    Simplify the installation of your app.
+  </para>
+  {@example schema.php}
  </refsect2>
 </refentry>
