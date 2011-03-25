@@ -7,8 +7,9 @@ $config['map'] = array(
   'boolean' => 'Phorms_Fields_BooleanField',
   'string' => 'Phorms_Fields_CharField',
   'text' => 'Phorms_Fields_TextField',
+  'password' => 'Phorms_Fields_PasswordField',
   'timestamp' => 'Phorms_Fields_IntegerField',
-  'foreignkey' => 'ForeignKeyField',
+  'foreignkey' => 'Dormio_Form_RelatedField',
 );
 
 // defaults
@@ -23,5 +24,5 @@ $config['Phorms_Fields_DropDownField'] = array('label' => '', 'help' => '', 'cho
 $config['Phorms_Fields_UrlField'] = $config['Phorms_Fields_CharField'];
 $config['Phorms_Fields_EmailField'] = $config['Phorms_Fields_CharField'];
 $config['Phorms_Fields_DateTimeField'] = array('label' => '', 'help' => '');
-$config['ForeignKeyField'] = array('label' => '', 'help' => '', 'manager' => array());
+$config['Dormio_Form_RelatedField'] = array('label' => '', 'help' => '', 'manager' => array());
 ?>
