@@ -99,8 +99,7 @@ Generate schemas directly from your models. Can even upgrade them for you.
 ::
 
     $pdo = new PDO('sqlite::memory:');
-    $meta = Dormio_Meta::get('Blog');
-    $sf = Dormio_Schema::factory('sqlite', $meta->schema());
+    $sf = Dormio_Schema::factory('sqlite', 'Blog');
     $sf->batchExecute($pdo, $sf->createTable());
     
 Blistering performance
