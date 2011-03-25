@@ -90,6 +90,11 @@ class TestOfPDOSchemaFactory extends UnitTestCase{
 		} catch(Exception $e) {
 			$this->fail('Should have found the sqlite driver file');
 		}
+    
+    // test multiple contruct methods
+    $this->assertTrue(Dormio_Schema::factory('sqlite', 'Blog'));
+    $this->assertTrue(Dormio_Schema::factory('sqlite', Dormio_Meta::get('Blog')));
+    $this->assertTrue(Dormio_Schema::factory('sqlite', new Blog(new PDO('sqlite::memory:'))));
 	}
 	
 	public function testTableOps() {

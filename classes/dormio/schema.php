@@ -34,8 +34,18 @@ class Dormio_Schema {
 	*/
 	private function __construct() {}
 	
+  /**
+  * Get a new Schema instance
+  * @param  string  $lang     A valid PDO driver name as returned by PDO::getAttribute(PDO::ATTR_DRIVER_NAME)  
+  * @param  mixed   $spec     You can pass it a schema array, a meta object or even a model
+  * @return Dormio_Schema_Driver
+  */
 	public static function factory($lang, $spec) {
-		// allow multiple languages to use the same schema rules
+		// be generous in what we understand
+    if($spec instanceof Dormio_Model) $spec = $spec->_meta->schema();
+    if($spec instanceof Dormio_Meta) $spec = $spec->schema();
+    if(is_string($spec)) $spec = Dormio_Meta::get($spec)->schema();
+    // allow multiple languages to use the same schema rules
 		switch($lang) {
 			case 'mysql':
 			case 'mysqli':
