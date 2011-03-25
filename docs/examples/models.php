@@ -1,4 +1,10 @@
 <?php
+/**
+* Example models for tutorials
+* @package dormio
+* @subpackage example
+* @filesource
+*/
 class Blog extends Dormio_Model {
   static function getMeta() {
     return array(
@@ -32,6 +38,10 @@ class User extends Dormio_Model {
         'password' => array('type' => 'password'),
       ),
     );
+  }
+  
+  function display() {
+    return $this->username;
   }
 }
 

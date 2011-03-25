@@ -1,19 +1,17 @@
 <?
 /**
 * This is a runable example
-*   php examples/usage.php
+*   > php docs/examples/usage.php
+* @package dormio
+* @subpackage example
+* @filesource
 */
-$example_path = dirname(__FILE__);
 
-// you may need to change this depending on your system
-require_once($example_path . '/../classes/dormio/autoload.php');
-Dormio_Autoload::register();
-
-require_once($example_path . '/models.php');
-
-$pdo = new PDO('sqlite::memory:');
-// quickly set up the schemas and load some data
-foreach(file($example_path . '/setup.sql') as $sql) $pdo->exec($sql);
+/**
+* This just registers the autoloader and creates an example database in memory
+* @example setup.php
+*/ 
+$pdo = include('setup.php');
 
 // create our factory
 $dormio = new Dormio_Factory($pdo);
@@ -66,4 +64,5 @@ echo "\nBlog has {$stats['pk_count']} comments\n";
 $stats = $dormio->manager('Profile')->aggregate()->max('age')->run();
 echo "\nOldest contributer is {$stats['age_max']}\n";
 
+return 42; // for our auto testing
 ?>
