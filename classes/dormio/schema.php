@@ -139,6 +139,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 			case 'double':
 				return 'DOUBLE'.((isset($colspec['unsigned'])) ? ' UNSIGNED' : '');
 			case 'string':
+      case 'password':
 				$size=(isset($colspec['size'])) ? $colspec['size'] : 255;
 				return "VARCHAR({$size})";
 			case 'text':
@@ -148,6 +149,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 			case 'timestamp':
 				return 'TIMESTAMP';
       case 'foreignkey':
+      case 'onetoone':
         return 'INTEGER';
 			default:
 				throw new Dormio_Schema_Exception('No such type: '.$colspec['type']);
@@ -285,7 +287,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 	public function createIndex($indexname, $spec) {
 		$cols=array();
 		foreach($spec as $name=> $dir) $cols[]=$this->quoteIdentifier($name).' '.(($dir) ? 'ASC' : 'DESC');
-		$sql="CREATE {$this->specific($spec,'modifiers')} INDEX {$this->quoteIdentifier($this->spec['table'].'_'.$indexname)} {$this->specific($spec,'index_type', 'USING %s')} ON {$this->quoteIdentifier($this->spec['table'])} (".implode(', ',$cols).")";
+    $sql="CREATE {$this->specific($spec,'modifiers')} INDEX {$this->quoteIdentifier($this->spec['table'].'_'.$indexname)} {$this->specific($spec,'index_type', 'USING %s')} ON {$this->quoteIdentifier($this->spec['table'])} (".implode(', ',$cols).")";
 		$sql=preg_replace('/ +/',' ', $sql);
 		return array($sql);
 	}

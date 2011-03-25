@@ -44,17 +44,19 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 			case 'integer':
 			case 'boolean':
       case 'foreignkey':
+      case 'onetoone':
 				return 'INTEGER';
 			case 'float':
 			case 'double':
 				return 'REAL';
 			case 'string':
 			case 'text':
+      case 'password':
 				return 'TEXT';
 			case 'timestamp':
 				return 'INTEGER';
 			default:
-				throw new Dormio_Schema_Exception('No such type: '.$colspec['type']);
+        return parent::getPrimitive($colspec);
 		}
 	}
 	
@@ -119,10 +121,6 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 	public function dropColumn($columnname) {
 		$this->can_upgrade=false;
 		return parent::dropColumn($columnname);
-	}
-	
-	public function createIndex($index_name, $index_spec) {
-		return array();
 	}
 }
 ?>
