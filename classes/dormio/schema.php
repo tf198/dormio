@@ -26,6 +26,8 @@
 * Abstracts tables as basic PHP arrays.
 * Key features: automatic upgrade path, driver specific options
 * @package dormio
+* @example schema.php
+* @tutorial example.pkg#schema
 */
 class Dormio_Schema {
 	

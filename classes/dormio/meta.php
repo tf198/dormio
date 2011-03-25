@@ -78,7 +78,7 @@ class Dormio_Meta {
             isset($spec['sql_column']) || $spec['sql_column'] = strtolower($key) . "_id";
             isset($spec['to_field']) || $spec['to_field'] = null; // dereferenced by queryset builder
             isset($spec['on_delete']) || $spec['on_delete'] = ($spec['type']=='foreignkey') ? 'cascade' : 'blank';
-            $meta['indexes'][$key] = array($spec['sql_column'] => true);
+            $meta['indexes']["{$key}_0"] = array($spec['sql_column'] => true);
             $spec['is_field'] = true;
             $reverse = array('type' => $spec['type'] . "_rev", 'sql_column' => $spec['to_field'], 'to_field' => $spec['sql_column'], 'model' => $model, 'on_delete' => $spec['on_delete'] );
             break;
@@ -104,7 +104,7 @@ class Dormio_Meta {
       $columns[$key] = $spec;
     }
     $meta['fields'] = $columns;
-    $meta['indexes'] = array_unique($meta['indexes']);
+    //$meta['indexes'] = array_unique($meta['indexes']);
     return $meta;
   }
   

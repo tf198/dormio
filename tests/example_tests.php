@@ -34,10 +34,15 @@ class TestOfExamples extends UnitTestCase{
     ob_end_clean();
   }
   
+  function testSchema() {
+    ob_start();
+    $this->assertEqual(include(TEST_PATH . '/../docs/examples/schema.php'), 42);
+    ob_end_clean();
+  }
+  
   function testREADMESchema() {
     $pdo = new PDO('sqlite::memory:');
-    $meta = Dormio_Meta::get('Blog');
-    $sf = Dormio_Schema::factory('sqlite', $meta->schema());
+    $sf = Dormio_Schema::factory('sqlite', 'Blog');
     $sf->batchExecute($pdo, $sf->createTable());
   }
 }
