@@ -40,8 +40,12 @@ class User extends Dormio_Model {
     );
   }
   
+  /**
+  * This overrides the default display for the object.
+  * It is used in HTML select elements instead of [User:23]
+  */
   function display() {
-    return $this->username;
+    return ucfirst($this->username);
   }
 }
 

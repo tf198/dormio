@@ -91,7 +91,7 @@ class Dormio_Form extends Phorms_Forms_Form{
     if(!isset($map[$spec['type']])) return new TextField($spec['label'], 25, 255);
     $phorm_type = $map[$spec['type']];
     
-    if($phorm_type == 'Dormio_Form_RelatedField') {
+    if($phorm_type == 'Dormio_Form_ManagerField') {
       $spec['manager'] = $this->obj->manager($name);
     }
     
@@ -107,7 +107,7 @@ class Dormio_Form extends Phorms_Forms_Form{
 * @package dormio
 * @subpackage form
 */
-class Dormio_Form_RelatedField extends Phorms_Fields_ChoiceField {
+class Dormio_Form_ManagerField extends Phorms_Fields_ChoiceField {
   function __construct($label, $help, $manager, $validators=array(), $attributes=array()) {
     $choices['-'] = 'Select...';
     foreach($manager as $obj) $choices[$obj->ident()] = (string)$obj;
