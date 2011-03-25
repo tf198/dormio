@@ -24,7 +24,7 @@
 /**
 * Need to add the Phorms autoloader
 */
-require_once(dirname(__FILE__) .'/../../3rd Party/phorms/src/Phorms/init.php');
+require_once(dirname(__FILE__) . '/../../3rd Party/phorms/src/Phorms/init.php');
 
 /**
 * Class to generate a Phorms form based on a Dormio model
@@ -34,8 +34,13 @@ class Dormio_Form extends Phorms_Forms_Form{
 
   static $base = array('validators' => array(), 'attributes' => array());
   
-  function __construct($obj) {
+  function __construct($obj, $config=null) {
     $this->obj = $obj;
+    if(!$config) {
+      // this is a messy hack at the moment - need to sort it out
+      include(dirname(__FILE__) . '/../../config/forms.php');
+    }
+    $this->form_config = $config;
     // get the existing data
     $data = array();
     foreach($this->obj->_meta->columns as $name => $spec) {
@@ -68,7 +73,8 @@ class Dormio_Form extends Phorms_Forms_Form{
   }
   
   function params_for($type, $spec) {
-    $defaults = bCommon::config("forms.{$type}");
+    //$defaults = bCommon::config("forms.{$type}");
+    $defaults = $this->form_config[$type];
     foreach($defaults as $key => $value) {
       $params[] = isset($spec[$key]) ? $spec[$key] : $value;
     }
@@ -81,7 +87,7 @@ class Dormio_Form extends Phorms_Forms_Form{
   
   function field_for($name, $spec) {
     $spec['label'] = isset($spec['verbose']) ? $spec['verbose'] : ucwords(str_replace('_', ' ', $name));
-    $map = bCommon::config('forms.map');
+    $map = $this->form_config['map'];
     if(!isset($map[$spec['type']])) return new TextField($spec['label'], 25, 255);
     $phorm_type = $map[$spec['type']];
     
@@ -106,6 +112,13 @@ class ForeignKeyField extends Phorms_Fields_ChoiceField {
     $choices[0] = 'Select...';
     foreach($manager as $obj) $choices[$obj->ident()] = (string)$obj;
     parent::__construct($label, $help, $choices, $validators, $attributes);
+  }
+  
+  function validate($value) {
+    // we want false and 0 to evaluate to the same thing
+    if(!array_search($value, array_keys($this->choices))) {
+      throw new Phorms_Validation_Error('Invalid selection.');
+    }
   }
 }
 ?>
