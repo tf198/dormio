@@ -109,16 +109,15 @@ class Dormio_Form extends Phorms_Forms_Form{
 */
 class ForeignKeyField extends Phorms_Fields_ChoiceField {
   function __construct($label, $help, $manager, $validators=array(), $attributes=array()) {
-    $choices[0] = 'Select...';
+    $choices['-'] = 'Select...';
     foreach($manager as $obj) $choices[$obj->ident()] = (string)$obj;
     parent::__construct($label, $help, $choices, $validators, $attributes);
   }
   
   function validate($value) {
-    // we want false and 0 to evaluate to the same thing
-    if(!array_search($value, array_keys($this->choices))) {
-      throw new Phorms_Validation_Error('Invalid selection.');
-    }
+    if($value=='-') throw new Phorms_Validation_Error('Invalid selection');
+    parent::validate($value);
   }
+  
 }
 ?>

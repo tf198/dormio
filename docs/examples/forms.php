@@ -3,7 +3,8 @@
 * This is a runable example
 *   > php docs/examples/forms.php > form_output.html
 *   > php docs/examples/forms.php title="Test Title"
-*   > php docs/examples
+*   > php docs/examples/forms.php author=26 # this fails validation
+*   > php docs/examples/forms.php author=2 # this is OK (2 is Bob)
 * @package dormio
 * @subpackage example
 * @filesource
