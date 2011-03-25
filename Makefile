@@ -1,7 +1,7 @@
 PHPDOC = phpdoc
 PHP = php
 
-DOC_OPTIONS = -ed examples -o HTML:frames:earthli -ti Dormio
+DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn dormio
 
 all: build
 
@@ -13,10 +13,10 @@ install:
 	@echo "No installer yet"
 
 dev_docs: classes tests/example_tests.php
-	${PHPDOC} ${DOC_OPTIONS} -pp -d $< -t $@
+	${PHPDOC} ${DOC_OPTIONS} -pp -d docs,$< -t $@
   
 api_docs: classes tests/example_tests.php
-	${PHPDOC} ${DOC_OPTIONS} -d $< -t $@
+	${PHPDOC} ${DOC_OPTIONS} -d docs,$< -t $@
 
 remote-docs: api_docs
 	rsync -r $< tris@tfconsulting.com.au:~/public_html/dormio/

@@ -1,0 +1,62 @@
+<refentry id="{@id}">
+ <refnamediv>
+  <refname>Examples</refname>
+ </refnamediv>
+ {@toc}
+ <refsect1 id="{@id examples}">
+  <title>Examples</title>
+  <para>
+    All the examples should be runnable out-of-the-box and a quick look at the source code will give you
+    a good idea of what is possible with Dormio.   You can find them in the docs/examples directory and you
+    should be able to just run them.
+    <programlisting>cd dormio</programlisting>
+    <programlisting>php docs/examples/usage.php</programlisting>
+  </para>
+ </refsect1>
+ <refsect2 id="{@id setup}">
+  <title>Setup</title>
+  <para>
+    In order to use Dormio you need an autoloader.  You may be able to adapt one from an existing
+    framework but if not Dormio provides one.  After that you just need some {@tutorial example.pkg#examples.models models} and a 
+    PDO connection.
+  </para>
+  <para>
+    This example is included by the others as it does some other
+    things as well - setting up the example tables and loading some dummy data.
+  </para>
+  {@example setup.php}
+ </refsect2>
+ <refsect2 id="{@id models}">
+  <title>Models</title>
+  <para>
+    This is the skeleton for a really basic blogging system (as with every ORM).  In a real world application
+    you might split the models into separate files for easier maintainance.  Models can have whatever extra
+    methods you want on them, in fact this is the best place to put any business logic relating to the data.
+  </para>
+  {@example models.php}
+ </refsect2>
+ <refsect2 id="{@id basic}">
+  <title>Basic Model Usage</title>
+  <para>
+    Adding and querying models.
+    <programlisting>php docs/examples/usage.php</programlisting>
+  </para>
+  {@example usage.php}
+ </refsect2>
+ <refsect2 id="{@id forms}">
+  <title>Form Generation</title>
+  <para>
+    Turn your model into a form. Most of this example is just setup and formatting: short form would be
+    <programlisting role="php"><![CDATA[
+$blog = $dormio->get('Blog', 3);
+$form = new Dormio_Form($blog);
+if($form->isValid()) {
+  $form->save();
+} else {
+  echo $form->asTable();
+}
+    ]]></programlisting>
+  </para>
+  {@example forms.php}
+ </refsect2>
+</refentry>

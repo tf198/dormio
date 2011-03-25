@@ -1,0 +1,21 @@
+<refentry id="{@id}">
+ <refnamediv>
+  <refname>Introduction to Dormio</refname>
+ </refnamediv>
+ <refsynopsisdiv>
+  <author>
+   Tris Forster
+   <authorblurb>
+    {@link mailto:tris@tfconsulting.com.au Tris Forster}
+   </authorblurb>
+  </author>
+ </refsynopsisdiv>
+ {@toc}
+ <refsect1 id="{@id intro}">
+  <title>User Guide</title>
+  <para>
+   Sorry, rather minimal documentation at the moment. You should probably start by having a look at the 
+   {@tutorial example.pkg examples}...
+  </para>
+ </refsect1>
+</refentry>
