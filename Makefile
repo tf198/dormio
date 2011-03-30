@@ -5,28 +5,28 @@ DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn dormio
 
 all: build
 
-build: api_docs check
+build: classes/Phorms docs/api
 	@echo "Ready to install"
 
-install:
+install: build
 	@echo "DESTDIR: ${DESTDIR}"
 	@echo "No installer yet"
 
-dev_docs: classes tests/example_tests.php
+docs/dev: classes/dormio tests/example_tests.php
 	${PHPDOC} ${DOC_OPTIONS} -pp -d docs,$< -t $@
   
-api_docs: classes tests/example_tests.php
+docs/api: classes/dormio tests/example_tests.php
 	${PHPDOC} ${DOC_OPTIONS} -d docs,$< -t $@
 
-remote-docs: api_docs
+remote-docs: docs/api
 	rsync -r $< tris@tfconsulting.com.au:~/public_html/dormio/
   
-classes/Phorms: vendor/phorms
-	rsync -r $</src/Phorms classes/
+classes/Phorms: vendor/phorms/src
+	rsync -r $</Phorms classes/
   
-vendor/phorms: .FORCE
-	git submodule update --init "$@"
-	cd "$@" && git pull
+vendor/phorms/src:
+	git submodule update --init vendor/phorms
+	cd vendor/phorms && git pull
   
   
 check: tests/all_tests.php tests/example_tests.php
@@ -40,4 +40,4 @@ dormio-%.tar.gz:
 .FORCE:
 
 clean:
-	rm -rf api_docs dev_docs
+	rm -rf docs/api docs/dev

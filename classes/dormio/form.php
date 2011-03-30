@@ -22,11 +22,6 @@
 */
 
 /**
-* Need to add the Phorms autoloader
-*/
-require_once(dirname(__FILE__) . '/../../3rd Party/phorms/src/Phorms/init.php');
-
-/**
 * Class to generate a Phorms form based on a Dormio model
 * @package dormio
 */
