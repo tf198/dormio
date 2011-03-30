@@ -198,7 +198,14 @@ class Dormio_Meta {
   function column($name) {
     // additional method of accessing reverse relations
     if(substr($name, -4)=='_set') {
-      return array('type' => 'reverse', 'model' => substr($name, 0, -4));
+      $name = substr($name, 0, -4);
+      // check if it is actually defined on this model - allows use of both defined and _set notation
+      if(isset($this->columns["__{$name}"])) { 
+        $name = $this->columns["__{$name}"]['accessor'];
+      } else {
+        // otherwise fake a reverse type
+        return array('type' => 'reverse', 'model' => $name);
+      }
     }
     
     if(!isset($this->columns[$name])) throw new Dormio_Meta_Exception('No such field: ' . $name);
@@ -214,6 +221,7 @@ class Dormio_Meta {
   */
   function resolve($name, &$spec, &$meta) {
     $spec = $this->column($name);
+    //var_dump($spec);
     if($spec['type']=='reverse') {
       $meta = Dormio_Meta::get($spec['model']);
       $spec = $meta->column("__{$this->_klass}");
