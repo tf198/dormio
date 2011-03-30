@@ -21,6 +21,14 @@ api_docs: classes tests/example_tests.php
 remote-docs: api_docs
 	rsync -r $< tris@tfconsulting.com.au:~/public_html/dormio/
   
+classes/Phorms: vendor/phorms
+	rsync -r $</src/Phorms classes/
+  
+vendor/phorms: .FORCE
+	git submodule update --init "$@"
+	cd "$@" && git pull
+  
+  
 check: tests/all_tests.php tests/example_tests.php
   
 tests/%.php: .FORCE
