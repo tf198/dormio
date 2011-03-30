@@ -34,13 +34,14 @@ class TestOfMeta extends UnitTestCase{
   }
   
   function testResolve() {
+    // foreign key
     $blog = Dormio_Meta::get('Blog');
-    $blog->resolve('comments', $spec1, $meta1); // explicit reverse
+    $blog->resolve('comments', $spec1, $meta1);
     $blog->resolve('comment_set', $spec2, $meta2);
     $this->assertEqual($spec1, $spec2);
     $this->assertEqual($meta1, $meta2);
     
-    
+    // many to many
     $comment = Dormio_Meta::get('Comment');
     $comment->resolve('tags', $spec1, $meta1);
     $comment->resolve('tag_set', $spec2, $meta2);
