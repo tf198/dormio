@@ -31,6 +31,8 @@ class Dormio_Meta {
   // cache for table meta
   static $_meta_cache = array();
   
+  static $config_loader = false;
+  
   /**
   * Singleton constructor
   * Normalises the meta
@@ -237,6 +239,20 @@ class Dormio_Meta {
   function instance($db, $dialect) {
     $klass = $this->_klass;
     return new $klass($db, $dialect);
+  }
+  
+  /**
+  * Overloadable config file loader.
+  * Provides enough basic functionality to run independently but is easily augmented by a framework adapter
+  * by setting Dormio_Meta::$config_loader to a callback.
+  * Tacked on to meta as it is small and always loaded.
+  * @param  string  $section  The section(file) to load
+  * @return array
+  */
+  static function config($section) {
+    $config = include(dirname(__FILE__) . "/config/{$section}.php");
+    if(self::$config_loader) $config = array_merge($config, call_user_func(self::$config_loader, $section, $value));
+    return $config;
   }
 }
 

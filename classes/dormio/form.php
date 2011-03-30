@@ -34,13 +34,9 @@ class Dormio_Form extends Phorms_Forms_Form{
 
   static $base = array('validators' => array(), 'attributes' => array());
   
-  function __construct($obj, $config=null) {
+  function __construct($obj) {
     $this->obj = $obj;
-    if(!$config) {
-      // this is a messy hack at the moment - need to sort it out
-      include(dirname(__FILE__) . '/../../config/forms.php');
-    }
-    $this->form_config = $config;
+    $this->form_config = Dormio_Meta::config('forms');
     // get the existing data
     $data = array();
     foreach($this->obj->_meta->columns as $name => $spec) {
@@ -87,9 +83,8 @@ class Dormio_Form extends Phorms_Forms_Form{
   
   function field_for($name, $spec) {
     $spec['label'] = isset($spec['verbose']) ? $spec['verbose'] : ucwords(str_replace('_', ' ', $name));
-    $map = $this->form_config['map'];
-    if(!isset($map[$spec['type']])) return new TextField($spec['label'], 25, 255);
-    $phorm_type = $map[$spec['type']];
+    if(!isset($this->form_config[$spec['type']])) return new TextField($spec['label'], 25, 255);
+    $phorm_type = $this->form_config[$spec['type']];
     
     if($phorm_type == 'Dormio_Form_ManagerField') {
       $spec['manager'] = $this->obj->manager($name);
