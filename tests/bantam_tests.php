@@ -1,11 +1,17 @@
 <?php
 require_once('simpletest/autorun.php');
-require_once('bantam/bantam.php');
-
-// hook into bantam autoloader
-Bantam::instance()->addPaths(array(dirname(__FILE__) . '../../'));
 
 class TestOfBantam extends UnitTestCase {
+
+  function skip() {
+    if(@include_once('bantam/bantam.php')) {
+      // hook into bantam autoloader
+      Bantam::instance()->addPaths(array(dirname(__FILE__) . '../../'));
+    } else {
+      $this->skipIf(true, "Bantam library not found");
+    }
+  }
+
   function testInstance() {
     $pdo = Dormio_Bantam::instance();
     $this->assertIsA($pdo, 'PDO');
