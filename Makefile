@@ -26,8 +26,6 @@ classes/Phorms: vendor/phorms/src
   
 vendor/phorms/src:
 	git submodule update --init vendor/phorms
-	cd vendor/phorms && git pull
-  
   
 check: tests/all_tests.php tests/example_tests.php
   

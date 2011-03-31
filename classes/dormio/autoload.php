@@ -48,7 +48,7 @@ class Dormio_Autoload {
     $klass = strtolower($klass);
     $parts = explode('_', $klass);
     // check for directory
-    if(file_exists(self::$path . '/' . $parts[0])) {
+    if(array_shift($parts) == 'dormio') {
       // recursivly check for files that might satisfy the class
       while(count($parts)>0) {
         $file = self::$path . '/' . implode('/', $parts) . ".php";
@@ -63,7 +63,7 @@ class Dormio_Autoload {
   */
   static function register() {
     if(self::$path) return;
-    self::$path = realpath(dirname(__FILE__) . '/..');
+    self::$path = dirname(__FILE__);
     spl_autoload_register(array('Dormio_Autoload','autoload')) or die('Failed to Pom autoloader');
   }
 }

@@ -21,6 +21,9 @@
 * @package dormio
 */
 
+// Need to use the Phorms autoloader as the cases are different
+require_once(dirname(__FILE__) . '/../Phorms/init.php');
+
 /**
 * Class to generate a Phorms form based on a Dormio model
 * @package dormio
