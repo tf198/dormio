@@ -1,0 +1,118 @@
+Description: Upstream changes introduced in version 0.3.1-2
+ This patch has been created by dpkg-source during the package build.
+ Here's the last changelog entry, hopefully it gives details on why
+ those changes were made:
+ .
+ php-dormio (0.3.1-2) unstable; urgency=low
+ .
+   * Updated to latest version
+ .
+ The person named in the Author field signed this changelog entry.
+Author: Tris Forster <tris@tfconsulting.com.au>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- php-dormio-0.3.1.orig/Makefile
++++ php-dormio-0.3.1/Makefile
+@@ -2,6 +2,8 @@ PHPDOC = phpdoc
+ PHP = php
+ VERSION = 0.3.1
+ 
++TESTS = tests/all_tests.php tests/example_tests.php tests/bantam_tests.php
++
+ DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn dormio
+ 
+ all: build
+@@ -34,7 +36,7 @@ classes/Phorms: vendor/phorms/src
+ vendor/phorms/src:
+ 	git submodule update --init vendor/phorms
+   
+-check: tests/all_tests.php tests/example_tests.php
++check: ${TESTS}
+   
+ tests/%.php: .FORCE
+ 	${PHP} $@
+--- php-dormio-0.3.1.orig/classes/dormio/bantam.php
++++ php-dormio-0.3.1/classes/dormio/bantam.php
+@@ -22,6 +22,9 @@
+ * @subpackage adapter
+ */
+ 
++// hook the Bantam config system into Dormio_Meta
++Dormio_Meta::$config_loader = array('bCommon', 'config');
++
+ /**
+ * Bantam entry point for Dormio
+ * @package dormio
+--- php-dormio-0.3.1.orig/classes/dormio/meta.php
++++ php-dormio-0.3.1/classes/dormio/meta.php
+@@ -251,7 +251,7 @@ class Dormio_Meta {
+   */
+   static function config($section) {
+     $config = include(dirname(__FILE__) . "/config/{$section}.php");
+-    if(self::$config_loader) $config = array_merge($config, call_user_func(self::$config_loader, $section, $value));
++    if(self::$config_loader) $config = array_merge($config, call_user_func(self::$config_loader, $section));
+     return $config;
+   }
+ }
+--- /dev/null
++++ php-dormio-0.3.1/tests/bantam_tests.php
+@@ -0,0 +1,27 @@
++<?php
++require_once('simpletest/autorun.php');
++require_once('bantam/bantam.php');
++
++// hook into bantam autoloader
++Bantam::instance()->addPaths(array(dirname(__FILE__) . '../../'));
++
++class TestOfBantam extends UnitTestCase {
++  function testInstance() {
++    $pdo = Dormio_Bantam::instance();
++    $this->assertIsA($pdo, 'PDO');
++  }
++  
++  function testFactory() {
++    $dormio = Dormio_Bantam::factory();
++    $this->assertIsA($dormio, 'Dormio_Factory');
++  }
++  
++  function testConfig() {
++    $dormio = Dormio_Bantam::factory(); // check it is loaded
++    $config = Dormio_Meta::config('forms');
++    $this->assertEqual($config['string'], 'Phorms_Fields_CharField'); // from dormio
++    $this->assertEqual($config['boolean'], 'Bantam_Field_YesNo'); // overriden by ap
++    $this->assertEqual($config['custom'], 'Bantam_Field_Custom'); // new in app
++  }
++}
++?>
+\ No newline at end of file
+--- /dev/null
++++ php-dormio-0.3.1/tests/config/dormio.php
+@@ -0,0 +1,5 @@
++<?php
++$config['default'] = array(
++  'connection' => 'sqlite::memory:',
++);
++?>
+\ No newline at end of file
+--- /dev/null
++++ php-dormio-0.3.1/tests/config/forms.php
+@@ -0,0 +1,6 @@
++<?
++$config['custom'] = 'Bantam_Field_Custom';
++$config['boolean'] = 'Bantam_Field_YesNo';
++
++$config['Bantam_Field_Custom'] = array();
++?>
+\ No newline at end of file
