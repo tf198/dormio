@@ -1,3 +1,4 @@
 classes/Phorms
-docs/api
-docs/dev
+api-docs
+dev-docs
+.pc

@@ -1,0 +1,12 @@
+Source: php-dormio
+Section: web
+Priority: extra
+Maintainer: Tris Forster <tris@tfconsulting.com.au>
+Build-Depends: debhelper (>= 7.0.50~)
+Standards-Version: 3.8.4
+Vcs-Git: git://github.com/tf198/dormio.git
+
+Package: php-dormio
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends} php5
+Description: Django inspired model layer (ORM) for PHP5

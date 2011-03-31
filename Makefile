@@ -1,5 +1,6 @@
 PHPDOC = phpdoc
 PHP = php
+VERSION = 0.3.1
 
 TESTS = tests/all_tests.php tests/example_tests.php tests/bantam_tests.php
 
@@ -7,20 +8,26 @@ DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn dormio
 
 all: build
 
-build: classes/Phorms docs/api
+build: classes/Phorms api-docs
 	@echo "Ready to install"
 
-install: build
-	@echo "DESTDIR: ${DESTDIR}"
-	@echo "No installer yet"
+../dormio-${VERSION}.tar.gz: build
+	tar zcvf $@ -C .. dormio-${VERSION} --exclude-vcs --exclude vendor
 
-docs/dev: classes/dormio tests/example_tests.php
+install: build
+	install -d ${DESTDIR}/usr/share/php/dormio
+	cp -a classes tests docs ${DESTDIR}/usr/share/php/dormio/
+
+	install -d $(DESTDIR)/usr/share/doc/php-dormio
+	cp -a api-docs ${DESTDIR}/usr/share/doc/php-dormio/
+
+dev-docs: classes/dormio tests/example_tests.php
 	${PHPDOC} ${DOC_OPTIONS} -pp -d docs,$< -t $@
   
-docs/api: classes/dormio tests/example_tests.php
+api-docs: classes/dormio tests/example_tests.php
 	${PHPDOC} ${DOC_OPTIONS} -d docs,$< -t $@
 
-remote-docs: docs/api
+remote-docs: api-docs
 	rsync -r $< tris@tfconsulting.com.au:~/public_html/dormio/
   
 classes/Phorms: vendor/phorms/src
@@ -34,10 +41,9 @@ check: ${TESTS}
 tests/%.php: .FORCE
 	${PHP} $@
   
-dormio-%.tar.gz:
-	git archive $* | gzip > $@
-  
+clean:
+	rm -rf api-docs dev-docs classes/Phorms
+
 .FORCE:
 
-clean:
-	rm -rf docs/api docs/dev
+.PRECIOUS: docs/api docs/dev classes/Phorms
