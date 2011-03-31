@@ -251,7 +251,7 @@ class Dormio_Meta {
   */
   static function config($section) {
     $config = include(dirname(__FILE__) . "/config/{$section}.php");
-    if(self::$config_loader) $config = array_merge($config, call_user_func(self::$config_loader, $section, $value));
+    if(self::$config_loader) $config = array_merge($config, call_user_func(self::$config_loader, $section));
     return $config;
   }
 }

@@ -22,6 +22,9 @@
 * @subpackage adapter
 */
 
+// hook the Bantam config system into Dormio_Meta
+Dormio_Meta::$config_loader = array('bCommon', 'config');
+
 /**
 * Bantam entry point for Dormio
 * @package dormio

@@ -1,6 +1,8 @@
 PHPDOC = phpdoc
 PHP = php
 
+TESTS = tests/all_tests.php tests/example_tests.php tests/bantam_tests.php
+
 DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn dormio
 
 all: build
@@ -27,7 +29,7 @@ classes/Phorms: vendor/phorms/src
 vendor/phorms/src:
 	git submodule update --init vendor/phorms
   
-check: tests/all_tests.php tests/example_tests.php
+check: ${TESTS}
   
 tests/%.php: .FORCE
 	${PHP} $@
