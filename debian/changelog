@@ -1,0 +1,5 @@
+php-dormio (0.3.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Tris Forster <tris@tfconsulting.com.au>  Thu, 31 Mar 2011 12:17:17 +1100

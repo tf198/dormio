@@ -1,0 +1,9 @@
+Document: php-dormio
+Title: Dormio Manual
+Author: Tris Forster
+Abstract: This manual describes what php-dormio is
+Section: web
+
+Format: HTML
+Index: /usr/share/doc/php-dormio/api-docs/index.html
+Files: /usr/share/doc/php-dormio/api-docs/dormio/*.html
