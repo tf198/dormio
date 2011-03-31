@@ -1,5 +1,6 @@
 PHPDOC = phpdoc
 PHP = php
+VERSION = 0.3.1
 
 DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn dormio
 
@@ -7,6 +8,9 @@ all: build
 
 build: classes/Phorms docs/api
 	@echo "Ready to install"
+
+../dormio-${VERSION}.tar.gz: build
+	tar zcvf $@ -C .. dormio-${VERSION} --exclude-vcs --exclude vendor
 
 install: build
 	@echo "DESTDIR: ${DESTDIR}"
@@ -39,3 +43,5 @@ dormio-%.tar.gz:
 
 clean:
 	rm -rf docs/api docs/dev
+
+.PRECIOUS: docs/api docs/dev classes/Phorms
