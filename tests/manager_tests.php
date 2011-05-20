@@ -4,6 +4,7 @@ require_once('db_tests.php');
 
 class TestOfManager extends TestOfDB{
   function testGet() {
+    $this->load("sql/test_schema.sql");
     $this->load('sql/test_data.sql');
     
     $blogs = new Dormio_Manager('Blog', $this->db);
@@ -60,6 +61,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testAggregationMethods() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $tags = new Dormio_Manager('Tag', $this->db);
@@ -76,12 +78,14 @@ class TestOfManager extends TestOfDB{
   }
   
   function testInsert() {
+    $this->load("sql/test_schema.sql");
     $blogs = new Dormio_Manager('Blog', $this->db);
     $stmt = $blogs->insert(array('title', 'the_user'));
     $this->assertEqual($stmt->_stmt->queryString, 'INSERT INTO "blog" ("title", "the_blog_user") VALUES (?, ?)');
   }
   
   function testUpdate() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     $comments = new Dormio_Manager('Comment', $this->db);
     $set = $comments->filter('blog', '=', 1)->filter('tags__tag', '=', 'Green');
@@ -91,6 +95,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testDelete() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $blogs = new Dormio_Manager('Blog', $this->db);
@@ -101,6 +106,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testForeignKeyCreate() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     $blog = new Blog($this->db);
     $blog->load(2);
@@ -115,6 +121,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testForeignKeyAdd() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     $blog = new Blog($this->db);
     $blog->load(2);
@@ -130,6 +137,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testManyToManyAdd() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $blog = $this->pom->get('Blog', 1);
@@ -154,6 +162,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testClear() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $blog = $this->pom->get('Blog', 1);
@@ -164,6 +173,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testRemove() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $blog = $this->pom->get('Blog', 1);
@@ -186,6 +196,7 @@ class TestOfManager extends TestOfDB{
   }
   
   function testJoinSanity() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
   
     $blogs = $this->pom->manager('Blog');

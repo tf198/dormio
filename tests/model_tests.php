@@ -5,6 +5,7 @@ require_once('db_tests.php');
 class TestOfModel extends TestOfDB{
 
   function testInsertUpdateDelete() {
+    $this->load("sql/test_schema.sql");
     // insert new
     $u1 = new User($this->db);
     $u1->name = 'Andy';
@@ -33,6 +34,7 @@ class TestOfModel extends TestOfDB{
   }
   
   function testToString() {
+    $this->load("sql/test_schema.sql");
     $this->load('sql/test_data.sql');
     
     $blog = $this->pom->get('Blog');
@@ -54,6 +56,7 @@ class TestOfModel extends TestOfDB{
   }
   
   function testNotFound() {
+    $this->load("sql/test_schema.sql");
     $blog = new Blog($this->db);
     $blog->load(1);
     try {
@@ -65,6 +68,7 @@ class TestOfModel extends TestOfDB{
   }
   
   function testDelete() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $blog = new Blog($this->db);
@@ -80,6 +84,7 @@ class TestOfModel extends TestOfDB{
   }
   
   function testForeignKey() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $b1 = new Blog($this->db);
@@ -115,7 +120,7 @@ class TestOfModel extends TestOfDB{
   
   function testRepeatRelations() {
     // this test is needed as we use a reference to the parent id
-    
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $users = new Dormio_Manager('User', $this->db);
@@ -147,6 +152,7 @@ class TestOfModel extends TestOfDB{
   }
   
   function testOneToOne() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     // Lazy
@@ -168,6 +174,7 @@ class TestOfModel extends TestOfDB{
   }
   
   function testManyToMany() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     // Forward
@@ -194,6 +201,7 @@ class TestOfModel extends TestOfDB{
   }
   
   function testManyToManyReverse() {
+    $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
     
     $tag = new Tag($this->db);

@@ -5,8 +5,6 @@ require_once('bootstrap.php');
 abstract class TestOfDB extends UnitTestCase{
   function setUp() {
     $this->db = new MockPDO('sqlite::memory:');
-    $this->load("sql/test_schema.sql");
-    
     $this->pom = new Dormio_Factory($this->db);
   }
   
