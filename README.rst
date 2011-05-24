@@ -37,12 +37,10 @@ Model definition
 ::
 
     class Blog extends Dormio_Model {
-      static function getMeta() {
-        return array(
-          'title' => array('type' => 'string', 'max_length' => 30),
-          'author' => array('type' => 'foreignkey', 'model' => 'User'),
-        );
-      }
+      static $meta = array(
+        'title' => array('type' => 'string', 'max_length' => 30),
+        'author' => array('type' => 'foreignkey', 'model' => 'User'),
+      );
     }
 
 Basic usage
