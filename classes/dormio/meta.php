@@ -50,12 +50,13 @@ class Dormio_Meta {
   }
   
   /**
-  * Singleton pattern so each model only gets processes once
+  * Singleton pattern so each model only gets processed once
   */
   public static function get($klass) {
     $klass = strtolower($klass);
     if(!isset(self::$_meta_cache[$klass])) {
       if(!class_exists($klass)) throw new Dormio_Meta_Exception('No such class: ' . $klass);
+      //self::$_meta_cache[$klass] = new Dormio_Meta($klass, $klass::$meta);
       self::$_meta_cache[$klass] = new Dormio_Meta($klass, call_user_func(array($klass, 'getMeta')));
     }
     return self::$_meta_cache[$klass];

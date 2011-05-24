@@ -32,7 +32,7 @@ abstract class Dormio_Model {
   private $_data = array();
   public $_updated = array();
   private $_related = array();
-  private $_db, $_stmt, $_objects, $_dialect;
+  protected $_db, $_stmt, $_objects, $_dialect;
   public $_meta, $_id=false; // need to be accessed by the manager
   
   // overridable meta fields for sub classes

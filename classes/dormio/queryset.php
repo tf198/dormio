@@ -170,6 +170,7 @@ class Dormio_Queryset {
   */
   function limit($limit, $offset=false) {
     $o = clone $this;
+    if($o->query['limit']) return $o;
     $o->query['limit'] = $limit;
     if($offset) $o->query['offset'] = $offset;
     return $o;
