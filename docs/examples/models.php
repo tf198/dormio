@@ -16,6 +16,12 @@ class Blog extends Dormio_Model {
   );
 }
 
+/**
+* Example models for tutorials
+* @package dormio
+* @subpackage example
+* @filesource
+*/
 class Comment extends Dormio_Model {
   static $meta = array(
     'fields' => array(
@@ -26,6 +32,12 @@ class Comment extends Dormio_Model {
   );
 }
 
+/**
+* Example models for tutorials
+* @package dormio
+* @subpackage example
+* @filesource
+*/
 class User extends Dormio_Model {
   static $meta = array(
     'fields' => array(
@@ -43,6 +55,12 @@ class User extends Dormio_Model {
   }
 }
 
+/**
+* Example models for tutorials
+* @package dormio
+* @subpackage example
+* @filesource
+*/
 class Profile extends Dormio_Model {
   static $meta = array(
     'fields' => array(

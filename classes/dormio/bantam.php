@@ -47,14 +47,14 @@ class Dormio_Bantam {
 	/**
 	* Get a PDO instance
 	* Requires config/pdodb.php:
-	* return array(
-	*		'default' => array(
-	*     'connection' => 'dsn:hostspec',
-	*     'username' => 'username', // optional
-	*     'password' => 'password', // optional
-	*     'parameters' => array()  // optional
-	*    ),
+  * <code>
+	* $config['default'] = array(
+	*   'connection' => 'dsn:hostspec',
+	*   'username' => 'username', // optional
+	*   'password' => 'password', // optional
+	*   'parameters' => array()  // optional
 	* );
+  * </code>
 	* @param		string	$which	  The database config to use
   * @return PDO
 	*/

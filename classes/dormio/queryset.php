@@ -24,9 +24,10 @@
 /**
 * Class to programatically generate SQL based on table meta information.
 *
-* Most methods accept either a field key (as defined in your getMeta() method) or
+* Most methods accept either a field key (as defined in your $meta) or
 * a descriptor which traces relations across the tables.
 * e.g. 'blog__title' on a Comment queryset refers to the title field on the associated blog model
+*
 * Reverse relations can either be accessed by field, for example blog has a reverse field defined for its
 * comments, or by adding _set to the model name so the same can be achieved by calling 'comment_set'.
 * This also works for onetoone relations e.g. 'author__profile_set__fav_colour' on a Blog queryset will traverse

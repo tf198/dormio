@@ -23,7 +23,7 @@
 
 /**
 * Django inspired model class.
-* All models should subclass this and implement the getMeta() method
+* All models should subclass this and provide a static $meta specification
 * @example models.php
 * @package dormio
 */
