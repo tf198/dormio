@@ -9,7 +9,6 @@ class User extends Dormio_Model {
       'profile' => array('type' => 'reverse', 'model' => 'Profile'),
     ),
   );
-  static function getMeta() { return self::$meta; }
 }
 
 class Blog extends Dormio_Model {
@@ -21,7 +20,6 @@ class Blog extends Dormio_Model {
       'comments' => array('type' => 'reverse', 'model' => 'Comment'),
     ),
   );
-  static function getMeta() { return self::$meta; }
 }
 
 class My_Blog_Tag extends Dormio_Model {
@@ -33,7 +31,6 @@ class My_Blog_Tag extends Dormio_Model {
       'tag' => array('type' => 'foreignkey', 'model' => 'Tag', 'sql_column' => 'the_tag_id'),
     ),
   );
-  static function getMeta() { return self::$meta; }
 }
 
 class Comment extends Dormio_Model {
@@ -45,7 +42,6 @@ class Comment extends Dormio_Model {
       'tags' => array('type' => 'manytomany', 'model' => 'Tag'),
     ),
   );
-  static function getMeta() { return self::$meta; }
   
   function display() {
     return $this->title;
@@ -60,7 +56,6 @@ class Tag extends Dormio_Model {
       'comments' => array('type' => 'reverse', 'model' => 'Comment'),
     ),
   );
-  static function getMeta() { return self::$meta; }
 }
 
 class Profile extends Dormio_Model {
@@ -70,6 +65,5 @@ class Profile extends Dormio_Model {
       'age' => array('type' => 'integer'),
     ),
   );
-  static function getMeta() { return self::$meta; }
 }
 ?>

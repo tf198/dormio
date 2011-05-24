@@ -56,8 +56,7 @@ class Dormio_Meta {
     $klass = strtolower($klass);
     if(!isset(self::$_meta_cache[$klass])) {
       if(!class_exists($klass)) throw new Dormio_Meta_Exception('No such class: ' . $klass);
-      //self::$_meta_cache[$klass] = new Dormio_Meta($klass, $klass::$meta);
-      self::$_meta_cache[$klass] = new Dormio_Meta($klass, call_user_func(array($klass, 'getMeta')));
+      self::$_meta_cache[$klass] = new Dormio_Meta($klass, call_user_func(array($klass, '_meta'), $klass));
     }
     return self::$_meta_cache[$klass];
   }
@@ -107,7 +106,6 @@ class Dormio_Meta {
       $columns[$key] = $spec;
     }
     $meta['fields'] = $columns;
-    //$meta['indexes'] = array_unique($meta['indexes']);
     return $meta;
   }
   

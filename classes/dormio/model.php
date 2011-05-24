@@ -41,26 +41,26 @@ abstract class Dormio_Model {
   static $logger = null;
   
   /**
-  * Create a new Model instance using the provided PDO connection
+  * Create a new Model instance using the provided PDO connection.
   * @param  PDO   $db   The connection
   * @param  Dormio_Dialect  $dialect  If provided saves creating a new instance
   */
   function __construct(PDO $db, $dialect=null) {
     $this->_db = $db;
     $this->_meta = Dormio_Meta::get(get_class($this));
-    //if(!$dialect) throw new Exception();
     $this->_dialect = ($dialect) ? $dialect : Dormio_Dialect::factory($db->getAttribute(PDO::ATTR_DRIVER_NAME));
   }
   
   /**
-  * Meta array defining fields.
-  * Should contain at least a 'fields' entry
-  * Optional entries are 'indexes', 'table' and 'verbose'
-  * @return   array The meta info for this model
-  * @example models.php
+  * Get the meta for the specified class.
+  * Allows intermediate classes to add fields etc...
+  * @param  string  $klass  the model to get meta for
+  * @return array           the meta spec
   */
-  static function getMeta() {
-    throw new Dormio_Model_Exception('Unimplemented getMeta() method');
+  public static function _meta($klass) {
+    // if we were 5.3+ we could just use static::$meta but in this one case we pander to backward compatibility
+    $vars = get_class_vars($klass);
+    return $vars['meta'];
   }
   
   /**
@@ -74,7 +74,6 @@ abstract class Dormio_Model {
       foreach($data as $key=>$value) $this->_setData($key, $value);
     }
     $pk = $this->_dataIndex($this->_meta->pk);
-    //if(!isset($this->_data[$pk])) throw new Dormio_Model_Exception('No primary key in hydration data');
     $this->_id = (isset($this->_data[$pk])) ? (int)$this->_data[$pk] : false;
   }
   
@@ -93,7 +92,6 @@ abstract class Dormio_Model {
     if($data) {
       $this->_hydrate($data, true);
     } else {
-      //var_dump($stmt);
       throw new Dormio_Model_Exception('No result found for primary key ' . $this->_id);
     }
   }
@@ -174,10 +172,24 @@ abstract class Dormio_Model {
   * indexes and rehydrating the object if required
   * @access private
   */
-  function _getData($column) {
+  function _getData($column, $type='string') {
     $key = $this->_dataIndex($column);
     if(!isset($this->_data[$key])) $this->_rehydrate(); // first try rehydrating
-    return $this->_data[$key];
+    return $this->_fromDB($this->_data[$key], $type);
+  }
+  
+  function _fromDB($data, $type) {
+    if(is_null($data)) return null;
+    switch($type) {
+      case 'integer': 
+        return (int) $data;
+      case 'float': return (float) $data;
+      case 'date':
+      case 'datetime':
+        return ($data instanceof DateTime) ? $data : new DateTime($data);
+      default:
+        return $data;
+    }
   }
   
   /**
