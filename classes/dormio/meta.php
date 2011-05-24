@@ -66,7 +66,7 @@ class Dormio_Meta {
   * Fills in defaults and generates reverse defininitions and intermediate models as required
   */
   private static function _normalise($model, $meta) {
-    if(!isset($meta['indexes'])) $meta['indexes'] = array();
+    isset($meta['indexes']) || $meta['indexes'] = array();
     // set a pk but it can be overriden by the fields
     $columns['pk'] = array('type' => 'ident', 'sql_column' => $model . "_id", 'is_field' => true);
     if(!isset($meta['fields'])) throw new Dormio_Meta_Exception("Missing required 'fields' on meta");
@@ -85,7 +85,7 @@ class Dormio_Meta {
             $reverse = array('type' => $spec['type'] . "_rev", 'sql_column' => $spec['to_field'], 'to_field' => $spec['sql_column'], 'model' => $model, 'on_delete' => $spec['on_delete'] );
             break;
           case 'manytomany':
-            if(!isset($spec['through'])) $spec['through'] = self::_generateIntermediate($model, $spec);
+            isset($spec['through']) || $spec['through'] = self::_generateIntermediate($model, $spec);
             $reverse = array('type' => 'manytomany', 'through' => $spec['through'], 'model' => $model);
             break;
           case 'reverse':
@@ -126,6 +126,11 @@ class Dormio_Meta {
     return $table;
   }
   
+  /**
+  * Replaces underscores with spaces and capitalises the first letter of each word.
+  * @param  string  $str  the text to use
+  * @return string        modified text
+  */
   public static function title($str) {
     return ucwords(str_replace('_', ' ', $str));
   }
@@ -141,6 +146,10 @@ class Dormio_Meta {
     return $this->_schema;
   }
   
+  /**
+  * array_filter for schema()
+  * @access private
+  */
   function filterSchema($spec) {
     return (isset($spec['is_field']));
   }
