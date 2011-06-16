@@ -66,4 +66,13 @@ class Profile extends Dormio_Model {
     ),
   );
 }
+
+class Module extends Dormio_Model {
+  static $meta = array(
+    'fields' => array(
+      'name' => array('type' => 'string', 'max_length' => 30),
+      'depends_on' => array('type' => 'manytomany', 'model' => 'Module'),
+    ),
+  );
+}
 ?>

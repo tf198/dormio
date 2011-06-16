@@ -195,7 +195,7 @@ class TestOfModel extends TestOfDB{
     
     $expected = array('Orange', 'Violet');
     $this->assertQueryset($c1->tags, 'tag', $expected);
-    $this->assertSQL('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag" FROM "tag" INNER JOIN "comment_tag" ON "tag"."tag_id"="comment_tag"."tag_id" WHERE "comment_tag"."comment_id" = ?', 2);
+    $this->assertSQL('SELECT "tag"."tag_id" AS "tag_tag_id", "tag"."tag" AS "tag_tag" FROM "tag" INNER JOIN "comment_tag" ON "tag"."tag_id"="comment_tag"."r_tag_id" WHERE "comment_tag"."l_comment_id" = ?', 2);
     
     $this->assertDigestedAll();
   }
@@ -215,7 +215,7 @@ class TestOfModel extends TestOfDB{
     // default fields
     $expected = array('Andy Comment 1 on Andy Blog 1', 'Andy Comment 1 on Bob Blog 1');
     $this->assertQueryset($tag->comment_set, 'title', $expected);
-    $this->assertSQL('SELECT "comment"."comment_id" AS "comment_comment_id", "comment"."title" AS "comment_title", "comment"."the_comment_user" AS "comment_the_comment_user", "comment"."blog_id" AS "comment_blog_id" FROM "comment" INNER JOIN "comment_tag" ON "comment"."comment_id"="comment_tag"."comment_id" WHERE "comment_tag"."tag_id" = ?', 4);
+    $this->assertSQL('SELECT "comment"."comment_id" AS "comment_comment_id", "comment"."title" AS "comment_title", "comment"."the_comment_user" AS "comment_the_comment_user", "comment"."blog_id" AS "comment_blog_id" FROM "comment" INNER JOIN "comment_tag" ON "comment"."comment_id"="comment_tag"."l_comment_id" WHERE "comment_tag"."r_tag_id" = ?', 4);
     
     $this->assertDigestedAll();
   }

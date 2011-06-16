@@ -30,3 +30,12 @@ INSERT INTO comment_tag VALUES (2, 1, 4);
 INSERT INTO comment_tag VALUES (3, 3, 4);
 INSERT INTO comment_tag VALUES (4, 2, 7);
 INSERT INTO comment_tag VALUES (5, 1, 5);
+
+INSERT INTO module VALUES (1, 'Core');
+INSERT INTO module VALUES (2, 'Blog');
+INSERT INTO module VALUES (3, 'Comment');
+INSERT INTO module VALUES (4, 'Tags');
+
+INSERT INTO module_module VALUES (1, 2, 1);
+INSERT INTO module_module VALUES (2, 3, 2);
+INSERT INTO module_module VALUES (3, 4, 2);

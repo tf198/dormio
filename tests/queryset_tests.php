@@ -64,7 +64,7 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($comments->with('blog')->query['join'], // foreignkey
       array('LEFT JOIN {blog} ON {comment}.{blog_id}={blog}.{blog_id}')); 
     $this->assertEqual($comments->filter('tags__tag', '=', 'Red')->query['join'], // manytomany
-      array('INNER JOIN {comment_tag} ON {comment}.{comment_id}={comment_tag}.{comment_id}', 'INNER JOIN {tag} ON {comment_tag}.{tag_id}={tag}.{tag_id}')); 
+      array('INNER JOIN {comment_tag} ON {comment}.{comment_id}={comment_tag}.{l_comment_id}', 'INNER JOIN {tag} ON {comment_tag}.{r_tag_id}={tag}.{tag_id}')); 
     
     $profiles = new Dormio_Queryset('Profile');
     $this->assertEqual($profiles->with('user')->query['join'], // onetoone
@@ -78,7 +78,11 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($tags->filter('blog_set__title', '=', 'Test')->query['join'], // manytomany_rev
       array('INNER JOIN {blog_tag} ON {tag}.{tag_id}={blog_tag}.{the_tag_id}', 'INNER JOIN {blog} ON {blog_tag}.{the_blog_id}={blog}.{blog_id}'));
     $this->assertEqual($tags->filter('comment_set__title', '=', 'Test')->query['join'], // manytomany_rev
-      array('INNER JOIN {comment_tag} ON {tag}.{tag_id}={comment_tag}.{tag_id}', 'INNER JOIN {comment} ON {comment_tag}.{comment_id}={comment}.{comment_id}'));
+      array('INNER JOIN {comment_tag} ON {tag}.{tag_id}={comment_tag}.{r_tag_id}', 'INNER JOIN {comment} ON {comment_tag}.{l_comment_id}={comment}.{comment_id}'));
+      
+    $modules = new Dormio_Queryset('Module');
+    #$this->assertEqual($modules->filter('depends_on__name', '=', 'core')->query['join'], // manytomany self
+    #  array('INNER JOIN {module_module} ON {module}.{module_id}={module_module}.{l_module_id}', 'INNER JOIN {module} ON {module_module}.{r_module_id}={module}.{module_id}'));
   }
  
   function testField() {
@@ -220,7 +224,7 @@ class TestOfSQL extends UnitTestCase{
     $blogs = new Dormio_Queryset('Blog');
     $this->assertEqual($blogs->deleteById(3), array(
       array('DELETE FROM "blog_tag" WHERE "blog_tag"."the_blog_id" = ?', array(3)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "comment" ON "comment_tag"."comment_id"="comment"."comment_id" WHERE "comment"."blog_id" = ?)', array(3)),
+      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "comment" ON "comment_tag"."l_comment_id"="comment"."comment_id" WHERE "comment"."blog_id" = ?)', array(3)),
       array('DELETE FROM "comment" WHERE "comment"."blog_id" = ?', array(3)),
       array('DELETE FROM "blog" WHERE "blog"."blog_id" = ?', array(3)),
     ));
@@ -228,10 +232,10 @@ class TestOfSQL extends UnitTestCase{
     $users = new Dormio_Queryset('User');
     $this->assertEqual($users->deleteById(1), array(
       array('DELETE FROM "blog_tag" WHERE "blog_tag"."blog_tag_id" IN (SELECT "blog_tag"."blog_tag_id" FROM "blog_tag" INNER JOIN "blog" ON "blog_tag"."the_blog_id"="blog"."blog_id" WHERE "blog"."the_blog_user" = ?)', array(1)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "comment" ON "comment_tag"."comment_id"="comment"."comment_id" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" WHERE "blog"."the_blog_user" = ?)', array(1)),
+      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "comment" ON "comment_tag"."l_comment_id"="comment"."comment_id" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" WHERE "blog"."the_blog_user" = ?)', array(1)),
       array('DELETE FROM "comment" WHERE "comment"."comment_id" IN (SELECT "comment"."comment_id" FROM "comment" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" WHERE "blog"."the_blog_user" = ?)', array(1)), 
       array('DELETE FROM "blog" WHERE "blog"."the_blog_user" = ?', array(1)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "comment" ON "comment_tag"."comment_id"="comment"."comment_id" WHERE "comment"."the_comment_user" = ?)', array(1)),
+      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "comment" ON "comment_tag"."l_comment_id"="comment"."comment_id" WHERE "comment"."the_comment_user" = ?)', array(1)),
       array('DELETE FROM "comment" WHERE "comment"."the_comment_user" = ?', array(1)),
       array('UPDATE "profile" SET "user_id"=? WHERE "profile"."user_id" = ?', array(null, 1)),
       array('DELETE FROM "user" WHERE "user"."user_id" = ?', array(1)),
@@ -244,7 +248,7 @@ class TestOfSQL extends UnitTestCase{
     $sql = $set->delete();
     $this->assertEqual($sql, array(
       array('DELETE FROM "blog_tag" WHERE "blog_tag"."blog_tag_id" IN (SELECT "blog_tag"."blog_tag_id" FROM "blog_tag" INNER JOIN "blog" ON "blog_tag"."the_blog_id"="blog"."blog_id" WHERE "blog"."blog_id" = ?)', array(1)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" INNER JOIN "comment" ON "comment_tag"."comment_id"="comment"."comment_id" WHERE "blog"."blog_id" = ?)', array(1)),
+      array('DELETE FROM "comment_tag" WHERE "comment_tag"."comment_tag_id" IN (SELECT "comment_tag"."comment_tag_id" FROM "comment_tag" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" INNER JOIN "comment" ON "comment_tag"."l_comment_id"="comment"."comment_id" WHERE "blog"."blog_id" = ?)', array(1)),
       array('DELETE FROM "comment" WHERE "comment"."comment_id" IN (SELECT "comment"."comment_id" FROM "comment" INNER JOIN "blog" ON "comment"."blog_id"="blog"."blog_id" WHERE "blog"."blog_id" = ?)', array(1)),
       array('DELETE FROM "blog" WHERE "blog"."blog_id" = ?', array(1)),
     ));

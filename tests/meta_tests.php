@@ -26,10 +26,10 @@ class TestOfMeta extends UnitTestCase{
     $intermediate = Dormio_Meta::get('comment_tag');
     $schema = $intermediate->schema();
     $this->assertEqual($schema['indexes'], array(
-      'comment_0' => array('comment_id' => true),
-      'tag_0' => array('tag_id' => true),
+      'l_comment_0' => array('l_comment_id' => true),
+      'r_tag_0' => array('r_tag_id' => true),
     ));
-    $this->assertEqual(array_keys($schema['columns']), array('pk', 'comment', 'tag'));
+    $this->assertEqual(array_keys($schema['columns']), array('pk', 'l_comment', 'r_tag'));
     
   }
   
@@ -48,6 +48,14 @@ class TestOfMeta extends UnitTestCase{
     $this->assertEqual($spec1, $spec2);
     $this->assertEqual($meta1, $meta2);
   }
+  
+  /*
+  function testModule() {
+    // module is a many to many self join
+    $module = Dormio_Meta::get('Module');
+    //var_dump(Dormio_Meta::get('Module_Module'));
+  }
+  */
 }
 
 ?>
