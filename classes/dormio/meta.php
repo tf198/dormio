@@ -40,12 +40,14 @@ class Dormio_Meta {
   private function __construct($klass, $spec) {
     $this->_klass = $klass;
     if(!isset($spec['table'])) $spec['table'] = $klass;
+    if(!isset($spec['version'])) $spec['version'] = 1;
     $this->_spec = self::_normalise($klass, $spec);
     
     // helpful pointers
     $this->columns = $this->_spec['fields'];
     $this->table = $this->_spec['table'];
     $this->pk = $this->_spec['fields']['pk']['sql_column'];
+    $this->version = $this->_spec['version'];
     $this->verbose = isset($spec['verbose']) ? $spec['verbose'] : self::title($this->_klass);
   }
   
@@ -65,7 +67,7 @@ class Dormio_Meta {
   * Update the fields in place
   * Fills in defaults and generates reverse defininitions and intermediate models as required
   */
-  private static function _normalise($model, $meta) {
+  static function _normalise($model, $meta) {
     isset($meta['indexes']) || $meta['indexes'] = array();
     // set a pk but it can be overriden by the fields
     $columns['pk'] = array('type' => 'ident', 'sql_column' => $model . "_id", 'is_field' => true);
@@ -117,8 +119,8 @@ class Dormio_Meta {
     $meta = array(
       'table' => $table,
       'fields' => array(
-        $model => array('type' => 'foreignkey', 'model' => $model),
-        $spec['model'] => array('type' => 'foreignkey', 'model' => $spec['model']),
+        "l_{$model}" => array('type' => 'foreignkey', 'model' => $model),
+        "r_{$spec['model']}" => array('type' => 'foreignkey', 'model' => $spec['model']),
       ),
     );
     $obj = new Dormio_Meta($table, $meta);
@@ -140,17 +142,27 @@ class Dormio_Meta {
   */
   function schema() {
     if(isset($this->_schema)) return $this->_schema;
-    $this->_schema = $this->_spec;
-    $this->_schema['columns'] = array_filter($this->_schema['fields'], array($this, 'filterSchema'));
-    unset($this->_schema['fields']);
+    $this->_schema = self::_schema($this->_spec);
     return $this->_schema;
+  }
+  
+  /**
+  * Converts a meta array into a schema array.
+  * Removes non-field entries and renames 'fields' to 'columns'
+  * @param  array   $spec   Meta spec
+  * @return array           Schema spec
+  */
+  static function _schema($spec) {
+    $spec['columns'] = array_filter($spec['fields'], array('Dormio_Meta', 'filterSchema'));
+    unset($spec['fields']);
+    return $spec;
   }
   
   /**
   * array_filter for schema()
   * @access private
   */
-  function filterSchema($spec) {
+  static function filterSchema($spec) {
     return (isset($spec['is_field']));
   }
   
