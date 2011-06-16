@@ -38,7 +38,7 @@ class Dormio_Schema {
 	
   /**
   * Get a new Schema instance
-  * @param  string  $lang     A valid PDO driver name as returned by PDO::getAttribute(PDO::ATTR_DRIVER_NAME)  
+  * @param  string  $lang     A valid PDO driver name or a PDO instance
   * @param  mixed   $spec     You can pass it a schema array, a meta object or even a model
   * @return Dormio_Schema_Driver
   */
@@ -47,6 +47,7 @@ class Dormio_Schema {
     if($spec instanceof Dormio_Model) $spec = $spec->_meta->schema();
     if($spec instanceof Dormio_Meta) $spec = $spec->schema();
     if(is_string($spec)) $spec = Dormio_Meta::get($spec)->schema();
+    if($lang instanceof PDO) $lang = $lang->getAttribute(PDO::ATTR_DRIVER_NAME);
     // allow multiple languages to use the same schema rules
 		switch($lang) {
 			case 'mysql':
@@ -70,10 +71,14 @@ class Dormio_Schema {
 */
 interface Dormio_Schema_Driver {
 	public function __construct($spec);
+  // SQL generation
+  public function createSQL();
+  public function upgradeSQL($newspec);
+  // Code generation
+  public function upgradePHP($newspec);
 	// Table operations
-	public function createTable();
+	public function createTable($drop=false);
 	public function renameTable($newname);
-	public function upgradeTo($newspec);
 	public function dropTable();
 	// Column Operations
 	public function addColumn($columnname, $spec, $after=false);
@@ -176,32 +181,34 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 		return $result;
 	}
 	
+  public function createSQL($drop=false) {
+    $this->startUpgrade(array());
+    $this->createTable($drop);
+    $this->finishUpgrade($this->spec);
+    return $this->sql;
+  }
+  
 	// Table operations
 	public function createTable($drop=false) {
-    $sql = ($drop) ? $this->dropTable() : array();
-		$sql[] = "CREATE TABLE {$this->quoteIdentifier($this->spec['table'])} (".implode(', ',$this->getColumns($this->spec)).")";
+    if($drop) $this->dropTable();
+		$this->sql[] = "CREATE TABLE {$this->quoteIdentifier($this->spec['table'])} (".implode(', ',$this->getColumns($this->spec)).")";
 		if(isset($this->spec['indexes'])) {
 			foreach($this->spec['indexes'] as $index_name=>$index_spec) {
-				$sql=array_merge($sql, $this->createIndex($index_name, $index_spec));
+				$this->sql[] = $this->createIndex($index_name, $index_spec);
 			}
 		}
-		//echo implode("\n", $sql)."\n";
-		return $sql;
 	}
 	
 	public function renameTable($newname) {
-		$sql="ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} RENAME TO {$this->quoteIdentifier($newname)}";
+    $this->sql[] = "ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} RENAME TO {$this->quoteIdentifier($newname)}";
 		$this->spec['table']=$newname;
-		return array($sql);
 	}
-	
-	public function upgradeTo($newspec) {
-		$sql=array();
-		
-		$orig=$this->spec;
+  
+  private function _upgradePath($newspec) {
+    $actions=array();
 		
 		// first check for a table rename
-		if($newspec['table']!=$this->spec['table']) $sql=array_merge($sql, $this->renameTable($newspec['table']));
+		if($newspec['table']!=$this->spec['table']) $actions[] = array('renameTable', $newspec['table']);
 		
 		// calculate column differences
 		$removed=array_diff_assoc($this->spec['columns'], $newspec['columns']);
@@ -210,102 +217,142 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 		// try and match any removed against added and do a rename
 		foreach($removed as $colname => $colspec) {
 			if(($match=array_search($colspec, $added))!==false) {
-				$sql=array_merge($sql, $this->renameColumn($colname, $match));
+				$actions[] = array('renameColumn', $colname, $match);
 				unset($removed[$colname]);
 				unset($added[$match]);
 			}
 		}
 		
 		// remove old columns
-		foreach($removed as $col=>$colspec) $sql=array_merge($sql, $this->dropColumn($col));
+		foreach($removed as $col=>$colspec) $actions[] = array('dropColumn', $col);
 		// add new ones at the correct position
 		$prev=0;
 		foreach($newspec['columns'] as $col=>$colspec) {
-			if(isset($added[$col])) $sql=array_merge($sql, $this->addColumn($col, $colspec, $prev));
+			if(isset($added[$col])) $actions[] = array('addColumn', $col, $colspec, $prev);
 			$prev=$col;
-		}
-		
-		// check that the column names are now identical
-		if(array_keys($this->spec['columns'])!==array_keys($newspec['columns'])) {
-			throw new Dormio_Schema_Exception('Failed to migrate column names');
 		}
 		
 		// alter any column specifications
 		foreach($newspec['columns'] as $colname => $colvalue) {
-			if($this->spec['columns'][$colname]!==$colvalue) {
-				$sql=array_merge($sql,$this->alterColumn($colname, $colvalue));
+			if(isset($this->spec['columns'][$colname]) && $this->spec['columns'][$colname]!==$colvalue) {
+				$actions[] = array('alterColumn', $colname, $colvalue);
 			}
 		}
 		
-		// check that our schema has got to the correct place
-		if($this->spec!==$newspec) {
-			var_dump($this->spec, $newspec);
-			throw new Dormio_Schema_Exception('Failed to generate upgrade route');
+		return $actions;
+  }
+  
+  public function upgradePHP($newspec) {
+    $actions = $this->_upgradePath($newspec);
+    $output = array('<?php');
+    
+    $output[] = '$old_schema = ' . var_export($this->spec, true) . ';';
+    $output[] = '$new_schema = ' . var_export($newspec, true) . ';';
+    
+    $output[] = '$schema = Dormio_Schema::factory($pdo, $old_schema);';
+    $output[] = '$schema->startUpgrade($new_schema);';
+    
+    foreach($actions as $action) {
+      $params = array();
+      for($i=1; $i<count($action); $i++) {
+        $params[] = var_export($action[$i], true);
+      }
+      $output[] = '$schema->' . $action[0] . '(' . implode(', ', $params) . ');';
+    }
+    
+    $output[] = '$schema->finishUpgrade($new_schema);';
+    $output[] = '$schema->commitUpgrade($pdo);';
+    $output[] = "?>\n";
+    
+    return implode("\n", $output);
+  }
+  
+  public function startUpgrade($spec) {
+    $this->sql = array();
+  }
+  
+  public function finishUpgrade($spec) {
+    if($this->spec!==$spec) {
+			var_dump($this->spec, $spec);
+			throw new Dormio_Schema_Exception('Schema specification not valid');
 		}
+  }
+  
+  public function commitUpgrade($pdo) {
+    $this->batchExecute($pdo, $this->sql);
+  }
+	
+	public function upgradeSQL($newspec) {
 		
-		return $sql;
+    $actions = $this->_upgradePath($newspec);
+    
+    $this->startUpgrade($this->spec);
+    
+    foreach($actions as $action) {
+      $method = array_shift($action);
+      call_user_func_array(array($this, $method), $action);
+    }
+    
+    $this->finishUpgrade($newspec);
+		
+		return $this->sql;
 	}
 	
 	public function dropTable() {
-		$sql="DROP TABLE IF EXISTS {$this->quoteIdentifier($this->spec['table'])}";
-		return array($sql);
+    $this->sql[] = "DROP TABLE IF EXISTS {$this->quoteIdentifier($this->spec['table'])}";
 	}
 	
 	// Column Operations
 	public function addColumn($columnname, $colspec, $after=false) {
-		$sql="ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} ADD COLUMN {$this->quoteIdentifier($columnname)} {$this->getType($colspec)}";
+    $sql="ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} ADD COLUMN {$this->quoteIdentifier($columnname)} {$this->getType($colspec)}";
 		if($after!==false) {
 			$sql.=($after===0) ? ' FIRST' : ' AFTER '.$this->quoteIdentifier($after);
 		}
 		$this->insertAfter($this->spec['columns'], $columnname, $colspec, $after);
-		return array($sql);
+		$this->sql[] = $sql;
 	}
 	
 	public function alterColumn($columnname, $newspec, $after=false) {
-		if(!isset($this->spec['columns'][$columnname])) throw new Dormio_Schema_Exception("Column '{$columnname}' doesn't exist");
+    if(!isset($this->spec['columns'][$columnname])) throw new Dormio_Schema_Exception("Column '{$columnname}' doesn't exist");
 		$sql="ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} MODIFY COLUMN {$this->quoteIdentifier($columnname)} {$this->getType($newspec)}";
 		if($after!==false) {
 			$sql.=($after===0) ? ' FIRST' : ' AFTER '.$this->quoteIdentifier($after);
 		}
+    $this->sql[] = $sql;
 		$this->insertAfter($this->spec['columns'], $columnname, $newspec, $after);
-		return array($sql);
 	}
 	
 	public function renameColumn($oldcolumnname, $newcolumnname) {
-		$sql="ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} CHANGE COLUMN {$this->quoteIdentifier($oldcolumnname)} {$this->quoteIdentifier($newcolumnname)} {$this->getType($this->spec['columns'][$oldcolumnname])}";
+    $this->sql[] = "ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} CHANGE COLUMN {$this->quoteIdentifier($oldcolumnname)} {$this->quoteIdentifier($newcolumnname)} {$this->getType($this->spec['columns'][$oldcolumnname])}";
 		$this->insertAfter($this->spec['columns'], $newcolumnname, $this->spec['columns'][$oldcolumnname], $oldcolumnname);
 		unset($this->spec['columns'][$oldcolumnname]);
-		return array($sql);
 	}
 	
 	public function dropColumn($columnname) {
-		if(!isset($this->spec['columns'][$columnname])) throw new Dormio_Schema_Exception("Column '{$columnname}' doesn't exist");
-		$sql="ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} DROP COLUMN {$this->quoteIdentifier($columnname)}";
+    if(!isset($this->spec['columns'][$columnname])) throw new Dormio_Schema_Exception("Column '{$columnname}' doesn't exist");
+		$this->sql[] = "ALTER TABLE {$this->quoteIdentifier($this->spec['table'])} DROP COLUMN {$this->quoteIdentifier($columnname)}";
 		unset($this->spec['columns'][$columnname]);
-		return array($sql);
 	}
 	
 	// Index Operations
-	public function createIndex($indexname, $spec) {
+	private function createIndex($indexname, $spec) {
 		$cols=array();
 		foreach($spec as $name=> $dir) $cols[]=$this->quoteIdentifier($name).' '.(($dir) ? 'ASC' : 'DESC');
     $sql="CREATE {$this->specific($spec,'modifiers')} INDEX {$this->quoteIdentifier($this->spec['table'].'_'.$indexname)} {$this->specific($spec,'index_type', 'USING %s')} ON {$this->quoteIdentifier($this->spec['table'])} (".implode(', ',$cols).")";
 		$sql=preg_replace('/ +/',' ', $sql);
-		return array($sql);
+		return $sql;
 	}
 	
 	public function addIndex($indexname, $spec) {
 		if(isset($this->spec['indexes'][$indexname])) throw new Dormio_Schema_Exception("Index '{$indexname}' already exisits");
-		$sql=$this->createIndex($indexname, $spec);
+		$this->sql[] = $this->createIndex($indexname, $spec);
 		$this->spec['indexes'][$indexname]=$spec;
-		return $sql;
 	}
 	
 	public function dropIndex($indexname) {
 		if(!isset($this->spec['indexes'][$indexname])) throw new Dormio_Schema_Exception("Index '{$indexname}' doesn't exist");
-		$sql="DROP INDEX {$this->quoteIdentifier($this->spec['table'].'_'.$indexname)} ON {$this->quoteIdentifier($this->spec['table'])}";
+		$this->sql[] = "DROP INDEX {$this->quoteIdentifier($this->spec['table'].'_'.$indexname)} ON {$this->quoteIdentifier($this->spec['table'])}";
 		unset($this->spec['indexes'][$indexname]);
-		return array($sql);
 	}
 	
 	protected function specific($spec, $name, $formatter='%s') {

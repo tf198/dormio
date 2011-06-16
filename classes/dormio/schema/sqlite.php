@@ -30,9 +30,6 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 
 	protected $version='sqlite';
 	
-	private $can_upgrade=true;
-	private $map;
-	
 	public function quoteIdentifier($identifier) {
 		return '"'.$identifier.'"';
 	}
@@ -60,67 +57,65 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 		}
 	}
 	
-	public function upgradeTo($newspec) {
-		$this->can_upgrade=true;
-		$this->map=array();
-		// see whether we can use the standard upgrade process
-		$oldspec=$this->spec;
-		$sql=parent::upgradeTo($newspec);
-		if($this->can_upgrade) {
-			return $sql;
-		}
+  public function startUpgrade($spec) {
+    parent::startUpgrade($spec);
+    $this->oldspec = $this->spec;
+    $this->can_upgrade = true;
+    $this->map = array();
+  }
+  
+  public function finishUpgrade($newspec) {
+		if($this->can_upgrade) return parent::finishUpgrade($newspec);
 		
-		// previous step not wasted as it at least determined the column renames
-		
+    // need to rewrite the sql
+    $this->sql = array();
+    
 		// create the new table
 		$this->spec=$newspec;
-		if($this->spec['table']==$oldspec['table']) $this->spec['table'].='_new';
-		$sql=$this->createTable();
+		if($this->spec['table']==$this->oldspec['table']) $this->spec['table'].='_new';
+		$this->createTable();
 		
     // create a select statement for the data copy
 		$columns=array();
 		foreach($this->spec['columns'] as $key=>$spec) {
       if(isset($this->map[$key])) {
 				$columns[]=$this->quoteIdentifier($this->map[$key]);
-			} else if(isset($oldspec['columns'][$key])) { // straight data copy
+			} else if(isset($this->oldspec['columns'][$key])) { // straight data copy
 				$columns[]=$this->quoteIdentifier($spec['sql_column']);
 			} else { // use NULL
 				$columns[]='NULL';
 			}
 		}
-		$sql[]="INSERT INTO {$this->quoteIdentifier($this->spec['table'])} SELECT ".implode(', ',$columns)." FROM {$this->quoteIdentifier($oldspec['table'])}";
+		$this->sql[] = "INSERT INTO {$this->quoteIdentifier($this->spec['table'])} SELECT ".implode(', ',$columns)." FROM {$this->quoteIdentifier($this->oldspec['table'])}";
 		
 		// drop the old table
-		$sql[]="DROP TABLE {$this->quoteIdentifier($oldspec['table'])}";
+		$this->sql[] = "DROP TABLE {$this->quoteIdentifier($this->oldspec['table'])}";
 		
 		// rename the new table if required
 		if($this->spec['table']!=$newspec['table']) {
-			$sql=array_merge($sql,$this->renameTable($newspec['table']));
+			$this->renameTable($spec['table']);
 		}
-		
-		return $sql;
+    
+    parent::finishUpgrade($newspec);
 	}
-	
+  
 	public function addColumn($columnname, $newspec, $after=false) {
 		$this->can_upgrade=false;
-		return parent::addColumn($columnname, $newspec, $after);
 	}
 	
 	public function alterColumn($columnname, $newspec) {
 		// stuff will map anyway so we just set the flag
 		$this->can_upgrade=false;
-		return parent::alterColumn($columnname, $newspec);
 	}
 	
 	public function renameColumn($oldcolumnname, $newcolumnname) {
+    // remember the old to new column mappings
 		$this->map[$newcolumnname]=$oldcolumnname;
 		$this->can_upgrade=false;
-		return parent::renameColumn($oldcolumnname, $newcolumnname);
 	}
 	
 	public function dropColumn($columnname) {
 		$this->can_upgrade=false;
-		return parent::dropColumn($columnname);
 	}
 }
 ?>

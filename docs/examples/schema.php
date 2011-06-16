@@ -40,7 +40,7 @@ while($row = $stmt->fetch(PDO::FETCH_NUM)) {
 echo "\nMySQL statements that would be used\n---\n";
 foreach($models as $model) {
   $sf = Dormio_Schema::factory('mysql', $model);
-  foreach($sf->createTable() as $sql) echo "{$sql};\n";
+  foreach($sf->createSQL() as $sql) echo "{$sql};\n";
 }
 
 return 42; // for our auto testing

@@ -99,27 +99,33 @@ class TestOfPDOSchemaFactory extends UnitTestCase{
 	
 	public function testTableOps() {
 		$schema=Dormio_Schema::factory('sqlite', $this->clients);
-		$sql=$schema->createTable();
-		$this->assertEqual($sql[0], 'CREATE TABLE "client" ("ClientId" INTEGER PRIMARY KEY AUTOINCREMENT, "ClientName" TEXT, "ClientAge" INTEGER)');
-		$sql=$schema->renameTable('new_client');
-		$this->assertEqual($sql[0], 'ALTER TABLE "client" RENAME TO "new_client"');
-		$sql=$schema->dropTable();
-		$this->assertEqual($sql[0], 'DROP TABLE IF EXISTS "new_client"');
+    $schema->sql = array();
+		$schema->createTable();
+		$this->assertEqual($schema->sql[0], 'CREATE TABLE "client" ("ClientId" INTEGER PRIMARY KEY AUTOINCREMENT, "ClientName" TEXT, "ClientAge" INTEGER)');
+    $schema->sql = array();
+		$schema->renameTable('new_client');
+		$this->assertEqual($schema->sql[0], 'ALTER TABLE "client" RENAME TO "new_client"');
+    $schema->sql = array();
+		$schema->dropTable();
+		$this->assertEqual($schema->sql[0], 'DROP TABLE IF EXISTS "new_client"');
 	}
 	
 	public function testColumnOps() {
-		$schema=Dormio_Schema::factory('sqlite', $this->clients);
-		$sql=$schema->addColumn('Address', array('type'=>'string'));
-		$this->assertEqual($sql[0], 'ALTER TABLE "client" ADD COLUMN "Address" TEXT');
+		$schema=Dormio_Schema::factory('mysql', $this->clients);
+    $schema->sql = array();
+		$schema->addColumn('Address', array('type'=>'string'));
+		$this->assertEqual($schema->sql[0], 'ALTER TABLE `client` ADD COLUMN `Address` VARCHAR(255)');
 		
 	}
 	
 	public function testIndexOps() {
 		$schema=Dormio_Schema::factory('mysql', $this->clients);
-		$sql=$schema->addIndex('TestIndex',array('ClientName' => true, 'Address' => false));
-		$this->assertEqual($sql[0], 'CREATE INDEX `client_TestIndex` ON `client` (`ClientName` ASC, `Address` DESC)');
-		$sql=$schema->dropIndex('TestIndex');
-		$this->assertEqual($sql[0], 'DROP INDEX `client_TestIndex` ON `client`');
+    $schema->sql = array();
+		$schema->addIndex('TestIndex',array('ClientName' => true, 'Address' => false));
+		$this->assertEqual($schema->sql[0], 'CREATE INDEX `client_TestIndex` ON `client` (`ClientName` ASC, `Address` DESC)');
+    $schema->sql = array();
+		$schema->dropIndex('TestIndex');
+		$this->assertEqual($schema->sql[0], 'DROP INDEX `client_TestIndex` ON `client`');
 	}
 	
 	public function testBadTypeData() {
@@ -151,8 +157,8 @@ class TestOfPDOSchemaFactory extends UnitTestCase{
 	public function testMysqlUpgradeRoute() {
 		$schema=Dormio_Schema::factory('mysql', $this->clients);
 		$script=fopen(dirname(__FILE__).'/output/upgrade_mysql.sql', 'w');
-		$sql=$schema->createTable();
-		$sql=array_merge($sql, $schema->upgradeTo($this->clients2));
+		$sql=$schema->createSQL();
+		$sql=array_merge($sql, $schema->upgradeSQL($this->clients2));
 		$post_upgrade=$schema->createTable();
 		$schema2=Dormio_Schema::factory('mysql', $this->clients2);
 		$target=$schema2->createTable();
@@ -168,23 +174,27 @@ class TestOfPDOSchemaFactory extends UnitTestCase{
 	public function testSqliteUpgradeRoute() {
 		$pdo=new PDO('sqlite::memory:');
 		$schema=Dormio_Schema::factory('sqlite', $this->clients);
-		$schema->batchExecute($pdo, $schema->createTable());
+		$schema->batchExecute($pdo, $schema->createSQL());
 		// create some test data
 		$pdo->exec("INSERT INTO client (ClientName, ClientAge) VALUES ('Tris', 29)");
 		// upgrade the schema
-		$sql=$schema->upgradeTo($this->clients2);
+		$sql=$schema->upgradeSQL($this->clients2);
     $schema->batchExecute($pdo, $sql);
 		
-		// create a brand new create statement and compare it to the stored SQLITE one
-		$schema2=Dormio_Schema::factory('sqlite', $this->clients2);
-		$sql2=$schema2->createTable();
-		$result=$pdo->query("SELECT sql FROM sqlite_master WHERE type='table' AND tbl_name='detailed_client'")->fetch();
-		$this->assertEqual($result[0], $sql2[0]);
+		$this->_validateUpgrade($pdo);
 		
 		// check the data got upgraded
 		$result=$pdo->query("SELECT * FROM detailed_client WHERE ClientId=1")->fetch(PDO::FETCH_ASSOC);
     $this->assertEqual($result['clientname'],'Tris');
 	}
+  
+  private function _validateUpgrade($pdo) {
+    // create a brand new create statement and compare it to the stored SQLITE one
+		$schema2=Dormio_Schema::factory('sqlite', $this->clients2);
+		$sql2=$schema2->createSQL();
+		$result=$pdo->query("SELECT sql FROM sqlite_master WHERE type='table' AND tbl_name='detailed_client'")->fetch(PDO::FETCH_NUM);
+		$this->assertEqual($result[0], $sql2[0]);
+  }
 	
 	public function testTypes() {
 		$schema=Dormio_Schema::factory('sqlite', $this->clients);
@@ -215,5 +225,23 @@ class TestOfPDOSchemaFactory extends UnitTestCase{
 		$this->assertTrue($schema->insertAfter($orig, 'six', 6, 'two'));
 		$this->assertEqual(implode(' ',$orig), '5 1 2 6 3 4');
 	}
+  
+  function testCodePath() {
+    $pdo=new PDO('sqlite::memory:');
+  
+    $sf = Dormio_Schema::factory('sqlite', $this->clients);
+    $sf->createSQL();
+    $sf->commitUpgrade($pdo);
+    
+    $pdo->exec("INSERT INTO client (ClientName, ClientAge) VALUES ('Tris', 29)");
+    
+    $upgrade = dirname(__FILE__).'/output/upgrade_sqlite.php';
+    file_put_contents($upgrade, $sf->upgradePHP($this->clients2));
+    include $upgrade;
+    
+    $this->_validateUpgrade($pdo);
+    $result=$pdo->query("SELECT * FROM detailed_client WHERE ClientId=1")->fetch(PDO::FETCH_ASSOC);
+    $this->assertEqual($result['clientname'],'Tris');
+  }
 }
 ?>
