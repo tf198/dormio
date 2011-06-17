@@ -27,6 +27,8 @@
 * Migration scripts should be stored in the migrations folder under a module folder
 * and be in the format <timestamp>_<model>.php.  You can auto-generate them using
 * php index.php migrate generate <module> and edit them by hand.
+* @package dormio
+* @subpackage schema
 */
 class Controller_Migrate {
   function __construct() {
