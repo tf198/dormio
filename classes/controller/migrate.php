@@ -161,7 +161,7 @@ EOF;
       $current_schema = unserialize($m->schema);
       $sf = Dormio_Schema::factory($this->dormio->db, $current_schema);
       $sql = $sf->upgradeSQL($target->schema());
-    } catch(PDOException $e) {
+    } catch(Exception $e) {
       $sf = Dormio_Schema::factory($this->dormio->db, $target);
       $sql = $sf->createSQL();
     }
