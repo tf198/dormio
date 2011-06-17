@@ -132,7 +132,7 @@ EOF;
     $config = Dormio_Meta::config($module);
     if(isset($config['models'])) {
       foreach($config['models'] as $model) {
-        $code = $this->generate($model);
+        $code = $this->upgrade_db($model);
         if($code) {
           $filename = $migrations . DIRECTORY_SEPARATOR . time() . "_" . $model . ".php";
           file_put_contents($filename, $code);
