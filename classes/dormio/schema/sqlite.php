@@ -93,7 +93,7 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 		
 		// rename the new table if required
 		if($this->spec['table']!=$newspec['table']) {
-			$this->renameTable($spec['table']);
+			$this->renameTable($newspec['table']);
 		}
     
     parent::finishUpgrade($newspec);
