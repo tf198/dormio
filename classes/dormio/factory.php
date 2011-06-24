@@ -71,7 +71,20 @@ class Dormio_Factory {
     if(!isset(self::$_cache[$name])) self::$_cache[$name] = new Dormio_Manager($name, $this->db, $this->dialect);
     return self::$_cache[$name];
   }
-  
+
+  /**
+   * Create a new instance with the supplied parameters and save it.
+   * @param string $name    Name of model
+   * @param array $params   Assoc array of field values
+   * @return Dormio_Model   Model instance (already saved)
+   */
+  function create($name, $params) {
+    $model = $this->get($name);
+    $model->_updated = $params;
+    $model->save();
+    return $model;
+  }
+
   /**
 	* Get a PDO instance based on a config.
   * <code>
