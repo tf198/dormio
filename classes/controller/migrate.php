@@ -69,7 +69,7 @@ EOF;
     
     // get the most recent applied migration
     try {
-      $m = $this->dormio->manager('Dormio_Migration')->filter('module', '=', basename($path))->orderBy('-applied')->limit(1)->get();
+      $m = $this->dormio->manager('Dormio_Migration')->filter('module', '=', basename($path))->orderBy('-pk')->limit(1)->get();
       $last = $path . DIRECTORY_SEPARATOR . "migrations" . DIRECTORY_SEPARATOR . $m->file;
     } catch(Exception $e) {
       $last = "";
@@ -90,6 +90,7 @@ EOF;
     fputs(STDERR, "Migrating {$parts[$c-3]} {$id[1]} {$id[0]}...\n");
     
     try {
+      $dormio = $this->dormio;
       $pdo->beginTransaction();
       $schema = include($script);
       $pdo->commit();
@@ -150,13 +151,14 @@ EOF;
   * Returns a code fragment to upgrade a specific model.
   * @param  string  $model    Model to upgrade
   * @return string            Valid PHP code to upgrade the model.
+  * @todo   Handle class removal (DROP TABLE)
   */
   function upgrade_db($model) {
     $target = Dormio_Meta::get($model);
     
     try {
       // get the last applied migration
-      $m = $this->dormio->manager('Dormio_Migration')->filter('model', '=', strtolower($model))->orderBy('-applied')->limit(1)->get();
+      $m = $this->dormio->manager('Dormio_Migration')->filter('model', '=', strtolower($model))->orderBy('-pk')->limit(1)->get();
       
       $current_schema = unserialize($m->schema);
       $sf = Dormio_Schema::factory($this->dormio->db, $current_schema);
@@ -172,7 +174,7 @@ EOF;
     $output .= "\nEND_SQL;\n\n";
     $output .= <<< EOF
 foreach(explode("\\n", \$sql) as \$line) {
-  if(\$line!='' and \$line{0}!='#') \$pdo->exec(\$line);
+  if(\$line!='' and \$line{0}!='#') \$dormio->db->exec(\$line);
 }
 
 // Need to return a serialized version of the schema
@@ -183,7 +185,7 @@ EOF;
   }
   
   function show() {
-    $migrations = $this->dormio->manager('Dormio_Migration');
+    $migrations = $this->dormio->manager('Dormio_Migration')->orderBy('-pk');
     foreach($migrations as $migration) {
       fprintf(STDERR, "%20s %20s %s\n", $migration->module, $migration->model, $migration->file);
     }
