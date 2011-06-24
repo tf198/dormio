@@ -201,6 +201,10 @@ abstract class Dormio_Model {
   function _setData($column, $value) {
     $this->_data[$this->_dataIndex($column)] = $value;
   }
+
+  function _forget($name) {
+    unset($this->_data[$this->_dataIndex($name)]);
+  }
   
   /**
   * Does the heavy lifting of returning values, related objects and managers.
