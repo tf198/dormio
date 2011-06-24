@@ -146,7 +146,7 @@ class TestOfModel extends TestOfDB{
     $this->assertSQL('SELECT "user"."user_id" AS "user_user_id", "user"."name" AS "user_name" FROM "user"');
     // only one prepared statement with two execution sets.  Params evaluate to 3 now as they are a reference
     //var_dump($this->db->digest());
-    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" WHERE "blog"."the_blog_user" = ?', array(array(3), array(3), array(3))));
+    $this->assertEqual($this->db->digest(), array('SELECT "blog"."blog_id" AS "blog_blog_id", "blog"."title" AS "blog_title", "blog"."the_blog_user" AS "blog_the_blog_user" FROM "blog" WHERE "blog"."the_blog_user" = ?', array(array(false), array(false), array(false))));
     
     $this->assertDigestedAll();
   }
