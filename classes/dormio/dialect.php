@@ -90,8 +90,10 @@ class Dormio_Dialect_Generic {
     return $this->quoteIdentifiers($this->compile($spec));
   }
   
-  function update($spec, $fields) { 
+  function update($spec, $fields, $custom_fields=array()) {
+    $set = array();
     foreach($fields as $field) $set[] = "{$field}=?";
+    $set = array_merge($set, $custom_fields);
     $set = implode(', ', $set);
     $base = "UPDATE {$spec['from']} SET {$set} ";
     if(isset($spec['join'])) {
