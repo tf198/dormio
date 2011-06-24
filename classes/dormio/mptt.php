@@ -58,6 +58,10 @@ class Dormio_MPTT extends Dormio_Model {
     return $this->objects()->where('%lhs% <= ? AND %rhs% >= ?', array($this->lhs, $this->rhs))->orderBy('lhs');
   }
 
+  function descendants() {
+    return ($this->rhs - $this->lhs - 1) / 2;
+  }
+
   function add($obj) {
     $obj->lhs = $this->rhs;
     $obj->rhs = $this->rhs + 1;
@@ -72,10 +76,6 @@ class Dormio_MPTT extends Dormio_Model {
       throw $e;
     }
     $this->_data[$this->_dataIndex('rhs')] += 2;
-  }
-
-  function descendants() {
-    return ($this->rhs - $this->lhs - 1) / 2;
   }
 
   function delete($preview=false) {
