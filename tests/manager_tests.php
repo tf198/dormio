@@ -232,7 +232,7 @@ class TestOfManager extends TestOfDB{
       array('Andy Blog 1', 'Andy Blog 1', 'Andy Blog 2'));
     
     // doesn't de-dup automatically
-    $set = $blogs->where('{tags__tag} IN (?, ?)', array('Yellow', 'Indigo'));
+    $set = $blogs->where('%tags__tag% IN (?, ?)', array('Yellow', 'Indigo'));
     $this->assertQueryset($set, 'title',
       array('Andy Blog 1', 'Andy Blog 1'));
     
