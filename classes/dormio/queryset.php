@@ -213,16 +213,24 @@ class Dormio_Queryset {
   * Joins will be added automatically as required
   * @access private
   */
-  function _resolveString($str) {
-    return preg_replace_callback('/\{([a-z_]+)\}/', array($this, '_resolveStringCallback'), $str);
+  function _resolveString($str, $local=false) {
+    $callback = ($local) ? '_resolveStringLocalCallback' : '_resolveStringCallback';
+    return preg_replace_callback('/%([a-z_]+)%/', array($this, $callback), $str);
   }
   /**
   * @ignore
   */
   function _resolveStringCallback($matches) {
+    if($matches[1]=='table') return "{" . $this->_meta->table . "}";
     return $this->_resolveField($matches[1]);
   }
-  
+  /*
+  * @ignore
+  */
+  function _resolveStringLocalCallback($matches) {
+    return $this->_meta->columns[$matches[1]]['sql_column'];
+  }
+
   /**
   * Resolves path to the format "{table}.{column}".
   * @access private
@@ -326,12 +334,13 @@ class Dormio_Queryset {
   * @param  array $params   Assoc array of values to set
   * @return array           array(sql, params)
   */
-  function update($params) {
+  function update($params, $custom_fields=array(), $custom_params=array()) {
     $o = clone $this;
     $o->_selectIdent();
-    $update_params = array_merge(array_values($params), $o->params);
+    $update_params = array_merge(array_values($params), $custom_params, $o->params);
     $update_fields = $o->_resolveLocal(array_keys($params));
-    return array($this->dialect->update($o->query, $update_fields), $update_params);
+    foreach($custom_fields as &$field) $field = $this->_resolveString($field, true);
+    return array($this->dialect->update($o->query, $update_fields, $custom_fields), $update_params);
   }
   
   /**
