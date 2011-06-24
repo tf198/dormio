@@ -70,7 +70,7 @@ class Dormio_Meta {
   static function _normalise($model, $meta) {
     isset($meta['indexes']) || $meta['indexes'] = array();
     // set a pk but it can be overriden by the fields
-    $columns['pk'] = array('type' => 'ident', 'sql_column' => $model . "_id", 'is_field' => true);
+    $columns['pk'] = array('type' => 'ident', 'sql_column' => $model . "_id", 'is_field' => true, 'verbose' => 'ID');
     if(!isset($meta['fields'])) throw new Dormio_Meta_Exception("Missing required 'fields' on meta");
     foreach($meta['fields'] as $key=>$spec) {
       isset($spec['verbose']) || $spec['verbose'] = self::title($key);
