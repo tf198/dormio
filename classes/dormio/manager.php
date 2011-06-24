@@ -30,10 +30,14 @@
 * @package dormio
 * @example usage.php Example usage
 */
-class Dormio_Manager extends Dormio_Queryset implements Iterator {
+class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
   protected $_db = null;
   protected $_stmt = null;
-  
+  protected $_iter = null;
+  protected $_qualified = true;
+
+  public $buffered_query = false;
+
   /**
   * Create a new manager object based on the supplied meta.
   * @param  string|Dormio_Meta  $meta The meta class to use
@@ -53,7 +57,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   */
   function __clone() {
     $this->_stmt = null;
-    $this->_model = null;
+    $this->_iter = null;
   }
   
   /**
@@ -65,17 +69,15 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   */
   function get($pk=null) {
     $o = $this->limit(2);
-    if($pk) {
-      $o = $o->filter('pk', '=', $pk);
-    }
-    //if(count($o->query['where'])==0) throw new Dormio_Manager_Exception('Need some criteria for get()');
-    $o->_evaluate();
+    if($pk) $o = $o->filter('pk', '=', $pk);
+    $o->evaluate();
     $o->_stmt->execute($o->params);
     $data = $o->_stmt->fetchall(PDO::FETCH_ASSOC);
     if(isset($data[1])) throw new Dormio_Manager_Exception('More than one record returned');
     if(!isset($data[0])) throw new Dormio_Manager_Exception('No record returned');
-    $o->_model->_hydrate($data[0], true);
-    return $o->_model;
+    $model = $this->_meta->instance($this->_db, $this->dialect);
+    $model->_hydrate($data[0], true);
+    return $model;
   }
   
   /**
@@ -105,9 +107,9 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   * @param  array   $params   A set of key => values to be updated 
   * @return int               The number of rows updated
   */
-  function update($params) {
-    $sql = parent::update($params);
-    return $this->batchExecute(array($sql));
+  function update($params, $custom_fields=array(), $custom_params=array()) {
+    $sql = parent::update($params, $custom_fields, $custom_params);
+    return $this->batchExecute(array($sql), false);
   }
   
   /**
@@ -171,6 +173,7 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
   * @throws Dormio_Exception If it cannot execute the query
   */
   function execute($query) {
+    if(!is_array($query)) $query = array($query, array());
     try {
       $stmt = $this->_db->prepare($query[0]);
       $stmt->execute($query[1]);
@@ -181,82 +184,121 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
       throw new Dormio_Exception("Failed to execute: {$query[0]}\n{$e}");
     }
   }
-  
+
   /**
   * Execute many queries in a single transaction.
   *
-  * @param  array   $sql    An array of queries suitable for passing to execute()
-  * @return int             The total number of affected rows
+  * @param  array   $sql          An array of queries suitable for passing to execute()
+  * @param boolean $transaction   Whether to wrap in a transaction or not
+  * @return int                   The total number of affected rows
   */
-  function batchExecute($sql) {
-    $this->_db->beginTransaction();
+  function batchExecute($sql, $transaction=true) {
+    if($transaction) $this->_db->beginTransaction();
     $result = 0;
     foreach($sql as $q) {
       $result += $this->execute($q);
     }
-    $this->_db->commit();
+    if($transaction) $this->_db->commit();
     return $result;
   }
   
   /**
-  * Compile the current query and store the PDOStatment for execution.
-  * Manager instance cannot be modified after this.
-  * @access private
-  */
-  private function _evaluate() {
-    if($this->_stmt) throw new Dormio_Manager_Exception('Statement already compiled');
-    $query = $this->select();
-    //print_r($query);
-    $this->_stmt = $this->_db->prepare($query[0]);
-    $this->_model = $this->_meta->instance($this->_db, $this->dialect);
+   * Load some custom SQL into the manager.
+   * Will dereference fields e.g. %name% and quote identifiers {name}.
+   * SELECT * FROM %table% WHERE %name%=?
+   * @param string $sql           SQL Query
+   * @param array $params         Query parameters
+   * @param boolean $dereference  Whether or not to dereference %fields$
+   * @param boolean $qualified    Whether or not the fields are qualified
+   */
+  public function customSQL($sql, $params, $dereference=true, $qualified=false) {
+    if($dereference) $sql = $this->_resolveString($sql);
+    $sql = $this->dialect->quoteIdentifiers($sql);
+    $this->_qualified = $qualified;
+    $this->evaluate($sql, $params);
   }
-  
+
+  /**
+  * Compile the current query and store the PDOStatment for execution.
+  * Can be overriden with custom SQL and parameters.
+  * Manager instance cannot be modified after this.
+  * @param  string  $sql    Custom sql (schema specific)
+  * @param  array   $params Custom parameters
+  */
+  public function evaluate($sql=false, $params=false) {
+    if($this->_stmt) throw new Dormio_Manager_Exception('Statement already compiled');
+    if(!$sql) {
+      $query = $this->select();
+      $sql = $query[0];
+    }
+    if($params) $this->params = $params;
+    //print_r($query);
+    $this->_stmt = $this->_db->prepare($sql);
+  }
+
+  /**
+   * Get an iterator for the current queryset
+   * Note: a querset can only be evaluated once
+   * @return Iterator
+   */
+  public function getIterator() {
+    if(!$this->_stmt) $this->evaluate();
+    if(!$this->_iter) {
+      $model = $this->_meta->instance($this->_db, $this->dialect);
+      $klass = ($this->buffered_query) ? "Dormio_Buffered_Iterator" : "Dormio_Iterator";
+      $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_qualified);
+    }
+    return $this->_iter;
+  }
+}
+
+/**
+ * Traversable dataset - buffers the results
+ * @package dormio
+ * @subpackage manager
+ */
+class Dormio_Buffered_Iterator implements Iterator {
+
+  function __construct($stmt, $params, $model, $qualified=true) {
+    $this->_model = $model;
+    $this->_stmt = $stmt;
+    $this->_params = $params;
+    $this->_qualified = $qualified;
+  }
+
   /**
   * Rewind the iterator.
   * Actual execution is done here
-  * @access private
   */
   function rewind() {
-    //print "REWIND\n";
-    if(!$this->_stmt) $this->_evaluate();
-    $this->_stmt->execute($this->params);
+    $this->_stmt->execute($this->_params);
     $this->_data = $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
     $this->_iter = new ArrayIterator($this->_data);
     $this->_iter->rewind();
     $this->_model->clear();
-    //$this->next();
-    //return $this->current();
   }
-  
+
   /**
   * Advance the iterator.
-  * @access private
   */
   function next() {
-    //print "NEXT\n";
-    //$data = $this->_stmt->fetch(PDO::FETCH_ASSOC);
     $this->_iter->next();
   }
-  
+
   /**
   * Is there a current model.
-  * @access private
   */
   function valid() {
-    //print "VALID\n";
-    //return ($this->_model->ident());
     return $this->_iter->valid();
   }
-  
+
   /**
   * Returns the current model.
-  * @access private
   */
   function current() {
-    //print "CURRENT\n";
     $data = $this->_iter->current();
     if($data) {
-      $this->_model->_hydrate($data, true); // dont need to clear as should be the same fields each time
+      $this->_model->_hydrate($data, $this->_qualified); // dont need to clear as should be the same fields each time
     } else {
       $this->_model->clear();
       $this->_data = null;
@@ -264,16 +306,70 @@ class Dormio_Manager extends Dormio_Queryset implements Iterator {
     }
     return $this->_model;
   }
-  
+
   /**
   * Returns the current model ident, or false.
   * @return int|false
-  * @access private
   */
   function key() {
-    //print "KEY\n";
-    //return $this->_model->ident();
     return $this->_iter->key();
+  }
+}
+
+/**
+ * Traversable dataset - non buffering
+ * @package dormio
+ * @subpackage manager
+ */
+class Dormio_Iterator implements Iterator {
+
+  function __construct($stmt, $params, $model) {
+    $this->_model = $model;
+    $this->_stmt = $stmt;
+    $this->_params = $params;
+  }
+
+  /**
+  * Rewind the iterator.
+  */
+  function rewind() {
+    $this->_stmt->execute($this->_params);
+    $this->_model->clear();
+    $this->next();
+  }
+
+  /**
+  * Advance the iterator.
+  */
+  function next() {
+    $data = $this->_stmt->fetch(PDO::FETCH_ASSOC);
+    if($data) {
+      $this->_model->_hydrate($data, true);
+    } else {
+      $this->_model->clear();
+    }
+  }
+
+  /**
+  * Is there a current model.
+  */
+  function valid() {
+    return ($this->_model->ident());
+  }
+
+  /**
+  * Returns the current model.
+  */
+  function current() {
+    return $this->_model;
+  }
+
+  /**
+  * Returns the current model ident, or false.
+  * @return int|false
+  */
+  function key() {
+    return $this->_model->ident();
   }
 }
 
@@ -327,6 +423,8 @@ class Dormio_Manager_Related extends Dormio_Manager {
   * $tag = $blog->tags->create(array('tag' => 'Grey'));
   * $blog->tags->add($tag);
   * </code>
+  * @param  array   $params   Values to set
+  * @return Dormio_Model      The created instance
   */
 	function create($params=array()) {
     $obj = $this->_meta->instance($this->_db, $this->dialect);
