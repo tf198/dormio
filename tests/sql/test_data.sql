@@ -39,3 +39,6 @@ INSERT INTO module VALUES (4, 'Tags');
 INSERT INTO module_module VALUES (1, 2, 1);
 INSERT INTO module_module VALUES (2, 3, 2);
 INSERT INTO module_module VALUES (3, 4, 2);
+
+INSERT INTO aro VALUES (1, 1, 4, '/');
+INSERT INTO aro VALUES (2, 2, 3, 'admin');

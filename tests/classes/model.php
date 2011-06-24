@@ -75,4 +75,12 @@ class Module extends Dormio_Model {
     ),
   );
 }
+
+class ARO extends Dormio_MPTT {
+  static $meta = array(
+    'fields' => array(
+      'name' => array('type' => 'string'),
+    )
+  );
+}
 ?>
