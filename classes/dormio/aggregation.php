@@ -41,7 +41,7 @@ class Dormio_Aggregation {
   */
   private function add($method, $extra=null, $field='pk') {
     $spec = $this->manager->_meta->column($field);
-    $this->manager->query['select'][] = "{$method}({$extra}{{$spec['sql_column']}}) AS {{$field}_" . strtolower($method) . "}";
+    $this->manager->query['select'][] = "{$method}({$extra}{{$spec['db_column']}}) AS {{$field}_" . strtolower($method) . "}";
     return $this;
   }
   

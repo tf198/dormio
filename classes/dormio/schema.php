@@ -176,7 +176,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 	public function getColumns() {
 		$result=array();
 		foreach($this->spec['columns'] as $colspec) {
-			$result[]=$this->quoteIdentifier($colspec['sql_column']).' '.$this->getType($colspec);
+			$result[]=$this->quoteIdentifier($colspec['db_column']).' '.$this->getType($colspec);
 		}
 		return $result;
 	}

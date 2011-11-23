@@ -46,7 +46,7 @@ class Dormio_Meta {
     // helpful pointers
     $this->columns = $this->_spec['fields'];
     $this->table = $this->_spec['table'];
-    $this->pk = $this->_spec['fields']['pk']['sql_column'];
+    $this->pk = $this->_spec['fields']['pk']['db_column'];
     $this->version = $this->_spec['version'];
     $this->verbose = isset($spec['verbose']) ? $spec['verbose'] : self::title($this->_klass);
   }
@@ -68,23 +68,29 @@ class Dormio_Meta {
   * Fills in defaults and generates reverse defininitions and intermediate models as required
   */
   static function _normalise($model, $meta) {
+    // check the basic array structure
     isset($meta['indexes']) || $meta['indexes'] = array();
-    // set a pk but it can be overriden by the fields
-    $columns['pk'] = array('type' => 'ident', 'sql_column' => $model . "_id", 'is_field' => true, 'verbose' => 'ID');
     if(!isset($meta['fields'])) throw new Dormio_Meta_Exception("Missing required 'fields' on meta");
+    
+    // set a pk but it can be overriden by the fields
+    $columns['pk'] = array('type' => 'ident', 'db_column' => $model . "_id", 'is_field' => true, 'verbose' => 'ID');
+    
+    
     foreach($meta['fields'] as $key=>$spec) {
       isset($spec['verbose']) || $spec['verbose'] = self::title($key);
-      if(isset($spec['model'])) { // relations
+      
+      // we only really care about normalizing related fields at this stage
+      if(isset($spec['model'])) {
         $spec['model'] = strtolower($spec['model']); // all meta references are lower case
         switch($spec['type']) {
           case 'foreignkey':
           case 'onetoone':
-            isset($spec['sql_column']) || $spec['sql_column'] = strtolower($key) . "_id";
+            isset($spec['db_column']) || $spec['db_column'] = strtolower($key) . "_id";
             isset($spec['to_field']) || $spec['to_field'] = null; // dereferenced by queryset builder
             isset($spec['on_delete']) || $spec['on_delete'] = ($spec['type']=='foreignkey') ? 'cascade' : 'blank';
-            $meta['indexes']["{$key}_0"] = array($spec['sql_column'] => true);
+            $meta['indexes']["{$key}_0"] = array($spec['db_column'] => true);
             $spec['is_field'] = true;
-            $reverse = array('type' => $spec['type'] . "_rev", 'sql_column' => $spec['to_field'], 'to_field' => $spec['sql_column'], 'model' => $model, 'on_delete' => $spec['on_delete'] );
+            $reverse = array('type' => $spec['type'] . "_rev", 'db_column' => $spec['to_field'], 'to_field' => $spec['db_column'], 'model' => $model, 'on_delete' => $spec['on_delete'] );
             break;
           case 'manytomany':
             isset($spec['through']) || $spec['through'] = self::_generateIntermediate($model, $spec);
@@ -102,7 +108,7 @@ class Dormio_Meta {
           $columns['__' . $spec['model']] = $reverse;
         }
       } else {
-        isset($spec['sql_column']) || $spec['sql_column'] = strtolower($key);
+        isset($spec['db_column']) || $spec['db_column'] = strtolower($key);
         $spec['is_field'] = true;
       }
       $columns[$key] = $spec;
@@ -172,7 +178,7 @@ class Dormio_Meta {
   function sqlFields() {
     $schema = $this->schema();
     $result = array();
-    foreach($schema['columns'] as $spec) $result[] = $spec['sql_column'];
+    foreach($schema['columns'] as $spec) $result[] = $spec['db_column'];
     return $result;
   }
   

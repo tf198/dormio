@@ -5,9 +5,9 @@ require_once('bootstrap.php');
 class Client extends Dormio_Model {
   static $meta = array (
     'fields' => array(
-      'pk' => array('type' => 'ident', 'sql_column' => 'ClientId'),
-      'ClientName' => array('type' => 'string', 'sql_column' => 'ClientName'),
-      'ClientAge' => array('type' => 'integer', 'sql_column' => 'ClientAge')
+      'pk' => array('type' => 'ident', 'db_column' => 'ClientId'),
+      'ClientName' => array('type' => 'string', 'db_column' => 'ClientName'),
+      'ClientAge' => array('type' => 'integer', 'db_column' => 'ClientAge')
     ),
 	);
   static function getMeta() { return self::$meta; }
@@ -17,7 +17,7 @@ class Client2 extends Dormio_Model {
   static $meta = array(
     'table' => 'detailed_client',
     'fields' => array(
-      'pk' => array('type' => 'ident', 'sql_column' => 'ClientId'),
+      'pk' => array('type' => 'ident', 'db_column' => 'ClientId'),
       'NickName' => array('type' => 'string'),
       'ClientName' => array('type' => 'integer'),
       'AgeAtStartOfYear' => array('type' => 'integer'),

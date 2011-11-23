@@ -219,7 +219,7 @@ abstract class Dormio_Model {
     
     
     $this->_meta->resolve($name, $spec, $meta);
-    isset($spec['sql_column']) || $spec['sql_column'] = $this->_meta->pk;
+    isset($spec['db_column']) || $spec['db_column'] = $this->_meta->pk;
     
     switch($spec['type']) {
       case 'foreignkey':
@@ -228,7 +228,7 @@ abstract class Dormio_Model {
         // relations that return a single object
         if(!isset($this->_related[$name])) $this->_related[$name] = new $spec['model']($this->_db, $this->_dialect);
    
-        $id = $this->_getData($spec['sql_column']);
+        $id = $this->_getData($spec['db_column']);
         isset(self::$logger) && self::$logger->log("Preparing {$spec['model']}({$id})");
         if($this->_related[$name]->ident()!=$id) {
           // We pass the current data to the related object - allows for eager loading
@@ -259,7 +259,7 @@ abstract class Dormio_Model {
         return $this->_related[$name];
       default:
         // everything else is concidered a field on the table
-        $column = $spec['sql_column'];
+        $column = $spec['db_column'];
         if(isset($this->_updated[$column])) return $this->_updated[$column];
         return $this->_getData($column);
     }
@@ -276,7 +276,7 @@ abstract class Dormio_Model {
       $this->_related[$name] = $value;
       $value = $value->ident();
     }
-    $this->_updated[$spec['sql_column']] = $value; // key is un-qualified
+    $this->_updated[$spec['db_column']] = $value; // key is un-qualified
   }
    
   /**

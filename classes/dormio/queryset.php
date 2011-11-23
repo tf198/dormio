@@ -228,7 +228,7 @@ class Dormio_Queryset {
   * @ignore
   */
   function _resolveStringLocalCallback($matches) {
-    return $this->_meta->columns[$matches[1]]['sql_column'];
+    return $this->_meta->columns[$matches[1]]['db_column'];
   }
 
   /**
@@ -249,7 +249,7 @@ class Dormio_Queryset {
     $result = array();
     foreach($fields as $field) {
       if(!isset($this->_meta->columns[$field])) throw new Dormio_Queryset_Exception('No such local field: ' . $field);
-      $result[] = "{{$this->_meta->columns[$field]['sql_column']}}";
+      $result[] = "{{$this->_meta->columns[$field]['db_column']}}";
     }
     return $result;
   }
@@ -265,7 +265,7 @@ class Dormio_Queryset {
     if($strip_pk && $field=='pk' && $parts) $field = array_pop($parts);
     $spec = $this->_resolve($parts, $type);
     if(!isset($spec->columns[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
-    return array($spec, $spec->columns[$field]['sql_column']);
+    return array($spec, $spec->columns[$field]['db_column']);
   }
   
   /**
@@ -289,7 +289,7 @@ class Dormio_Queryset {
   function _addFields($meta) {
     $schema = $meta->schema();
     foreach($schema['columns'] as $key=>$spec) {
-      $this->query['select'][] = "{{$meta->table}}.{{$spec['sql_column']}} AS {{$meta->table}_{$spec['sql_column']}}";
+      $this->query['select'][] = "{{$meta->table}}.{{$spec['db_column']}} AS {{$meta->table}_{$spec['db_column']}}";
     }
   }
   
@@ -317,7 +317,7 @@ class Dormio_Queryset {
     
     $right = Dormio_Meta::get($spec['model']);
     // fill in the values that weren't known at parse time
-    $left_field = ($spec['sql_column']) ? $spec['sql_column'] : $left->pk;
+    $left_field = ($spec['db_column']) ? $spec['db_column'] : $left->pk;
     $right_field = ($spec['to_field']) ? $spec['to_field'] : $right->pk;
     
     if(array_search($right->table, $this->_joined) === false) {

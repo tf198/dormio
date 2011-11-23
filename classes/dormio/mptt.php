@@ -16,8 +16,8 @@ class Dormio_MPTT extends Dormio_Model {
 
   function __construct(PDO $db, $dialect=null) {
     parent::__construct($db, $dialect);
-    $this->_lhs = $this->_meta->columns['lhs']['sql_column'];
-    $this->_rhs = $this->_meta->columns['rhs']['sql_column'];
+    $this->_lhs = $this->_meta->columns['lhs']['db_column'];
+    $this->_rhs = $this->_meta->columns['rhs']['db_column'];
   }
 
   function _hydrate($data, $prefixed=false) {

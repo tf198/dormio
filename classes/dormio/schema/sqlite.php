@@ -81,7 +81,7 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
       if(isset($this->map[$key])) {
 				$columns[]=$this->quoteIdentifier($this->map[$key]);
 			} else if(isset($this->oldspec['columns'][$key])) { // straight data copy
-				$columns[]=$this->quoteIdentifier($spec['sql_column']);
+				$columns[]=$this->quoteIdentifier($spec['db_column']);
 			} else { // use NULL
 				$columns[]='NULL';
 			}
