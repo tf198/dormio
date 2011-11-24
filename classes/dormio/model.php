@@ -78,7 +78,8 @@ abstract class Dormio_Model {
   */
   function _hydrate($data) {
     $this->_data = array_merge($this->_data, $data);
-    $this->_id = $this->_getData($this->_meta->pk);
+    $pk = $this->_dataIndex($this->_meta->pk);
+    $this->_id = (isset($this->_data[$pk])) ? $this->_data[$pk] : false;
   }
   
   function _prefixData($data) {
@@ -245,18 +246,16 @@ abstract class Dormio_Model {
       case 'onetoone_rev':
         // relations that return a single object
         if(!isset($this->_related[$name])) $this->_related[$name] = new $spec['model']($this->_db, $this->_dialect);
-   
         $id = $this->_getData($spec['db_column']);
-        if(!id) echo "No id for {$name}\n";
         isset(self::$logger) && self::$logger->log("Preparing {$spec['model']}({$id})");
         if($this->_related[$name]->ident()!=$id) {
-          
           $this->_related[$name]->load($id); // clears the stale data
           
           // Pass the current data if it is relevant
           // DB is not hit at all in this operation
           $key = "{$this->_meta->_klass}__{$name}";
           if(isset($this->_table_aliases[$key])) {
+            //echo "Reusing data for {$key}\n";
             $this->_related[$name]->_setAliases($this->_table_aliases, $this->_table_aliases[$key]);
             $this->_related[$name]->_hydrate($this->_data);
           }

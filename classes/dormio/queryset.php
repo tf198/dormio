@@ -121,8 +121,12 @@ class Dormio_Queryset {
     // this needs to left join
     $o = clone $this;
     $p = $o->_resolvePath($path, 'LEFT');
-    if(!$alias) $alias = str_replace('__', '_', $path);
-    $o->query['select'][] = "<@{$p[2]}.@>{{$p[1]}}<@ AS {{$p[2]}_{$alias}}@>";
+    if($alias) { // place it in the current object scope
+      $alias = "t1_" . $alias;
+    } else {
+      $alias = "{$p[2]}_" . str_replace('__', '_', $path);
+    }
+    $o->query['select'][] = "<@{$p[2]}.@>{{$p[1]}}<@ AS {{$alias}}@>";
     return $o;
   }
   
