@@ -76,7 +76,8 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     if(isset($data[1])) throw new Dormio_Manager_Exception('More than one record returned');
     if(!isset($data[0])) throw new Dormio_Manager_Exception('No record returned');
     $model = $this->_meta->instance($this->_db, $this->dialect);
-    $model->_hydrate($data[0], true);
+    $model->_setAliases($this->aliases);
+    $model->_hydrate($data[0]);
     return $model;
   }
   
@@ -245,6 +246,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     if(!$this->_stmt) $this->evaluate();
     if(!$this->_iter) {
       $model = $this->_meta->instance($this->_db, $this->dialect);
+      $model->_setAliases($this->aliases);
       $klass = ($this->buffered_query) ? "Dormio_Buffered_Iterator" : "Dormio_Iterator";
       $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_qualified);
     }
@@ -390,7 +392,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
     // set the base query
     if($through) $field = "{$through}_set__{$field}";
     $this->query['where'][] = $this->_resolveField($field) . " = ?";
-    // set the id by reference so when the iterator advances the model criterial update automatically
+    // set the id by reference so when the iterator advances the model criteria update automatically
     $this->params[] = &$this->_to->_id;
 	}
 

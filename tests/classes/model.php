@@ -76,6 +76,16 @@ class Module extends Dormio_Model {
   );
 }
 
+class Tree extends Dormio_Model {
+  static $meta = array(
+      'fields' => array(
+          'name' => array('type' => 'string', 'max_length' => 30),
+          'parent' => array('type' => 'foreignkey', 'model' => 'Tree'),
+          'children' => array('type' => 'reverse', 'model' => 'Tree'),
+      )
+  );
+}
+
 class ARO extends Dormio_MPTT {
   static $meta = array(
     'fields' => array(

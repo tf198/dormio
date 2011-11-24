@@ -34,6 +34,8 @@ abstract class Dormio_Model {
   private $_related = array();
   public $_db, $_stmt, $_objects, $_dialect;
   public $_meta, $_id=false; // need to be accessed by the manager
+  private $_table_aliases = array();
+  private $_prefix;
   
   // overridable meta fields for sub classes
   static $meta = array();
@@ -49,6 +51,7 @@ abstract class Dormio_Model {
     $this->_db = $db;
     $this->_meta = Dormio_Meta::get(get_class($this));
     $this->_dialect = ($dialect) ? $dialect : Dormio_Dialect::factory($db->getAttribute(PDO::ATTR_DRIVER_NAME));
+    $this->_prefix = $this->_meta->_klass;
   }
   
   /**
@@ -63,18 +66,24 @@ abstract class Dormio_Model {
     return $vars['meta'];
   }
   
+  function _setAliases($alias_table, $prefix="t1") {
+    $this->_table_aliases = $alias_table;
+    $this->_prefix = $prefix;
+    $this->_data = array();
+  }
+  
   /**
-  * Populate the data
+  * Bulk load prefixed data onto the object
   * @access private
   */
-  function _hydrate($data, $prefixed=false) {
-    if($prefixed) {
-      $this->_data = array_merge($this->_data, $data);
-    } else {
-      foreach($data as $key=>$value) $this->_setData($key, $value);
-    }
-    $pk = $this->_dataIndex($this->_meta->pk);
-    $this->_id = (isset($this->_data[$pk])) ? (int)$this->_data[$pk] : false;
+  function _hydrate($data) {
+    $this->_data = array_merge($this->_data, $data);
+    $this->_id = $this->_getData($this->_meta->pk);
+  }
+  
+  function _prefixData($data) {
+    foreach($data as $key=>$value) $result["{$this->_prefix}_{$key}"] = $value;
+    return $result;
   }
   
   /**
@@ -83,14 +92,15 @@ abstract class Dormio_Model {
   * @access private
   */
   function _rehydrate() {
-    if(!$this->_id) throw new Dormio_Model_Exception('No primary key set');
+   if(!$this->_id) throw new Dormio_Model_Exception("No primary key set for {$this->_meta->_klass}");
     isset(self::$logger) && self::$logger->log("Rehydrating {$this->_meta->_klass}({$this->_id})");
     $stmt = $this->_hydrateStmt();
     $stmt->execute(array($this->_id));
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
     if($data) {
-      $this->_hydrate($data, true);
+      $this->_hydrate($data);
+      $this->_prefix = $this->_meta->_klass;
     } else {
       throw new Dormio_Model_Exception('No result found for primary key ' . $this->_id);
     }
@@ -101,15 +111,23 @@ abstract class Dormio_Model {
   * @access private
   */
   function _hydrateStmt() {
+    
     // slightly cheekily we store proceedures on the actual pdo object
     // tried a static cache but causes problems if you change db handle
     if(!isset($this->_db->_stmt_cache)) $this->_db->_stmt_cache = array();
     if(!isset($this->_db->_stmt_cache[$this->_meta->_klass])) {
-      $fields = implode(', ', $this->_meta->prefixedSqlFields());
+      $fields = implode(', ', $this->_meta->prefixedDBColumns());
       $sql = "SELECT {$fields} FROM {{$this->_meta->table}} WHERE {{$this->_meta->table}}.{{$this->_meta->pk}} = ?";
       $this->_db->_stmt_cache[$this->_meta->_klass] = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     }
     return $this->_db->_stmt_cache[$this->_meta->_klass];
+    /*
+    $columns = $this->_meta->DBColumns();
+    for($i=0, $c=count($columns); $i<$c; $i++) $columns[$i] = "{$this->_prefix}.{{$columns[$i]}} AS {{$this->_prefix}_{$columns[$i]}}";
+    $fields = implode(', ', $columns);
+    $sql = "SELECT {$fields} FROM {{$this->_meta->table}} AS {$this->_prefix} WHERE {$this->_prefix}.{{$this->_meta->pk}} = ?";
+    return $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
+     */
   }
   
   /**
@@ -120,7 +138,7 @@ abstract class Dormio_Model {
   * @access private
   */
   function _dataIndex($field) {
-    return "{$this->_meta->table}_{$field}";
+    return "{$this->_prefix}_{$field}";
   }
   
   /**
@@ -231,10 +249,16 @@ abstract class Dormio_Model {
         $id = $this->_getData($spec['db_column']);
         isset(self::$logger) && self::$logger->log("Preparing {$spec['model']}({$id})");
         if($this->_related[$name]->ident()!=$id) {
-          // We pass the current data to the related object - allows for eager loading
-          // DB is not hit at all in this operation
+          
           $this->_related[$name]->load($id); // clears the stale data
-          $this->_related[$name]->_hydrate($this->_data, true);
+          
+          // Pass the current data if it is relevant
+          // DB is not hit at all in this operation
+          $key = "{$this->_meta->_klass}__{$name}";
+          if(isset($this->_table_aliases[$key])) {
+            $this->_related[$name]->_setAliases($this->_table_aliases, $this->_table_aliases[$key]);
+            $this->_related[$name]->_hydrate($this->_data);
+          }
         }
         return $this->_related[$name];
         
@@ -271,7 +295,7 @@ abstract class Dormio_Model {
   */
   function __set($name, $value) {
     if($name=='pk') throw new Dormio_Model_Exception("Can't update primary key");
-    $spec = $this->_meta->column($name);
+    $spec = $this->_meta->getSpec($name);
     if(is_a($value, 'Dormio_Model')) { // use the primary key of objects
       $this->_related[$name] = $value;
       $value = $value->ident();
@@ -286,8 +310,8 @@ abstract class Dormio_Model {
   */
   function load($id) {
     $this->clear();
-    $this->_id = $id;
     $this->_setData($this->_meta->pk, $id);
+    $this->_id = $id;
     //$this->_qualified = true;
   }
   
@@ -313,7 +337,7 @@ abstract class Dormio_Model {
     $stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     if($stmt->execute($params) !=1) throw new Dormio_Model_Exception('Insert failed');
     //$this->_insert = false;
-    $this->_updated[$this->_meta->pk] = $this->_id = $this->_db->lastInsertId();
+    $this->_updated[$this->_meta->pk] = $this->_db->lastInsertId();
     $this->_merge();
   }
   
@@ -337,7 +361,8 @@ abstract class Dormio_Model {
   * @access private
   */
   function _merge() {
-    $this->_hydrate($this->_updated, false);
+    $data = $this->_prefixData($this->_updated);
+    $this->_hydrate($data);
     //$this->_qualified = true;
     $this->_updated = array();
   }

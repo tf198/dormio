@@ -40,8 +40,9 @@ class Dormio_Aggregation {
   * @return int   The number result of the method
   */
   private function add($method, $extra=null, $field='pk') {
-    $spec = $this->manager->_meta->column($field);
-    $this->manager->query['select'][] = "{$method}({$extra}{{$spec['db_column']}}) AS {{$field}_" . strtolower($method) . "}";
+    $p = $this->manager->_resolvePath($field);
+    //$this->manager->query['select'][] = "{$method}({$extra}{{$spec['db_column']}}) AS {{$field}_" . strtolower($method) . "}";
+    $this->manager->query['select'][] = "{$method}({$extra}<@{$p[2]}.@>{{$p[1]}}) AS {<@{$p[0]->table}_@>{$field}_" . strtolower($method) . "}";
     return $this;
   }
   

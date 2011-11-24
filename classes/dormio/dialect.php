@@ -87,7 +87,7 @@ class Dormio_Dialect_Generic {
       $spec['from'] = $spec['from'] . " " . implode(' ',$spec['join']);
       $spec['join'] = null;
     }
-    return $this->quoteIdentifiers($this->compile($spec));
+    return $this->quoteIdentifiers($this->aliasFields($this->compile($spec), true));
   }
   
   function update($spec, $fields, $custom_fields=array()) {
@@ -101,14 +101,14 @@ class Dormio_Dialect_Generic {
       $spec['join'] = null;
     }
     $spec['select'] = $spec['from'] = $spec['order_by'] = $spec['offset'] = null; // irrelevant fields
-    return $this->quoteIdentifiers($base . $this->compile($spec));
+    return $this->quoteIdentifiers($this->aliasFields($base . $this->compile($spec), false));
   }
   
   function insert($spec, $fields) {
     $values = implode(', ', array_fill(0, count($fields), '?'));
     $fields = implode(', ', $fields);
     $sql = "INSERT INTO {$spec['from']} ({$fields}) VALUES ({$values})";
-    return $this->quoteIdentifiers($sql);
+    return $this->quoteIdentifiers($this->aliasFields($sql, false));
   }
   
   function delete($spec) {
@@ -117,7 +117,7 @@ class Dormio_Dialect_Generic {
       $spec['join'] = null;
     } 
     $spec['select'] = $spec['order_by'] = $spec['offset'] = null; // irrelevant fields
-    return $this->quoteIdentifiers("DELETE " . $this->compile($spec));
+    return $this->quoteIdentifiers($this->aliasFields("DELETE " . $this->compile($spec), false));
   }
   
   function quoteFields($fields) {
@@ -127,6 +127,11 @@ class Dormio_Dialect_Generic {
   
   function quoteIdentifiers($sql) {
     return strtr($sql, '{}', '""');
+  }
+  
+  function aliasFields($sql, $should_alias) {
+    if($should_alias) return str_replace('<@', '', str_replace('@>', '', $sql));
+    return preg_replace('/<@.*?@>/', '', $sql);
   }
 }
 

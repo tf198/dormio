@@ -60,9 +60,9 @@ foreach($set as $comment) {
 
 // aggregate functions
 $stats = $blog->comments->aggregate()->count()->run();
-echo "\nBlog has {$stats['pk_count']} comments\n";
+echo "\nBlog has {$stats['comment_pk_count']} comments\n";
 $stats = $dormio->manager('Profile')->aggregate()->max('age')->run();
-echo "\nOldest contributer is {$stats['age_max']}\n";
+echo "\nOldest contributer is {$stats['profile_age_max']}\n";
 
 return 42; // for our auto testing
 ?>
