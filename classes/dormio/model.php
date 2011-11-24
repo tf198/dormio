@@ -247,6 +247,7 @@ abstract class Dormio_Model {
         if(!isset($this->_related[$name])) $this->_related[$name] = new $spec['model']($this->_db, $this->_dialect);
    
         $id = $this->_getData($spec['db_column']);
+        if(!id) echo "No id for {$name}\n";
         isset(self::$logger) && self::$logger->log("Preparing {$spec['model']}({$id})");
         if($this->_related[$name]->ident()!=$id) {
           
