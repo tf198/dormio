@@ -97,8 +97,8 @@ class Dormio_Queryset {
   * @return Dormio_Queryset Cloned copy of the queryset
   * @todo validate IN and LIKE behaviour
   */
-  function filter($key, $op, $value) {
-    $o = clone $this;
+  function filter($key, $op, $value, $clone=true) {
+    $o = ($clone) ? clone $this : $this;
     $f = $o->_resolveField($key);
     $v = '?';
     if($op == 'IN') {
