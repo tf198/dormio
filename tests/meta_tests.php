@@ -4,6 +4,41 @@ require_once('bootstrap.php');
 
 class TestOfMeta extends UnitTestCase{
 
+  function testNormalize() {
+    // standard fields
+    
+    $meta = array(
+        'fields' => array(
+            'my_field' => array(),
+        ),
+    );
+    $field = &$meta['fields']['my_field'];
+    try {
+      Dormio_Meta::_normalise('Model_1', $meta);
+    } catch(Dormio_Meta_Exception $dme) {
+      $this->assertEqual($dme->getMessage(), "'type' required on field 'my_field'");
+    }
+    
+    // basic with defaults
+    $field['type'] = 'string';
+    $generated = Dormio_Meta::_normalise('Test', $meta);
+    $this->assertEqual($generated['fields']['my_field'], array('type' => 'string', 'verbose' => 'My Field', 'db_column' => 'my_field', 'is_field' => true));
+    
+    // basic with overrides
+    $field['db_column'] = 'my_test_column';
+    $field['verbose'] = 'My Funky Field';
+    $field['size'] = 42;
+    $generated = Dormio_Meta::_normalise('Test', $meta);
+    $this->assertEqual($generated['fields']['my_field'], array('type' => 'string', 'verbose' => 'My Funky Field', 'db_column' => 'my_test_column', 'is_field' => true, 'size' => 42));
+    
+    // foreignkey with defaults
+    $field = array('type' => 'foreignkey', 'model' => 'Model_2');
+    $generated = Dormio_Meta::_normalise('Test', $meta);
+    $this->assertEqual($generated['fields']['my_field'], array('type' => 'foreignkey', 'model' => 'model_2', 'verbose' => 'My Field', 'db_column' => 'my_field_id', 'is_field' => true, 'local_field'=>'my_field', 'remote_field' => 'pk', 'on_delete' => 'cascade'));
+   
+  
+  }
+  
   function testBlog() {
     $blogs = Dormio_Meta::get('Blog');
     $this->assertEqual(array_keys($blogs->columns), array('pk', 'title', '__user', 'the_user', '__tag', 'tags', 'comments'));
@@ -47,15 +82,15 @@ class TestOfMeta extends UnitTestCase{
     
     // standard field
     $spec = $blog->getSpec('title');
-    $this->assertEqual($spec, array('type'=>'text', 'max_length'=>30, 'verbose'=>'Title', 'field' => 'title', 'db_column'=>'title', 'is_field'=>true));
+    $this->assertEqual($spec, array('type'=>'text', 'max_length'=>30, 'verbose'=>'Title', 'db_column'=>'title', 'is_field'=>true));
     
     // forward foreignkey
     $spec = $comment->getSpec('blog');
-    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'blog', 'verbose'=>'Blog', 'field' => 'blog', 'db_column'=>'blog_id', 'to_field'=>null, 'on_delete'=>'cascade', 'is_field'=>true));
+    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'blog', 'verbose'=>'Blog', 'db_column'=>'blog_id', 'local_field'=>'blog', 'remote_field'=>'pk', 'on_delete'=>'cascade', 'is_field'=>true));
     
     // reverse foreignkey
     $spec = $blog->getSpec('comment_set');
-    $this->assertEqual($spec, array('type'=>'foreignkey_rev', 'model'=>'comment', 'db_column'=>null, 'to_field'=>'blog_id', 'on_delete'=>'cascade', 'field' => 'comment[blog]'));
+    $this->assertEqual($spec, array('type'=>'foreignkey_rev', 'model'=>'comment', 'local_field'=>'pk', 'remote_field'=>'blog', 'on_delete'=>'cascade'));
     
     // reverse foreignkey (defined) - should be identical to the previous result
     $spec_defined = $blog->getSpec('comments');
@@ -63,27 +98,27 @@ class TestOfMeta extends UnitTestCase{
     
     // forward manytomany
     $spec = $blog->getSpec('tags');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'tag', 'verbose'=>'Tags', 'field' => 'tags', 'through'=>'My_Blog_Tag', 'local_field'=>null, 'remote_field'=>null));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'tag', 'verbose'=>'Tags', 'through'=>'My_Blog_Tag', 'local_field'=>null, 'remote_field'=>null));
     
     // reverse manytomany
     $spec = $tag->getSpec('blog_set');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'blog', 'field' => 'blog[tags]', 'through'=>'My_Blog_Tag', 'local_field'=>null, 'remote_field'=>null));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'blog', 'through'=>'My_Blog_Tag', 'local_field'=>null, 'remote_field'=>null));
     
     // forward foreignkey onto self
     $spec = $tree->getSpec('parent');
-    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'tree', 'verbose'=>'Parent', 'field' => 'parent', 'db_column'=>'parent_id', 'to_field'=>null, 'on_delete'=>'cascade', 'is_field'=>true));
+    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'tree', 'verbose'=>'Parent', 'db_column'=>'parent_id', 'local_field'=>'parent', 'remote_field'=>'pk', 'on_delete'=>'cascade', 'is_field'=>true));
     
     // reverse foreignkey onto self
     $spec = $tree->getSpec('children');
-    $this->assertEqual($spec, array('type'=>'foreignkey_rev', 'model'=>'tree', 'db_column'=>null, 'to_field'=>'parent_id', 'on_delete'=>'cascade', 'field' => 'tree[parent]'));
+    $this->assertEqual($spec, array('type'=>'foreignkey_rev', 'model'=>'tree', 'local_field'=>'pk', 'remote_field'=>'parent', 'on_delete'=>'cascade'));
     
     // forward manytomany onto self
     $spec = $module->getSpec('depends_on');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'verbose'=>'Depends On', 'field' => 'depends_on', 'through'=>'module_module', 'local_field'=>'l_module', 'remote_field'=>'r_module'));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'verbose'=>'Depends On', 'through'=>'module_module', 'local_field'=>'l_module', 'remote_field'=>'r_module'));
     
     // reverse manytomany onto self
     $spec = $module->getSpec('module_set');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'through'=>'module_module', 'field' => 'module[depends_on]', 'local_field'=>'r_module', 'remote_field'=>'l_module'));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'through'=>'module_module', 'local_field'=>'r_module', 'remote_field'=>'l_module'));
     
   }
   
@@ -91,8 +126,8 @@ class TestOfMeta extends UnitTestCase{
     $module = Dormio_Meta::get('module');
     $through = Dormio_Meta::get('module_module');
     
-    $this->assertEqual($through->getReverseSpec('module', 'l_module'), array('type'=>'foreignkey_rev', 'db_column'=>null, 'to_field'=>'l_module_id', 'model'=>'module_module', 'on_delete'=>'cascade', 'field'=>'module_module[l_module]'));
-    $this->assertEqual($through->getReverseSpec('module', 'r_module'), array('type'=>'foreignkey_rev', 'db_column'=>null, 'to_field'=>'r_module_id', 'model'=>'module_module', 'on_delete'=>'cascade', 'field'=>'module_module[r_module]'));
+    $this->assertEqual($through->getReverseSpec('module', 'l_module'), array('type'=>'foreignkey_rev', 'local_field'=>'pk', 'remote_field'=>'l_module', 'model'=>'module_module', 'on_delete'=>'cascade'));
+    $this->assertEqual($through->getReverseSpec('module', 'r_module'), array('type'=>'foreignkey_rev', 'local_field'=>'pk', 'remote_field'=>'r_module', 'model'=>'module_module', 'on_delete'=>'cascade'));
     
     try {
       $through->getReverseSpec('Bad_Class', null);

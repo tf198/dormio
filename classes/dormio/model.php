@@ -248,9 +248,9 @@ abstract class Dormio_Model {
           
           // Pass the current data if it is relevant
           // DB is not hit at all in this operation
-          $key = "{$this->_meta->_klass}__{$name}";
+          $key = "{$this->_meta->_klass}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
           if(isset($this->_table_aliases[$key])) {
-            //echo "Reusing data for {$key}\n";
+            echo "Reusing data for {$key}\n";
             $this->_related[$name]->_setAliases($this->_table_aliases, $this->_table_aliases[$key]);
             $this->_related[$name]->_hydrate($this->_data);
           }
@@ -267,13 +267,17 @@ abstract class Dormio_Model {
         if($spec['type'] == 'manytomany') {
           $target = Dormio_Meta::get($spec['through']);
           $through = $spec['through'];
+          $field = $target->accessorFor($this);
+          $manager = new Dormio_Manager_Related($spec['model'], $this->_db, $this->_dialect, $this, $field, $through);
         } else {
           // reverse foreign - manually add the where clause
           $target = Dormio_Meta::get($spec['model']);
-          $through = null;
+          $field = $target->accessorFor($this);
+          //echo "\n{$this->_meta->_klass} -> {$spec['model']}\n";
+          //var_dump($target->getReverseSpec($this->_meta->_klass));
+          $manager = new Dormio_Manager_ReverseForeignkey($spec['model'], $this->_db, $this->_dialect, $this, $field);
         }
-        $field = $target->accessorFor($this);
-        $manager = new Dormio_Manager_Related($spec['model'], $this->_db, $this->_dialect, $this, $field, $through);
+        
         
         $this->_related[$name] = $manager;
         return $this->_related[$name];

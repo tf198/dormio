@@ -219,7 +219,7 @@ class TestOfManager extends TestOfDB{
     $expected = array("23", "46", null);
     $i=0;
     foreach($set as $user) {
-      //if($user->profile->ident()) $this->assertEqual($user->profile->age, $expected[$i]);
+      if($user->profile->ident()) $this->assertEqual($user->profile->age, $expected[$i]);
       $i++;
     }
     $this->assertEqual($i, 3);

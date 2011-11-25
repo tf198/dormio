@@ -72,13 +72,14 @@ class Dormio_Meta {
     isset($meta['indexes']) || $meta['indexes'] = array();
     if(!isset($meta['fields'])) throw new Dormio_Meta_Exception("Missing required 'fields' on meta");
     
-    // set a pk but it can be overriden by the fields
+    // default pk - can be overriden by the fields
     $columns['pk'] = array('type' => 'ident', 'db_column' => $model . "_id", 'is_field' => true, 'verbose' => 'ID');
     
     
     foreach($meta['fields'] as $key=>$spec) {
+      if(!isset($spec['type'])) throw new Dormio_Meta_Exception("'type' required on field '{$key}'");
       isset($spec['verbose']) || $spec['verbose'] = self::title($key);
-      $spec['field'] = $key;
+      //$spec['field'] = $key;
       
       // we only really care about normalizing related fields at this stage
       if(isset($spec['model'])) {
@@ -86,14 +87,27 @@ class Dormio_Meta {
         
         // set up the required fields based on the type
         switch($spec['type']) {
-          case 'foreignkey':    // model, db_column, to_field, on_delete
-          case 'onetoone':      // model, db_column, to_field, on_delete
-            isset($spec['db_column']) || $spec['db_column'] = strtolower($key) . "_id"; // dereferenced to right(remote) PK on join
-            isset($spec['to_field']) || $spec['to_field'] = null; // dereferenced to left(local) PK on join
-            isset($spec['on_delete']) || $spec['on_delete'] = ($spec['type']=='foreignkey') ? 'cascade' : 'blank';
+          case 'foreignkey':    // model, db_column, remote_field, on_delete
+          case 'onetoone':      // model, db_column, remote_field, on_delete
+            $defaults = array(
+                'verbose' => self::title($key), 
+                'db_column' => strtolower($key) . "_id",
+                'local_field' => $key,
+                'remote_field' => 'pk',
+                'on_delete' => ($spec['type']=='foreignkey') ? 'cascade' : 'blank',
+                'is_field' => true,
+            );
+            $spec = array_merge($defaults, $spec);
+            $reverse = array(
+                'type' => $spec['type'] . "_rev", 
+                'local_field' => $spec['remote_field'], 
+                'remote_field' => $key, 
+                'model' => $model, 
+                'on_delete' => $spec['on_delete']
+            );
+            
+            // add an index on the field
             $meta['indexes']["{$key}_0"] = array($spec['db_column'] => true);
-            $spec['is_field'] = true;
-            $reverse = array('type'=>$spec['type'] . "_rev", 'db_column'=>$spec['to_field'], 'to_field'=>$spec['db_column'], 'model'=>$model, 'on_delete'=>$spec['on_delete']);
             break;
           
           case 'manytomany':    // model, through, local_field, remote_field
@@ -122,13 +136,14 @@ class Dormio_Meta {
         if(isset($reverse)) {
           //if(isset($columns['__' . $spec['model']])) throw new Dormio_Meta_Exception("More than one reverse relation for model " . $model);
           // reverse specs stored in array by original accessor
-          $reverse['field'] = "{$model}[{$key}]";
           $columns['__' . $spec['model']][$key] = $reverse;
           //$meta['reverse'][] = $spec['model'];
         }
       } else {
-        isset($spec['db_column']) || $spec['db_column'] = strtolower($key);
-        $spec['is_field'] = true;
+        $defaults = array('verbose' => self::title($key), 'db_column' => strtolower($key), 'is_field' => true);
+        $spec = array_merge($defaults, $spec);
+        //isset($spec['db_column']) || $spec['db_column'] = strtolower($key);
+        //$spec['is_field'] = true;
       }
       $columns[$key] = $spec;
     }
@@ -252,6 +267,11 @@ class Dormio_Meta {
     }
     
     return $spec;
+  }
+  
+  function getColumn($name) {
+    $spec = $this->getSpec($name);
+    return $spec['db_column'];
   }
   
   /**

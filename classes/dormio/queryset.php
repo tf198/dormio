@@ -55,7 +55,7 @@ class Dormio_Queryset {
     'offset' => null, // int
   );
   
-  public $aliases = array('.' => 't1');
+  public $aliases = array();
   
   /**
   * Create a new Queryset
@@ -70,6 +70,7 @@ class Dormio_Queryset {
     $this->query['from'] = "{{$this->_meta->table}}<@ AS t1@>";
     $this->_addFields($this->_meta, 't1');
     
+    $this->aliases[$this->_meta->_klass] = 't1';
     $this->_next_alias = 2;
     
     $this->params = array();
@@ -335,10 +336,11 @@ class Dormio_Queryset {
     
     $right = Dormio_Meta::get($spec['model']);
     // fill in the values that weren't known at parse time
-    $left_field = ($spec['db_column']) ? $spec['db_column'] : $left->pk;
-    $right_field = ($spec['to_field']) ? $spec['to_field'] : $right->pk;
+    //$left_field = ($spec['db_column']) ? $spec['db_column'] : $left->pk;
+    $left_field = $left->getColumn($spec['local_field']);
+    $right_field = $right->getColumn($spec['remote_field']);
     
-    $key = "{$left->_klass}__{$spec['field']}";
+    $key = "{$left->_klass}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
     
     if(isset($this->aliases[$key])) {
       $left_alias = $this->aliases[$key];

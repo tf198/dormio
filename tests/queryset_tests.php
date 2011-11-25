@@ -218,10 +218,10 @@ class TestOfSQL extends UnitTestCase{
     
     $set = $comments->with('blog')->filter('tags__tag', '=', 'Yo');
     $this->assertEqual($set->aliases, array(
-        "." => "t1", 
-        "comment__blog" => "t2",
-        "comment__comment_tag[l_comment]" => "t3",
-        "comment_tag__r_tag" => "t4",
+        "comment" => "t1", 
+        "comment.blog__blog.pk" => "t2",
+        "comment.pk__comment_tag.l_comment" => "t3",
+        "comment_tag.r_tag__tag.pk" => "t4",
     ));
   
   }
