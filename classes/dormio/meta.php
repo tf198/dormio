@@ -78,8 +78,6 @@ class Dormio_Meta {
     
     foreach($meta['fields'] as $key=>$spec) {
       if(!isset($spec['type'])) throw new Dormio_Meta_Exception("'type' required on field '{$key}'");
-      isset($spec['verbose']) || $spec['verbose'] = self::title($key);
-      //$spec['field'] = $key;
       
       // we only really care about normalizing related fields at this stage
       if(isset($spec['model'])) {
@@ -92,6 +90,7 @@ class Dormio_Meta {
             $defaults = array(
                 'verbose' => self::title($key), 
                 'db_column' => strtolower($key) . "_id",
+                'null_ok' => false,
                 'local_field' => $key,
                 'remote_field' => 'pk',
                 'on_delete' => ($spec['type']=='foreignkey') ? 'cascade' : 'blank',
@@ -147,7 +146,7 @@ class Dormio_Meta {
           //$meta['reverse'][] = $spec['model'];
         }
       } else {
-        $defaults = array('verbose' => self::title($key), 'db_column' => strtolower($key), 'is_field' => true);
+        $defaults = array('verbose' => self::title($key), 'db_column' => strtolower($key), 'null_ok' => false, 'is_field' => true);
         $spec = array_merge($defaults, $spec);
         //isset($spec['db_column']) || $spec['db_column'] = strtolower($key);
         //$spec['is_field'] = true;

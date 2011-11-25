@@ -22,19 +22,19 @@ class TestOfMeta extends UnitTestCase{
     // basic with defaults
     $field['type'] = 'string';
     $generated = Dormio_Meta::_normalise('Test', $meta);
-    $this->assertEqual($generated['fields']['my_field'], array('type' => 'string', 'verbose' => 'My Field', 'db_column' => 'my_field', 'is_field' => true));
+    $this->assertEqual($generated['fields']['my_field'], array('type' => 'string', 'verbose' => 'My Field', 'db_column' => 'my_field', 'null_ok'=>false, 'is_field' => true));
     
     // basic with overrides
     $field['db_column'] = 'my_test_column';
     $field['verbose'] = 'My Funky Field';
     $field['size'] = 42;
     $generated = Dormio_Meta::_normalise('Test', $meta);
-    $this->assertEqual($generated['fields']['my_field'], array('type' => 'string', 'verbose' => 'My Funky Field', 'db_column' => 'my_test_column', 'is_field' => true, 'size' => 42));
+    $this->assertEqual($generated['fields']['my_field'], array('type' => 'string', 'verbose' => 'My Funky Field', 'db_column' => 'my_test_column', 'null_ok'=>false, 'is_field' => true, 'size' => 42));
     
     // foreignkey with defaults
     $field = array('type' => 'foreignkey', 'model' => 'Model_2');
     $generated = Dormio_Meta::_normalise('Test', $meta);
-    $this->assertEqual($generated['fields']['my_field'], array('type' => 'foreignkey', 'model' => 'model_2', 'verbose' => 'My Field', 'db_column' => 'my_field_id', 'is_field' => true, 'local_field'=>'my_field', 'remote_field' => 'pk', 'on_delete' => 'cascade'));
+    $this->assertEqual($generated['fields']['my_field'], array('type' => 'foreignkey', 'model' => 'model_2', 'verbose' => 'My Field', 'db_column' => 'my_field_id', 'null_ok'=>false, 'is_field' => true, 'local_field'=>'my_field', 'remote_field' => 'pk', 'on_delete' => 'cascade'));
    
   
   }
@@ -82,11 +82,11 @@ class TestOfMeta extends UnitTestCase{
     
     // standard field
     $spec = $blog->getSpec('title');
-    $this->assertEqual($spec, array('type'=>'text', 'max_length'=>30, 'verbose'=>'Title', 'db_column'=>'title', 'is_field'=>true));
+    $this->assertEqual($spec, array('type'=>'text', 'max_length'=>30, 'verbose'=>'Title', 'db_column'=>'title', 'null_ok'=>false, 'is_field'=>true));
     
     // forward foreignkey
     $spec = $comment->getSpec('blog');
-    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'blog', 'verbose'=>'Blog', 'db_column'=>'blog_id', 'local_field'=>'blog', 'remote_field'=>'pk', 'on_delete'=>'cascade', 'is_field'=>true));
+    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'blog', 'verbose'=>'Blog', 'db_column'=>'blog_id', 'null_ok'=>false, 'local_field'=>'blog', 'remote_field'=>'pk', 'on_delete'=>'cascade', 'is_field'=>true));
     
     // reverse foreignkey
     $spec = $blog->getSpec('comment_set');
@@ -106,7 +106,7 @@ class TestOfMeta extends UnitTestCase{
     
     // forward foreignkey onto self
     $spec = $tree->getSpec('parent');
-    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'tree', 'verbose'=>'Parent', 'db_column'=>'parent_id', 'local_field'=>'parent', 'remote_field'=>'pk', 'on_delete'=>'cascade', 'is_field'=>true));
+    $this->assertEqual($spec, array('type'=>'foreignkey', 'model'=>'tree', 'verbose'=>'Parent', 'db_column'=>'parent_id', 'null_ok'=>false, 'local_field'=>'parent', 'remote_field'=>'pk', 'on_delete'=>'cascade', 'is_field'=>true));
     
     // reverse foreignkey onto self
     $spec = $tree->getSpec('children');
