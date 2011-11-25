@@ -111,8 +111,17 @@ class Dormio_Meta {
             break;
           
           case 'manytomany':    // model, through, local_field, remote_field
-            if(isset($spec['through'])) {
-              $through = Dormio_Meta::get($spec['through']);
+            $defaults = array(
+                'verbose' => self::title($key),
+                'through' => null,
+                'local_field' => null,
+                'remote_field' => null,
+            );
+            $spec = array_merge($defaults, $spec);
+            //if(isset($spec['through'])) {
+            if($spec['through']) {
+              // load the spec
+              Dormio_Meta::get($spec['through']);
               isset($spec['local_field']) || $spec['local_field'] = null;
               isset($spec['remote_field']) || $spec['remote_field'] = null;
             } else {
