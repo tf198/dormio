@@ -57,8 +57,6 @@ class Dormio_Queryset {
   
   public $aliases = array('.' => 't1');
   
-  private $_should_alias = true;
-
   /**
   * Create a new Queryset
   * @param  string|Dormio_Meta  $meta   A meta object or the name of a model
@@ -167,7 +165,7 @@ class Dormio_Queryset {
   function with() {
     $o = clone $this;
     foreach(func_get_args() as $table) {
-      list($spec, $alias) = $o->_resolve(explode('__', $table), 'LEFT');
+      list($spec, $alias) = $o->_resolveArray(explode('__', $table), 'LEFT');
       $o->_addFields($spec, $alias);
     }
     return $o;
@@ -273,9 +271,10 @@ class Dormio_Queryset {
     $parts = explode('__', $path);
     $field = array_pop($parts);
     if($strip_pk && $field=='pk' && $parts) $field = array_pop($parts);
-    list($spec, $alias) = $this->_resolve($parts, $type);
-    if(!isset($spec->columns[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
-    return array($spec, $spec->columns[$field]['db_column'], $alias);
+    list($meta, $alias) = $this->_resolveArray($parts, $type);
+    
+    if(!isset($meta->columns[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
+    return array($meta, $meta->columns[$field]['db_column'], $alias);
   }
   
   /**
@@ -285,11 +284,14 @@ class Dormio_Queryset {
   * @return object          The top level meta object
   * @access private
   */
-  function _resolve($parts, $type=null) {
-    $spec = $this->_meta;
+  function _resolveArray($parts, $type=null) {
+    $meta = $this->_meta;
     $alias = "t1";
-    for($i=0,$c=count($parts); $i<$c; $i++) $spec = $this->_addJoin($spec, $parts[$i], $type, $alias);
-    return array($spec, $alias);
+    for($i=0,$c=count($parts); $i<$c; $i++) {
+      $spec = $meta->getSpec($parts[$i]);
+      $meta = $this->_addJoin($meta, $spec, $type, $alias);
+    }
+    return array($meta, $alias);
   }
   
   /**
@@ -313,17 +315,22 @@ class Dormio_Queryset {
   * @return Dormio_Meta   The righthand table which was joined to
   * @access private
   */
-  function _addJoin($left, $field, $type, &$left_alias) {
+  function _addJoin($left, $spec, $type, &$left_alias) {
     if(!$type) $type='INNER';
-    // get our spec and meta
-    $left->resolve($field, $spec, $meta);
     
     // if manytomany redispatch in two queries
     if(isset($spec['through'])) {
       if($type!='INNER') trigger_error("Trying to {$type} JOIN onto {$spec['model']} - may have unexpected results", E_USER_WARNING);
-      $mid = $this->_addJoin($left, strtolower($spec['through']) . "_set", "INNER", $left_alias);
-      // need to traverse the mid columns to find the model as the name may be different
-      return $this->_addJoin($mid, $mid->accessorFor($spec['model']), "INNER", $left_alias);
+      
+      // do the reverse bit
+      $through_meta = Dormio_Meta::get($spec['through']);
+      $reverse_spec = $through_meta->getReverseSpec($left->_klass, $spec['local_field']);
+      $mid = $this->_addJoin($left, $reverse_spec, "INNER", $left_alias);
+      
+      // do the forward bit
+      if(!$spec['remote_field']) $spec['remote_field'] = $mid->accessorFor($spec['model']);
+      $spec = $mid->getSpec($spec['remote_field']);
+      return $this->_addJoin($mid, $spec, "INNER", $left_alias);
     }
     
     $right = Dormio_Meta::get($spec['model']);
@@ -331,15 +338,13 @@ class Dormio_Queryset {
     $left_field = ($spec['db_column']) ? $spec['db_column'] : $left->pk;
     $right_field = ($spec['to_field']) ? $spec['to_field'] : $right->pk;
     
-    $key = "{$left->_klass}__{$field}";
+    $key = "{$left->_klass}__{$spec['field']}";
     
     if(isset($this->aliases[$key])) {
       $left_alias = $this->aliases[$key];
     } else {
       $right_alias= "t" . $this->_next_alias++;
       $this->query['join'][] = "{$type} JOIN {{$right->table}} AS {$right_alias} ON {$left_alias}.{{$left_field}}={$right_alias}.{{$right_field}}";
-      //$this->query['join'][]= "{$type} JOIN {{$right->table}}";
-      //$this->query['where'][] = "{{$left->table}}.{{$left_field}}={{$right->table}}.{{$right_field}}";
       $this->aliases[$key] = $right_alias;
       $left_alias = $right_alias;
     }
@@ -378,6 +383,7 @@ class Dormio_Queryset {
   /**
   * @access private
   */
+  /*
   function _deleteSpec() {
     $result = array();
     foreach($this->_meta->columns as $key=>$spec) {
@@ -401,6 +407,7 @@ class Dormio_Queryset {
     }
     return $result;
   }
+   */
   
   /**
   * Create a DELETE path based on the current query.
@@ -408,19 +415,26 @@ class Dormio_Queryset {
   * @param    array   $resolved   Internal parameter for recursion
   * @return   array   array( array(sql, params), array(sql, params), ... )
   */
+  /*
   function delete($resolved=array()) {
     $sql = array();
     foreach($this->_deleteSpec() as $parts) {
       $child = new Dormio_Queryset($parts[0]);
+      echo "Delete {$parts[0]}\n";
+      
+      //$o = $this->field("{$child->_meta->_klass}_set");
+      //var_dump($o);
+      
       //$child->query['select'] = array("{{$child->_meta->table}}.{{$child->_meta->pk}}");
       $child->_selectIdent();
-      $child->query['where'] = $this->query['where'];
-      $child->query['join'] = $this->query['join'];
-      $child->params = $this->params;
-      $child->aliases = $this->aliases;
+      //$child->query['where'] = $this->query['where'];
+      //$child->query['join'] = $this->query['join'];
+      //$child->params = $this->params;
+      //$child->aliases = $this->aliases;
         
       $r = $resolved;
       array_unshift($r, $child->_meta->accessorFor($this));
+      echo "Resolving " . implode('__', $r) . "\n";              
       $child->_resolve($r);
         
       $sql = array_merge($sql, $child->delete($r));
@@ -431,7 +445,7 @@ class Dormio_Queryset {
     
     return $sql;
   }
-  
+  */
   /**
   * Create the DELETE path for a specific primary key
   * Will follow relations where 'on_delete' is set to 'cascade'
@@ -439,6 +453,7 @@ class Dormio_Queryset {
   * @param  string  $query  Internal parameter for recursion
   * @param  array   $resolved Internal parameter for recursion
   */
+  /*
   function deleteById($id, $query='pk', $resolved=array()) {
     $sql = array();
     foreach($this->_deleteSpec() as $parts) {
@@ -458,6 +473,47 @@ class Dormio_Queryset {
     }
     $o = $this->filter($query, '=', $id);
     //foreach($o->query['where'] as &$w) $w = str_replace("t1.", "", $w);
+    $sql[] = array($this->dialect->delete($o->query), $o->params);
+    
+    return $sql;
+  }
+  */
+  
+  function delete() {
+    throw new Exception("Not yet implemented");
+  }
+  
+  /**
+  * Create the DELETE path for a specific primary key
+  * Will follow relations where 'on_delete' is set to 'cascade'
+  * @param  int   $id   The primary key to delete
+  * @param  string  $query  Internal parameter for recursion
+  * @param  array   $resolved Internal parameter for recursion
+  */
+  function deleteById($id, $query='pk', $resolved=array()) {
+    if($this->query['where']) throw new Dormio_Queryset_Exception("Cannot delete item if filters are set");
+    $sql = array();
+    foreach($this->_meta->reverseFields() as $spec) {
+      $child = new Dormio_Queryset($spec['model']);
+      $child->_selectIdent();
+      
+      $r = $resolved;
+      array_unshift($r, $spec['accessor']);
+      
+      $q = implode('__', $r);
+      switch($spec['on_delete']) {
+        case "cascade":
+          $sql = array_merge($sql, $child->deleteById($id, $q, $r));
+          break;
+        case "blank":
+        case "set_null":
+          $sql[] = $child->filter($q, '=', $id)->update(array($q => null));
+          break;
+        default:
+          throw new Dormio_Queryset_Exception('Unknown ON DELETE action: ' . $spec['on_delete']);
+      }
+    }
+    $o = $this->filter($query, '=', $id);
     $sql[] = array($this->dialect->delete($o->query), $o->params);
     
     return $sql;

@@ -72,6 +72,7 @@ class Module extends Dormio_Model {
     'fields' => array(
       'name' => array('type' => 'string', 'max_length' => 30),
       'depends_on' => array('type' => 'manytomany', 'model' => 'Module'),
+      'required_by' => array('type' => 'reverse', 'model' => 'Module', 'accessor' => 'depends_on')
     ),
   );
 }

@@ -117,18 +117,13 @@ abstract class Dormio_Model {
     // tried a static cache but causes problems if you change db handle
     if(!isset($this->_db->_stmt_cache)) $this->_db->_stmt_cache = array();
     if(!isset($this->_db->_stmt_cache[$this->_meta->_klass])) {
-      $fields = implode(', ', $this->_meta->prefixedDBColumns());
+      $fields = array();
+      foreach($this->_meta->DBColumns() as $column) $fields[] = "{{$this->_meta->table}}.{{$column}} AS {{$this->_meta->_klass}_{$column}}";
+      $fields = implode(', ', $fields);
       $sql = "SELECT {$fields} FROM {{$this->_meta->table}} WHERE {{$this->_meta->table}}.{{$this->_meta->pk}} = ?";
       $this->_db->_stmt_cache[$this->_meta->_klass] = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     }
     return $this->_db->_stmt_cache[$this->_meta->_klass];
-    /*
-    $columns = $this->_meta->DBColumns();
-    for($i=0, $c=count($columns); $i<$c; $i++) $columns[$i] = "{$this->_prefix}.{{$columns[$i]}} AS {{$this->_prefix}_{$columns[$i]}}";
-    $fields = implode(', ', $columns);
-    $sql = "SELECT {$fields} FROM {{$this->_meta->table}} AS {$this->_prefix} WHERE {$this->_prefix}.{{$this->_meta->pk}} = ?";
-    return $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
-     */
   }
   
   /**
@@ -173,7 +168,7 @@ abstract class Dormio_Model {
   * @return Dormio_Manager A manager instance
   */
   function manager($field) {
-    $this->_meta->resolve($field, $spec, $meta);
+    $spec = $this->_meta->getSpec($field);
     return new Dormio_Manager($spec['model'], $this->_db, $this->_dialect);
   }
   
@@ -237,7 +232,7 @@ abstract class Dormio_Model {
     if(array_key_exists($key, $this->_data)) return $this->_data[$key];
     
     
-    $this->_meta->resolve($name, $spec, $meta);
+    $spec = $this->_meta->getSpec($name);
     isset($spec['db_column']) || $spec['db_column'] = $this->_meta->pk;
     
     switch($spec['type']) {
@@ -279,6 +274,7 @@ abstract class Dormio_Model {
         }
         $field = $target->accessorFor($this);
         $manager = new Dormio_Manager_Related($spec['model'], $this->_db, $this->_dialect, $this, $field, $through);
+        
         $this->_related[$name] = $manager;
         return $this->_related[$name];
       default:

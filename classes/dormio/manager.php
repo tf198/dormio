@@ -252,8 +252,12 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     }
     return $this->_iter;
   }
-}
 
+
+  public function __toString() {
+    return "<Dormio_Manager::{$this->_meta->_klass}>";
+  }
+}
 /**
  * Traversable dataset - buffers the results
  * @package dormio
@@ -459,6 +463,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
       }
       $field = $set->_meta->accessorFor($this->_to);
       $sql = $set->filter($field, '=', $this->_to->ident())->delete();
+      //$sql = $set->deleteById($this->_to->ident(), $field);
       return $this->batchExecute($sql);
     } else {
       throw new Dormio_Manager_Exception('Unable to clear foreign key sets');

@@ -197,9 +197,19 @@ class TestOfModel extends TestOfDB{
     $c1->load(2);
     
     $expected = array('Orange', 'Violet');
+    //var_dump($c1->tags);
     $this->assertQueryset($c1->tags, 'tag', $expected);
     $this->assertSQL('SELECT t1."tag_id" AS "t1_tag_id", t1."tag" AS "t1_tag" FROM "tag" AS t1 INNER JOIN "comment_tag" AS t2 ON t1."tag_id"=t2."r_tag_id" WHERE t2."l_comment_id" = ?', 2);
     
+    // manytomany on self
+    /*
+    $m1 = new Module($this->db);
+    $m1->load(3);
+    foreach($m1->depends_on as $m) {
+      echo "{$m->name}\n";
+    }
+    $this->assertSQL();
+    */
     $this->assertDigestedAll();
   }
   
