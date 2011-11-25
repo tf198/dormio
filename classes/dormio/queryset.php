@@ -325,12 +325,12 @@ class Dormio_Queryset {
       
       // do the reverse bit
       $through_meta = Dormio_Meta::get($spec['through']);
-      $reverse_spec = $through_meta->getReverseSpec($left->_klass, $spec['local_field']);
+      $reverse_spec = $through_meta->getReverseSpec($left->_klass, $spec['map_local_field']);
       $mid = $this->_addJoin($left, $reverse_spec, "INNER", $left_alias);
       
       // do the forward bit
-      if(!$spec['remote_field']) $spec['remote_field'] = $mid->accessorFor($spec['model']);
-      $spec = $mid->getSpec($spec['remote_field']);
+      if(!$spec['map_remote_field']) $spec['map_remote_field'] = $mid->accessorFor($spec['model']);
+      $spec = $mid->getSpec($spec['map_remote_field']);
       return $this->_addJoin($mid, $spec, "INNER", $left_alias);
     }
     

@@ -114,23 +114,21 @@ class Dormio_Meta {
             $defaults = array(
                 'verbose' => self::title($key),
                 'through' => null,
-                'local_field' => null,
-                'remote_field' => null,
+                'map_local_field' => null,
+                'map_remote_field' => null,
             );
             $spec = array_merge($defaults, $spec);
             //if(isset($spec['through'])) {
             if($spec['through']) {
               // load the spec
               Dormio_Meta::get($spec['through']);
-              isset($spec['map_local']) || $spec['map_local'] = null;
-              isset($spec['map_remote']) || $spec['map_remote'] = null;
             } else {
               $through = self::_generateIntermediate($model, $spec);
               $spec['through'] = $through->_klass;
-              $spec['map_local'] = 'l_' . $model;
-              $spec['map_remote'] = 'r_' . $spec['model'];
+              $spec['map_local_field'] = 'l_' . $model;
+              $spec['map_remote_field'] = 'r_' . $spec['model'];
             }
-            $reverse = array('type'=>'manytomany', 'through'=>$spec['through'], 'model'=>$model, 'map_local'=>$spec['map_remote'], 'map_remote'=>$spec['map_local']);
+            $reverse = array('type'=>'manytomany', 'through'=>$spec['through'], 'model'=>$model, 'map_local_field'=>$spec['map_remote_field'], 'map_remote_field'=>$spec['map_local_field']);
             break;
             
           case 'reverse':

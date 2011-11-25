@@ -98,11 +98,11 @@ class TestOfMeta extends UnitTestCase{
     
     // forward manytomany
     $spec = $blog->getSpec('tags');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'tag', 'verbose'=>'Tags', 'through'=>'My_Blog_Tag', 'local_field'=>null, 'remote_field'=>null));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'tag', 'verbose'=>'Tags', 'through'=>'My_Blog_Tag', 'map_local_field'=>null, 'map_remote_field'=>null));
     
     // reverse manytomany
     $spec = $tag->getSpec('blog_set');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'blog', 'through'=>'My_Blog_Tag', 'local_field'=>null, 'remote_field'=>null));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'blog', 'through'=>'My_Blog_Tag', 'map_local_field'=>null, 'map_remote_field'=>null));
     
     // forward foreignkey onto self
     $spec = $tree->getSpec('parent');
@@ -114,11 +114,11 @@ class TestOfMeta extends UnitTestCase{
     
     // forward manytomany onto self
     $spec = $module->getSpec('depends_on');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'verbose'=>'Depends On', 'through'=>'module_module', 'local_field'=>'l_module', 'remote_field'=>'r_module'));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'verbose'=>'Depends On', 'through'=>'module_module', 'map_local_field'=>'l_module', 'map_remote_field'=>'r_module'));
     
     // reverse manytomany onto self
     $spec = $module->getSpec('module_set');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'through'=>'module_module', 'local_field'=>'r_module', 'remote_field'=>'l_module'));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'through'=>'module_module', 'map_local_field'=>'r_module', 'map_remote_field'=>'l_module'));
     
   }
   
