@@ -93,7 +93,7 @@ class TestOfManager extends TestOfDB{
     $comment = $comments->get(1);
     $this->assertEqual($comment->title, 'New Title');
   }
-  /*
+  
   function testDelete() {
     $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
@@ -102,9 +102,9 @@ class TestOfManager extends TestOfDB{
     $set = $blogs->filter('title', '=', 'Andy Blog 1');
     // 1 blog with 2 tags and 2 comments with 4 comment tags between them
     $this->assertEqual($set->delete(), 9);
-    //var_dump($this->db->stack);
+    var_dump($this->db->stack);
   }
-  */
+  
   function testForeignKeyCreate() {
     $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
