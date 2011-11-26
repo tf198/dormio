@@ -275,9 +275,9 @@ class TestOfSQL extends UnitTestCase{
   
   function testDelete() {
     $blogs = new Dormio_Queryset('Blog');
-    $set = $blogs->filter('title', '=', 'My First Blog');
-    //$sql = $set->new_delete();
-    //foreach($sql as $parts) echo $parts[0]."\n";
+    $set = $blogs->filter('title', '=', 'My First Blog')->filter('the_user__name', '=', 'Bob');
+    $sql = $set->delete();
+    foreach($sql as $parts) echo $parts[0]."\n";
     /**
     $this->assertEqual($sql, array(
       array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t1."blog_tag_id" FROM "blog_tag" AS t1 INNER JOIN "blog" AS t2 ON t1."the_blog_id"=t2."blog_id" WHERE t3."title" = ?)', array(1)),
