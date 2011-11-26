@@ -297,6 +297,10 @@ class TestOfSQL extends UnitTestCase{
       array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t3."comment_id" FROM "comment" AS t3 INNER JOIN "blog" AS t1 ON t3."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
       array('DELETE FROM "blog" WHERE "blog_id" IN (SELECT t1."blog_id" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
     ));
+    
+    $set = $blogs->filter('pk', '=', 3);
+    $sql = $set->delete();
+    foreach($sql as $parts) echo $parts[0]."\n";    
   }
   
   
