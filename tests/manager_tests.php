@@ -102,7 +102,7 @@ class TestOfManager extends TestOfDB{
     $set = $blogs->filter('title', '=', 'Andy Blog 1');
     // 1 blog with 2 tags and 2 comments with 4 comment tags between them
     $this->assertEqual($set->delete(), 9);
-    var_dump($this->db->stack);
+    //var_dump($this->db->stack);
   }
   
   function testForeignKeyCreate() {
