@@ -275,17 +275,28 @@ class TestOfSQL extends UnitTestCase{
   
   function testDelete() {
     $blogs = new Dormio_Queryset('Blog');
+    
+    // simple(ish) delete
+    $set = $blogs->filter('title', '=', 'My First Blog');
+    $sql = $set->delete();
+    //foreach($sql as $parts) echo $parts[0]."\n";    
+    $this->assertEqual($sql, array(
+      array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t2."blog_tag_id" FROM "blog_tag" AS t2 INNER JOIN "blog" AS t1 ON t2."the_blog_id"=t1."blog_id" WHERE t1."title" = ?)', array('My First Blog')),
+      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t4."comment_tag_id" FROM "comment_tag" AS t4 INNER JOIN "comment" AS t5 ON t4."l_comment_id"=t5."comment_id" INNER JOIN "blog" AS t1 ON t5."blog_id"=t1."blog_id" WHERE t1."title" = ?)', array('My First Blog')),
+      array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t2."comment_id" FROM "comment" AS t2 INNER JOIN "blog" AS t1 ON t2."blog_id"=t1."blog_id" WHERE t1."title" = ?)', array('My First Blog')),
+      array('DELETE FROM "blog" WHERE "title" = ?', array('My First Blog')),
+    ));
+    
+    // delete a complex cross-table set
     $set = $blogs->filter('title', '=', 'My First Blog')->filter('the_user__name', '=', 'Bob');
     $sql = $set->delete();
-    foreach($sql as $parts) echo $parts[0]."\n";
-    /**
+    //foreach($sql as $parts) echo $parts[0]."\n";    
     $this->assertEqual($sql, array(
-      array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t1."blog_tag_id" FROM "blog_tag" AS t1 INNER JOIN "blog" AS t2 ON t1."the_blog_id"=t2."blog_id" WHERE t3."title" = ?)', array(1)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t1."comment_tag_id" FROM "comment_tag" AS t1 INNER JOIN "blog" AS t2 ON t1."blog_id"=t2."blog_id" INNER JOIN "comment" AS t3 ON t2."l_comment_id"=t3."comment_id" WHERE t2."blog_id" = ?)', array(1)),
-      array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t1."comment_id" FROM "comment" AS t1 INNER JOIN "blog" AS t2 ON t1."blog_id"=t2."blog_id" WHERE t2."title" = ?)', array(1)),
-      array('DELETE FROM "blog" WHERE "title" = ?', array(1)),
+      array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t3."blog_tag_id" FROM "blog_tag" AS t3 INNER JOIN "blog" AS t1 ON t3."the_blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
+      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t5."comment_tag_id" FROM "comment_tag" AS t5 INNER JOIN "comment" AS t6 ON t5."l_comment_id"=t6."comment_id" INNER JOIN "blog" AS t1 ON t6."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
+      array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t3."comment_id" FROM "comment" AS t3 INNER JOIN "blog" AS t1 ON t3."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
+      array('DELETE FROM "blog" WHERE "blog_id" IN (SELECT t1."blog_id" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
     ));
-     */
   }
   
   

@@ -383,73 +383,6 @@ class Dormio_Queryset {
     return array($this->dialect->insert($this->query, $update_fields), array_values($params));
   }
   
-  /**
-  * @access private
-  */
-  /*
-  function _deleteSpec() {
-    $result = array();
-    foreach($this->_meta->columns as $key=>$spec) {
-      // add reverse manytomanys
-      //echo "$key\n";
-      if(substr($key,0,2)=='__') {
-        foreach($spec as $accessor=>$rev_spec) {
-          //echo "ACCESSOR: {$accessor} {$spec['type']}\n";
-          if($rev_spec['type']=='manytomany') $result[] = array($rev_spec['through'], 'cascade');
-        }
-      } else {
-        // add manual reverse specs
-        if($spec['type']=='reverse') {
-          $this->_meta->resolve($key, $spec, $meta);
-          
-          if($spec['type']=='foreignkey_rev' || $spec['type']=='onetoone_rev') {
-            $result[] = array($meta, $spec['on_delete']);
-          }
-        }
-      }
-    }
-    return $result;
-  }
-   */
-  
-  /**
-  * Create a DELETE path based on the current query.
-  * Will follow relations where 'on_delete' is set to 'cascade'
-  * @param    array   $resolved   Internal parameter for recursion
-  * @return   array   array( array(sql, params), array(sql, params), ... )
-  */
-  /*
-  function delete($resolved=array()) {
-    $sql = array();
-    foreach($this->_deleteSpec() as $parts) {
-      $child = new Dormio_Queryset($parts[0]);
-      echo "Delete {$parts[0]}\n";
-      
-      //$o = $this->field("{$child->_meta->_klass}_set");
-      //var_dump($o);
-      
-      //$child->query['select'] = array("{{$child->_meta->table}}.{{$child->_meta->pk}}");
-      $child->_selectIdent();
-      //$child->query['where'] = $this->query['where'];
-      //$child->query['join'] = $this->query['join'];
-      //$child->params = $this->params;
-      //$child->aliases = $this->aliases;
-        
-      $r = $resolved;
-      array_unshift($r, $child->_meta->accessorFor($this));
-      echo "Resolving " . implode('__', $r) . "\n";              
-      $child->_resolve($r);
-        
-      $sql = array_merge($sql, $child->delete($r));
-    }
-    
-    //print $this->dialect->delete($this->query) . "\n\n";
-    $sql[] = array($this->dialect->delete($this->query), $this->params);
-    
-    return $sql;
-  }
-  */
-  
   function delete($resolved=array(), $base=null) {
     if($base === null) $base = $this;
     $sql = array();
@@ -457,7 +390,7 @@ class Dormio_Queryset {
     
     foreach($this->_meta->reverseFields() as $spec) {
       $child = new Dormio_Queryset($spec['model'], $this->dialect, $this->_next_alias);
-      $child->aliases = array_merge($child->aliases, $base->aliases);
+      
       $child->query['where'] = $this->query['where'];
       $child->params = $this->params;
       
@@ -465,9 +398,10 @@ class Dormio_Queryset {
       array_unshift($r, $spec['accessor']);
       $child->_resolveArray($r);
       
-      $child->query['join'] = array_merge($child->query['join'], $base->query['join']);
-      
-      //var_dump($this->aliases, $child->aliases, $r);
+      if($base->query['join']) {
+        $child->query['join'] = array_merge($child->query['join'], $base->query['join']);
+        $child->aliases = array_merge($child->aliases, $base->aliases);
+      }
       
       $sql = array_merge($sql, $child->delete($r, $base));
       
@@ -481,7 +415,6 @@ class Dormio_Queryset {
     //var_dump($this->aliases, $base_key);
     foreach($this->aliases as $key=>$alias) {
       if(substr($key, -strlen($base_key)) == $base_key) {
-        //echo "KEY: {$key}\n";
         $result[0] = str_replace($alias, $base->_alias, $result[0]);
       }
     }

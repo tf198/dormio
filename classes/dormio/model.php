@@ -250,7 +250,7 @@ abstract class Dormio_Model {
           // DB is not hit at all in this operation
           $key = "{$this->_meta->_klass}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
           if(isset($this->_table_aliases[$key])) {
-            echo "Reusing data for {$key}\n";
+            //echo "Reusing data for {$key}\n";
             $this->_related[$name]->_setAliases($this->_table_aliases, $this->_table_aliases[$key]);
             $this->_related[$name]->_hydrate($this->_data);
           }
