@@ -39,12 +39,11 @@ class Dormio_Meta {
   */
   private function __construct($klass, $spec) {
     $this->_klass = $klass;
-    if(!isset($spec['table'])) $spec['table'] = $klass;
-    if(!isset($spec['version'])) $spec['version'] = 1;
     $this->_spec = self::_normalise($klass, $spec);
     
-    // helpful pointers
+    // set up some helpful pointers
     $this->columns = $this->_spec['fields'];
+    $this->reverse = $this->_spec['reverse'];
     $this->table = $this->_spec['table'];
     $this->pk = $this->_spec['fields']['pk']['db_column'];
     $this->version = $this->_spec['version'];
@@ -66,11 +65,18 @@ class Dormio_Meta {
   /**
   * Update the fields in place
   * Fills in defaults and generates reverse defininitions and intermediate models as required
+   * @todo Remove verbose field as generated in constructor
   */
   static function _normalise($model, $meta) {
-    // check the basic array structure
-    isset($meta['indexes']) || $meta['indexes'] = array();
     if(!isset($meta['fields'])) throw new Dormio_Meta_Exception("Missing required 'fields' on meta");
+    // check the basic array structure
+    $defaults = array(
+        'table' => $model,
+        'version' => 1,
+        'reverse' => array(),
+        'indexes' => array(),
+    );
+    $meta = array_merge($defaults, $meta);
     
     // default pk - can be overriden by the fields
     $columns['pk'] = array('type' => 'ident', 'db_column' => $model . "_id", 'is_field' => true, 'verbose' => 'ID');
@@ -142,7 +148,8 @@ class Dormio_Meta {
         if(isset($reverse)) {
           //if(isset($columns['__' . $spec['model']])) throw new Dormio_Meta_Exception("More than one reverse relation for model " . $model);
           // reverse specs stored in array by original accessor
-          $columns['__' . $spec['model']][$key] = $reverse;
+          //$columns['__' . $spec['model']][$key] = $reverse;
+          $meta['reverse'][$spec['model']][$key] = $reverse;
           //$meta['reverse'][] = $spec['model'];
         }
       } else {
@@ -225,12 +232,23 @@ class Dormio_Meta {
   /**
   * Get the first field name that maps to a particular model
   */
-  function accessorFor($model) {
+  function accessorFor($model, $accessor=null) {
+    /*
     if(is_object($model)) $model = $model->_meta->_klass;
     $reverse = '__' . strtolower($model);
     if(!isset($this->columns[$reverse])) throw new Dormio_Meta_Exception("No reverse relation found for {$model} on {$this->_klass}");
     $keys = array_keys($this->columns[$reverse]);
     return $keys[0];
+    */
+    if(is_object($model)) $model = $model->_meta->_klass;
+    if(!isset($this->reverse[$model])) throw  new Dormio_Meta_Exception("No reverse relation for '{$model}' on '{$this->_klass}'");
+    if($accessor) {
+      if(!isset($this->reverse[$model][$accessor])) throw new Dormio_Meta_Exception("No reverse accessor '{$model}.{$accessor}' on '{$this->_klass}'");
+      return $accessor;
+    } else {
+      reset($this->reverse[$model]);
+      return key($this->reverse[$model]);
+    }
   }
   
   /**
@@ -239,7 +257,8 @@ class Dormio_Meta {
    * @param string $accessor <optional> Return a specific spec instead of the first defined
    * @return array
    */
-  function getReverseSpec($name, $accessor=null) {
+  function getReverseSpec($model, $accessor=null) {
+    /*
     $reverse = "__" . $name;
     if(!isset($this->columns[$reverse])) throw  new Dormio_Meta_Exception("No reverse relation for '{$name}' on '{$this->_klass}'");
     if($accessor) {
@@ -249,6 +268,9 @@ class Dormio_Meta {
       $specs = array_values($this->columns[$reverse]);
       return $specs[0];
     }
+  */
+    $accessor = $this->accessorFor($model, $accessor);
+    return $this->reverse[$model][$accessor];
   }
   
   /**
@@ -285,11 +307,10 @@ class Dormio_Meta {
    * Used by delete routines
    */
   function reverseFields() {
-    $field = "__" . $this->_klass;
     $result = array();
     foreach(self::$_meta_cache as $model=>$meta) {
-      if($model != $this->_klass && isset($meta->columns[$field])) {
-        foreach($meta->columns[$field] as $accessor=>$spec) {
+      if($model != $this->_klass && isset($meta->reverse[$this->_klass])) {
+        foreach($meta->reverse[$this->_klass] as $accessor=>$spec) {
           $spec['accessor'] = $accessor;
           $result[] = $spec;
         }
