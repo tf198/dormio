@@ -42,7 +42,7 @@ class Dormio_Meta {
     $this->_spec = self::_normalise($klass, $spec);
     
     // set up some helpful pointers
-    $this->columns = $this->_spec['fields'];
+    $this->fields = $this->_spec['fields'];
     $this->reverse = $this->_spec['reverse'];
     $this->table = $this->_spec['table'];
     $this->pk = $this->_spec['fields']['pk']['db_column'];
@@ -285,8 +285,8 @@ class Dormio_Meta {
       $name = substr($name, 0, -4);
       $spec = array('type' => 'reverse', 'model' => $name, 'accessor' => null);
     } else {
-      if(!isset($this->columns[$name])) throw new Dormio_Meta_Exception("No field '{$name} on '{$this->_klass}'");
-      $spec = $this->columns[$name];
+      if(!isset($this->fields[$name])) throw new Dormio_Meta_Exception("No field '{$name} on '{$this->_klass}'");
+      $spec = $this->fields[$name];
     }
     
     if($spec['type']=='reverse') {

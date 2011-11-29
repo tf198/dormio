@@ -41,7 +41,7 @@ class TestOfMeta extends UnitTestCase{
   
   function testBlog() {
     $blogs = Dormio_Meta::get('Blog');
-    $this->assertEqual(array_keys($blogs->columns), array('pk', 'title', 'the_user', 'tags', 'comments'));
+    $this->assertEqual(array_keys($blogs->fields), array('pk', 'title', 'the_user', 'tags', 'comments'));
     
     $schema = $blogs->schema();
     $this->assertEqual($schema['indexes'], array(
@@ -52,7 +52,7 @@ class TestOfMeta extends UnitTestCase{
   function testComment() {
     $comments = Dormio_Meta::get('Comment');
     $schema = $comments->schema();
-    $this->assertEqual(array_keys($comments->columns), array('pk', 'title', 'user', 'blog', 'tags'));
+    $this->assertEqual(array_keys($comments->fields), array('pk', 'title', 'user', 'blog', 'tags'));
     $this->assertEqual($schema['indexes'], array(
       'user_0' => array('the_comment_user' => true), 
       'blog_0' => array('blog_id' => true),

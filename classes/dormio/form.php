@@ -37,7 +37,7 @@ class Dormio_Form extends Phorms_Forms_Form{
     $this->form_config = Dormio_Meta::config('forms');
     // get the existing data
     $data = array();
-    foreach($this->obj->_meta->columns as $name => $spec) {
+    foreach($this->obj->_meta->fields as $name => $spec) {
       if(isset($spec['is_field'])) {
         $this->model_fields[$name] = $spec;
         if($this->obj->ident()) $data[$name] = $this->obj->_getData($spec['db_column']);

@@ -6,7 +6,7 @@ class TestOfMPTT extends TestOfDB{
 
   function testMetaGeneration() {
     $meta = Dormio_Meta::get('ARO');
-    $this->assertEqual(array_keys($meta->columns), array('pk', 'lhs', 'rhs', 'name'));
+    $this->assertEqual(array_keys($meta->fields), array('pk', 'lhs', 'rhs', 'name'));
   }
 
   function testBasic() {

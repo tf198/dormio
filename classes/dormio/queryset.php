@@ -213,9 +213,14 @@ class Dormio_Queryset {
   * @access private
   */
   function _addFields($meta, $alias) {
-    $schema = $meta->schema();
-    foreach($schema['columns'] as $key=>$spec) {
-      $this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
+    //$schema = $meta->schema();
+    //foreach($schema['columns'] as $key=>$spec) {
+    //  $this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
+    //}
+    foreach($meta->fields as $key=>$spec) {
+      if(isset($spec['is_field']) && $spec['is_field']) {
+        $this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
+      }
     }
   }
   
@@ -249,7 +254,7 @@ class Dormio_Queryset {
   * @ignore
   */
   function _resolveStringLocalCallback($matches) {
-    return $this->_meta->columns[$matches[1]]['db_column'];
+    return $this->_meta->fields[$matches[1]]['db_column'];
   }
 
   /**
@@ -269,8 +274,8 @@ class Dormio_Queryset {
   function _resolveLocal($fields, $type=null) {
     $result = array();
     foreach($fields as $field) {
-      if(!isset($this->_meta->columns[$field])) throw new Dormio_Queryset_Exception('No such local field: ' . $field);
-      $result[] = "{{$this->_meta->columns[$field]['db_column']}}";
+      if(!isset($this->_meta->fields[$field])) throw new Dormio_Queryset_Exception('No such local field: ' . $field);
+      $result[] = "{{$this->_meta->fields[$field]['db_column']}}";
     }
     return $result;
   }
@@ -286,8 +291,8 @@ class Dormio_Queryset {
     if($strip_pk && $field=='pk' && $parts) $field = array_pop($parts);
     list($meta, $alias) = $this->_resolveArray($parts, $type);
     
-    if(!isset($meta->columns[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
-    return array($meta, $meta->columns[$field]['db_column'], $alias);
+    if(!isset($meta->fields[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
+    return array($meta, $meta->fields[$field]['db_column'], $alias);
   }
   
   /**
