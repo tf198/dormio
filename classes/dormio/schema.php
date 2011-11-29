@@ -80,6 +80,7 @@ class Dormio_Schema {
     // unset all the unused stuff
     unset($schema['fields']);
     unset($schema['reverse']);
+    unset($schema['verbose']);
     return $schema;
   }
 

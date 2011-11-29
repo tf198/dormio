@@ -68,7 +68,7 @@ class Dormio_Queryset {
     $this->params = array();
     
     $this->_alias = 't' . $alias;
-    $this->aliases = array($this->_meta->_klass => $this->_alias);
+    $this->aliases = array($this->_meta->model => $this->_alias);
     
     // add the base table and its primary key
     $this->query['from'] = "{{$this->_meta->table}}<@ AS {$this->_alias}@>";
@@ -330,11 +330,11 @@ class Dormio_Queryset {
       
       // do the reverse bit
       $through_meta = Dormio_Meta::get($spec['through']);
-      $reverse_spec = $through_meta->getReverseSpec($left->_klass, $spec['map_local_field']);
+      $reverse_spec = $through_meta->getReverseSpec($left->model, $spec['map_local_field']);
       $mid = $this->_addJoin($left, $reverse_spec, "INNER", $left_alias);
       
       // do the forward bit
-      if(!$spec['map_remote_field']) $spec['map_remote_field'] = $mid->accessorFor($spec['model']);
+      if(!$spec['map_remote_field']) $spec['map_remote_field'] = $mid->getAccessorFor($spec['model']);
       $spec = $mid->getSpec($spec['map_remote_field']);
       return $this->_addJoin($mid, $spec, "INNER", $left_alias);
     }
@@ -345,7 +345,7 @@ class Dormio_Queryset {
     $left_field = $left->getColumn($spec['local_field']);
     $right_field = $right->getColumn($spec['remote_field']);
     
-    $key = "{$left->_klass}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
+    $key = "{$left->model}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
     //$key = $spec['model'];
     
     if(isset($this->aliases[$key])) {
@@ -416,7 +416,7 @@ class Dormio_Queryset {
     $result = array($this->dialect->delete($this->query), $this->params);
     
     // rewrite all references to the base model
-    $base_key = "__{$base->_meta->_klass}.pk";
+    $base_key = "__{$base->_meta->model}.pk";
     //var_dump($this->aliases, $base_key);
     foreach($this->aliases as $key=>$alias) {
       if(substr($key, -strlen($base_key)) == $base_key) {

@@ -266,7 +266,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
   }
 
   public function __toString() {
-    return "<Dormio_Manager::{$this->_meta->_klass}>";
+    return "<Dormio_Manager::{$this->_meta->model}>";
   }
 
 }
@@ -422,14 +422,14 @@ class Dormio_Manager_Related extends Dormio_Manager {
    * @param  Dormio_Model $obj  The object to add to the set
    */
   function add($obj) {
-    if ($obj->_meta->_klass != $this->_meta->_klass)
+    if ($obj->_meta->model != $this->_meta->model)
       throw new Dormio_Manager_Exception('Can only add like objects');
     if ($this->_through) {
       $obj->save();
       $mid = Dormio_Meta::get($this->_through);
       $intermediate = $mid->instance($this->_db, $this->dialect);
       $intermediate->__set($this->_field, $this->_to->ident());
-      $field = $mid->accessorFor($obj);
+      $field = $mid->getAccessorFor($obj);
       $intermediate->__set($field, $obj->ident());
       $intermediate->save();
     } else {
@@ -479,10 +479,10 @@ class Dormio_Manager_Related extends Dormio_Manager {
     if ($this->_through) {
       $set = new Dormio_Queryset($this->_through);
       if ($pk) {
-        $field = $set->_meta->accessorFor($this);
+        $field = $set->_meta->getAccessorFor($this);
         $set = $set->filter($field, '=', $pk);
       }
-      $field = $set->_meta->accessorFor($this->_to);
+      $field = $set->_meta->getAccessorFor($this->_to);
       $sql = $set->filter($field, '=', $this->_to->ident())->delete();
 //$sql = $set->deleteById($this->_to->ident(), $field);
       return $this->batchExecute($sql);
@@ -518,7 +518,7 @@ class Dormio_Manager_ReverseForeignkey extends Dormio_Manager {
    * @param  Dormio_Model $obj  The object to add to the set
    */
   function add($obj) {
-    if ($obj->_meta->_klass != $this->_meta->_klass)
+    if ($obj->_meta->model != $this->_meta->model)
       throw new Dormio_Manager_Exception('Can only add like objects');
     $obj->__set($this->_field, $this->_to->ident());
     $obj->save();

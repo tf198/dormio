@@ -51,7 +51,7 @@ abstract class Dormio_Model {
     $this->_db = $db;
     $this->_meta = Dormio_Meta::get(get_class($this));
     $this->_dialect = ($dialect) ? $dialect : Dormio_Dialect::factory($db->getAttribute(PDO::ATTR_DRIVER_NAME));
-    $this->_prefix = $this->_meta->_klass;
+    $this->_prefix = $this->_meta->model;
   }
 
   /**
@@ -108,15 +108,15 @@ abstract class Dormio_Model {
    */
   function _rehydrate() {
     if (!$this->_id)
-      throw new Dormio_Model_Exception("No primary key set for {$this->_meta->_klass}");
-    isset(self::$logger) && self::$logger->log("Rehydrating {$this->_meta->_klass}({$this->_id})");
+      throw new Dormio_Model_Exception("No primary key set for {$this->_meta->model}");
+    isset(self::$logger) && self::$logger->log("Rehydrating {$this->_meta->model}({$this->_id})");
     $stmt = $this->_hydrateStmt();
     $stmt->execute(array($this->_id));
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
     if ($data) {
       $this->_hydrate($data);
-      $this->_prefix = $this->_meta->_klass;
+      $this->_prefix = $this->_meta->model;
     } else {
       throw new Dormio_Model_Exception('No result found for primary key ' . $this->_id);
     }
@@ -132,18 +132,18 @@ abstract class Dormio_Model {
     // tried a static cache but causes problems if you change db handle
     if (!isset($this->_db->_stmt_cache))
       $this->_db->_stmt_cache = array();
-    if (!isset($this->_db->_stmt_cache[$this->_meta->_klass])) {
+    if (!isset($this->_db->_stmt_cache[$this->_meta->model])) {
       $fields = array();
       foreach($this->_meta->fields as $key=>$spec) {
         if(isset($spec['is_field']) && $spec['is_field']) {
-          $fields[] = "{{$this->_meta->table}}.{{$spec['db_column']}} AS {{$this->_meta->_klass}_{$spec['db_column']}}";
+          $fields[] = "{{$this->_meta->table}}.{{$spec['db_column']}} AS {{$this->_meta->model}_{$spec['db_column']}}";
         }
       }
       $fields = implode(', ', $fields);
       $sql = "SELECT {$fields} FROM {{$this->_meta->table}} WHERE {{$this->_meta->table}}.{{$this->_meta->pk}} = ?";
-      $this->_db->_stmt_cache[$this->_meta->_klass] = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
+      $this->_db->_stmt_cache[$this->_meta->model] = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     }
-    return $this->_db->_stmt_cache[$this->_meta->_klass];
+    return $this->_db->_stmt_cache[$this->_meta->model];
   }
 
   /**
@@ -322,7 +322,7 @@ abstract class Dormio_Model {
       $this->_related[$name]->load($id); // clears the stale data
       // Pass the current data if it is relevant
       // DB is not hit at all in this operation
-      $key = "{$this->_meta->_klass}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
+      $key = "{$this->_meta->model}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
       if (isset($this->_table_aliases[$key])) {
         //echo "Reusing data for {$key}\n";
         $this->_related[$name]->_setAliases($this->_table_aliases, $this->_table_aliases[$key]);
@@ -348,12 +348,12 @@ abstract class Dormio_Model {
     if ($spec['type'] == 'manytomany') {
       $target = Dormio_Meta::get($spec['through']);
       $through = $spec['through'];
-      $field = $target->accessorFor($this);
+      $field = $target->getAccessorFor($this);
       $manager = new Dormio_Manager_Related($spec['model'], $this->_db, $this->_dialect, $this, $field, $through);
     } else {
       // reverse foreign - manually add the where clause
       $target = Dormio_Meta::get($spec['model']);
-      $field = $target->accessorFor($this);
+      $field = $target->getAccessorFor($this);
       //echo "\n{$this->_meta->_klass} -> {$spec['model']}\n";
       //var_dump($target->getReverseSpec($this->_meta->_klass));
       $manager = new Dormio_Manager_ReverseForeignkey($spec['model'], $this->_db, $this->_dialect, $this, $field);
@@ -476,7 +476,7 @@ abstract class Dormio_Model {
    * @return string The text to display
    */
   function display() {
-    return "[{$this->_meta->_klass}:{$this->ident()}]";
+    return "[{$this->_meta->model}:{$this->ident()}]";
   }
 
   /**
@@ -489,7 +489,7 @@ abstract class Dormio_Model {
     try {
       return (string) $this->display();
     } catch (Exception $e) {
-      return "[{$this->_meta->_klass}:{$e->getMessage()}]";
+      return "[{$this->_meta->model}:{$e->getMessage()}]";
     }
   }
 
