@@ -134,8 +134,11 @@ abstract class Dormio_Model {
       $this->_db->_stmt_cache = array();
     if (!isset($this->_db->_stmt_cache[$this->_meta->_klass])) {
       $fields = array();
-      foreach ($this->_meta->DBColumns() as $column)
-        $fields[] = "{{$this->_meta->table}}.{{$column}} AS {{$this->_meta->_klass}_{$column}}";
+      foreach($this->_meta->fields as $key=>$spec) {
+        if(isset($spec['is_field']) && $spec['is_field']) {
+          $fields[] = "{{$this->_meta->table}}.{{$spec['db_column']}} AS {{$this->_meta->_klass}_{$spec['db_column']}}";
+        }
+      }
       $fields = implode(', ', $fields);
       $sql = "SELECT {$fields} FROM {{$this->_meta->table}} WHERE {{$this->_meta->table}}.{{$this->_meta->pk}} = ?";
       $this->_db->_stmt_cache[$this->_meta->_klass] = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));

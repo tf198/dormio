@@ -44,6 +44,7 @@ class Dormio_Meta {
     // set up some helpful pointers
     $this->fields = $this->_spec['fields'];
     $this->reverse = $this->_spec['reverse'];
+    $this->indexes = $this->_spec['indexes'];
     $this->table = $this->_spec['table'];
     $this->pk = $this->_spec['fields']['pk']['db_column'];
     $this->version = $this->_spec['version'];
@@ -189,46 +190,7 @@ class Dormio_Meta {
   public static function title($str) {
     return ucwords(str_replace('_', ' ', $str));
   }
-  
-  /**
-  * Returns a table schema for the model without all the relation stuff
-  */
-  function schema() {
-    if(isset($this->_schema)) return $this->_schema;
-    $this->_schema = self::_schema($this->_spec);
-    return $this->_schema;
-  }
-  
-  /**
-  * Converts a meta array into a schema array.
-  * Removes non-field entries and renames 'fields' to 'columns'
-  * @param  array   $spec   Meta spec
-  * @return array           Schema spec
-  */
-  static function _schema($spec) {
-    $spec['columns'] = array_filter($spec['fields'], array('Dormio_Meta', '_filterSchema'));
-    unset($spec['fields']);
-    return $spec;
-  }
-  
-  /**
-  * array_filter for schema()
-  * @access private
-  */
-  static function _filterSchema($spec) {
-    return (isset($spec['is_field']));
-  }
-  
-  /**
-  * Get an array of DB columns (unqualified)
-  */
-  function DBColumns() {
-    $schema = $this->schema();
-    $result = array();
-    foreach($schema['columns'] as $spec) $result[] = $spec['db_column'];
-    return $result;
-  }
-  
+
   /**
   * Get the first field name that maps to a particular model
   */

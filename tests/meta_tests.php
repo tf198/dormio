@@ -43,34 +43,25 @@ class TestOfMeta extends UnitTestCase{
     $blogs = Dormio_Meta::get('Blog');
     $this->assertEqual(array_keys($blogs->fields), array('pk', 'title', 'the_user', 'tags', 'comments'));
     
-    $schema = $blogs->schema();
-    $this->assertEqual($schema['indexes'], array(
+    $this->assertEqual($blogs->indexes, array(
       'the_user_0' => array('the_blog_user' => 'true'),
     ));
   }
   
   function testComment() {
     $comments = Dormio_Meta::get('Comment');
-    $schema = $comments->schema();
     $this->assertEqual(array_keys($comments->fields), array('pk', 'title', 'user', 'blog', 'tags'));
-    $this->assertEqual($schema['indexes'], array(
+    $this->assertEqual($comments->indexes, array(
       'user_0' => array('the_comment_user' => true), 
       'blog_0' => array('blog_id' => true),
     ));
     
     $intermediate = Dormio_Meta::get('comment_tag');
-    $schema = $intermediate->schema();
-    $this->assertEqual($schema['indexes'], array(
+    $this->assertEqual($intermediate->indexes, array(
       'l_comment_0' => array('l_comment_id' => true),
       'r_tag_0' => array('r_tag_id' => true),
     ));
-    $this->assertEqual(array_keys($schema['columns']), array('pk', 'l_comment', 'r_tag'));
-  }
-  
-  function testDBColumns() {
-    $blogs = Dormio_Meta::get('Blog');
-    $this->assertEqual($blogs->DBColumns(), array('blog_id', 'title', 'the_blog_user'));
-    //$this->assertEqual($blogs->prefixedDBColumns(), array('{blog}.{blog_id} AS {blog_blog_id}', '{blog}.{title} AS {blog_title}', '{blog}.{the_blog_user} AS {blog_the_blog_user}'));
+    $this->assertEqual(array_keys($intermediate->fields), array('pk', 'l_comment', 'r_tag'));
   }
   
   function testResolve() {
