@@ -134,10 +134,8 @@ class TestOfMeta extends UnitTestCase{
     
   }
   
-  function testReverseList() {
+  function testReverse() {
     $blog = Dormio_Meta::get('blog');
-    //var_dump($blog->_spec);
-    //var_dump($blog->reverseFields());
   }
   
 }

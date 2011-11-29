@@ -86,6 +86,9 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($nodes->filter('parent__name', '=', 'Bob')->query['join'],
             array('INNER JOIN {tree} AS t2 ON t1.{parent_id}=t2.{tree_id}'));
     
+    $this->assertEqual($nodes->filter('tree_set__name', '=', 'Andy')->query['join'],
+            array('INNER JOIN {tree} AS t2 ON t1.{tree_id}=t2.{parent_id}'));
+    
     $modules = new Dormio_Queryset('Module');
     $this->assertEqual($modules->filter('depends_on__name', '=', 'core')->query['join'], // manytomany self
       array('INNER JOIN {module_module} AS t2 ON t1.{module_id}=t2.{l_module_id}', 'INNER JOIN {module} AS t3 ON t2.{r_module_id}=t3.{module_id}'));
@@ -297,10 +300,6 @@ class TestOfSQL extends UnitTestCase{
       array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t3."comment_id" FROM "comment" AS t3 INNER JOIN "blog" AS t1 ON t3."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
       array('DELETE FROM "blog" WHERE "blog_id" IN (SELECT t1."blog_id" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
     ));
-    
-    //$set = $blogs->filter('pk', '=', 3);
-    //$sql = $set->delete();
-    //foreach($sql as $parts) echo $parts[0]."\n";    
   }
   
   

@@ -151,8 +151,8 @@ class Dormio_Meta {
         $spec['model'] = strtolower($spec['model']); // all meta references are lower case
         // set up the required fields based on the type
         switch ($spec['type']) {
-          case 'foreignkey':    // model, db_column, remote_field, on_delete
-          case 'onetoone':      // model, db_column, remote_field, on_delete
+          case 'foreignkey':
+          case 'onetoone':
             $defaults = array(
                 'verbose' => self::title($key),
                 'db_column' => strtolower($key) . "_id",
@@ -206,11 +206,7 @@ class Dormio_Meta {
         }
         // store a reverse spec so we don't need to traverse the columns
         if (isset($reverse)) {
-          //if(isset($columns['__' . $spec['model']])) throw new Dormio_Meta_Exception("More than one reverse relation for model " . $model);
-          // reverse specs stored in array by original accessor
-          //$columns['__' . $spec['model']][$key] = $reverse;
           $meta['reverse'][$spec['model']][$key] = $reverse;
-          //$meta['reverse'][] = $spec['model'];
         }
       } else {
         $defaults = array('verbose' => self::title($key), 'db_column' => strtolower($key), 'null_ok' => false, 'is_field' => true);
@@ -265,6 +261,7 @@ class Dormio_Meta {
         throw new Dormio_Meta_Exception("No reverse accessor '{$model}.{$accessor}' on '{$this->model}'");
       return $accessor;
     } else {
+      if(count($this->reverse[$model])>1) throw new Dormio_Meta_Exception("More that one reverse relation found for '{$model}' on '{$this->model}'. You need to add an accessor.");
       reset($this->reverse[$model]);
       return key($this->reverse[$model]);
     }

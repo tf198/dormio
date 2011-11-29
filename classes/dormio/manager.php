@@ -37,7 +37,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
   protected $_stmt = null;
   protected $_iter = null;
   protected $_qualified = true;
-  public $buffered_query = false;
+  public $buffered_query = true;
 
   /**
    * Create a new manager object based on the supplied meta.

@@ -61,6 +61,7 @@ class Dormio_Queryset {
   * Create a new Queryset
   * @param  string|Dormio_Meta  $meta   A meta object or the name of a model
   * @param  string|Dormio_Dialect $dialect  A dialect object or the name of one e.g. sqlite
+  * @param  int $alias  The table alias to start at [default: 1]
   */
   function __construct($meta, $dialect='generic', $alias=1) {
     $this->_meta = is_object($meta) ? $meta : Dormio_Meta::get($meta);
@@ -213,10 +214,6 @@ class Dormio_Queryset {
   * @access private
   */
   function _addFields($meta, $alias) {
-    //$schema = $meta->schema();
-    //foreach($schema['columns'] as $key=>$spec) {
-    //  $this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
-    //}
     foreach($meta->fields as $key=>$spec) {
       if(isset($spec['is_field']) && $spec['is_field']) {
         $this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
@@ -340,13 +337,11 @@ class Dormio_Queryset {
     }
     
     $right = Dormio_Meta::get($spec['model']);
-    // fill in the values that weren't known at parse time
-    //$left_field = ($spec['db_column']) ? $spec['db_column'] : $left->pk;
+    
     $left_field = $left->getColumn($spec['local_field']);
     $right_field = $right->getColumn($spec['remote_field']);
     
     $key = "{$left->model}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
-    //$key = $spec['model'];
     
     if(isset($this->aliases[$key])) {
       $left_alias = $this->aliases[$key];
