@@ -37,7 +37,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
   protected $_stmt = null;
   protected $_iter = null;
   protected $_qualified = true;
-  public $buffered_query = true;
+  public $unbuffered = false;
 
   /**
    * Create a new manager object based on the supplied meta.
@@ -259,7 +259,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     if (!$this->_iter) {
       $model = $this->_meta->instance($this->_db, $this->dialect);
       $model->_setAliases($this->aliases);
-      $klass = ($this->buffered_query) ? "Dormio_Buffered_Iterator" : "Dormio_Iterator";
+      $klass = ($this->unbuffered) ? "Dormio_Iterator_Unbuffered" : "Dormio_Iterator";
       $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_qualified);
     }
     return $this->_iter;
@@ -276,7 +276,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
  * @package dormio
  * @subpackage manager
  */
-class Dormio_Buffered_Iterator implements Iterator {
+class Dormio_Iterator implements Iterator {
 
   function __construct($stmt, $params, $model, $qualified=true) {
     $this->_model = $model;
@@ -341,7 +341,7 @@ class Dormio_Buffered_Iterator implements Iterator {
  * @package dormio
  * @subpackage manager
  */
-class Dormio_Iterator implements Iterator {
+class Dormio_Iterator_Unbuffered implements Iterator {
 
   function __construct($stmt, $params, $model) {
     $this->_model = $model;
