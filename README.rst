@@ -7,8 +7,8 @@ The API is likely to change - you have been warned!**
 
 Documentation
 -------------
-phpDocumentor documentation of the API is available at http://www.tfconsulting.com.au/~tris/dormio/api_docs
-and the best place to start is probably with the example usage https://github.com/tf198/dormio/blob/master/examples/usage.php
+phpDocumentor documentation of the API is available at http://www.tfconsulting.com.au/~tris/dormio/api-docs
+and the best place to start is probably with the example usage https://github.com/tf198/dormio/blob/master/docs/examples/usage.php
 
 Introduction (or why another PHP ORM?)
 --------------------------------------

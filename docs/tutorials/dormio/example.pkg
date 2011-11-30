@@ -29,7 +29,7 @@
  <refsect2 id="{@id models}">
   <title>Models</title>
   <para>
-    This is the skeleton for a really basic blogging system (as with every ORM).  In a real world application
+    This is the skeleton for a really basic blogging system (as with every ORM tutorial!).  In a real world application
     you might split the models into separate files for easier maintainance.  Models can have whatever extra
     methods you want on them, in fact this is the best place to put any business logic relating to the data.
   </para>
