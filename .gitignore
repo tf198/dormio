@@ -2,3 +2,5 @@ classes/Phorms
 api-docs
 dev-docs
 .pc
+nbproject
+tests/output
