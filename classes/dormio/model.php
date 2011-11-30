@@ -341,27 +341,9 @@ abstract class Dormio_Model {
   function _getReverseRelated($name, $spec) {
     // relations that return a manager
     // due to the parameters being referenced we dont need to do anything if these are cached
-    if (isset($this->_related[$name]))
-      return $this->_related[$name];
-
-    //print "{$this->_meta->model}->{$name}\n";
-    //var_dump($spec);
-    if ($spec['type'] == 'manytomany') {
-      $target = Dormio_Meta::get($spec['through']);
-      $through = $spec['through'];
-      $field = $target->getAccessorFor($this);
-      $manager = new Dormio_Manager_Related($spec['model'], $this->_db, $this->_dialect, $this, $field, $through);
-    } else {
-      // reverse foreign - manually add the where clause
-      $target = Dormio_Meta::get($spec['model']);
-      $field = $target->getAccessorFor($this);
-      //echo "\n{$this->_meta->_klass} -> {$spec['model']}\n";
-      //var_dump($target->getReverseSpec($this->_meta->_klass));
-      $manager = new Dormio_Manager_ReverseForeignkey($spec['model'], $this->_db, $this->_dialect, $this, $field);
+    if (!isset($this->_related[$name])) {
+      $this->_related[$name] = new Dormio_Manager_Related($spec, $this->_db, $this->_dialect, $this);
     }
-
-
-    $this->_related[$name] = $manager;
     return $this->_related[$name];
   }
 

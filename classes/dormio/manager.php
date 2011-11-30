@@ -400,21 +400,40 @@ class Dormio_Iterator_Unbuffered implements Iterator {
  * @subpackage manager
  */
 class Dormio_Manager_Related extends Dormio_Manager {
+  
+  private $manytomany;
 
-  function __construct($meta, $db, $dialect, $model, $field, $through=null) {
-    if (!$model->ident())
+  function __construct($spec, $db, $dialect, $parent) {
+    if (!$parent->ident())
       throw new Dormio_Manager_Exception('Model needs to be saved first');
-    $this->_to = $model;
-    $this->_field = $field;
-    $this->_through = $through;
-    parent::__construct($meta, $db, $dialect);
+    $this->_parent = $parent;
+    parent::__construct($spec['model'], $db, $dialect);
+    
+    $this->manytomany = isset($spec['through']);
 
-// set the base query
-    if ($through)
-      $field = "{$through}_set__{$field}";
-    $this->query['where'][] = $this->_resolveField($field) . " = ?";
-// set the id by reference so when the iterator advances the model criteria update automatically
-    $this->params[] = &$this->_to->_id;
+    if($this->manytomany) {
+      // we only want to do a half join so we need to do it manually
+      $this->_through = Dormio_Meta::get($spec['through']);
+      $this->_map_self_field = $this->_through->getAccessorFor($this->_meta->model, $spec['map_remote_field']);
+      $reverse = $this->_through->getReverseSpec($this->_meta->model, $this->_map_self_field);
+      
+      // get the field that maps to the parent
+      $this->_map_parent_field = $this->_through->getAccessorFor($parent, $spec['map_local_field']);
+      
+      // manually do the join to ensure it is onto the right side
+      $alias = $this->_alias;
+      $this->_addJoin($this->_meta, $reverse, 'INNER', $alias);
+      
+      // add the query
+      $column = $this->_through->getColumn($this->_map_parent_field);
+      $this->query['where'][] = "<@{$alias}.@>{{$column}} = ?";
+      $this->params[] = &$this->_parent->_id;
+    } else { // is foreign key
+      // can just use the native queryset method
+      $this->_field = $this->_meta->getAccessorFor($parent, $spec['remote_field']);
+      $this->filterVar($this->_field, '=', $this->_parent->_id, false);
+    }
+    
   }
 
   /**
@@ -424,17 +443,15 @@ class Dormio_Manager_Related extends Dormio_Manager {
   function add($obj) {
     if ($obj->_meta->model != $this->_meta->model)
       throw new Dormio_Manager_Exception('Can only add like objects');
-    if ($this->_through) {
+    if ($this->manytomany) {
       $obj->save();
-      $mid = Dormio_Meta::get($this->_through);
-      $intermediate = $mid->instance($this->_db, $this->dialect);
-      $intermediate->__set($this->_field, $this->_to->ident());
-      $field = $mid->getAccessorFor($obj);
-      $intermediate->__set($field, $obj->ident());
+      $intermediate = $this->_through->instance($this->_db, $this->dialect);
+      $intermediate->__set($this->_map_parent_field, $this->_parent->ident());
+      $intermediate->__set($this->_map_self_field, $obj->ident());
       $intermediate->save();
     } else {
 // update the foreign key on the supplied object
-      $obj->__set($this->_field, $this->_to->ident());
+      $obj->__set($this->_field, $this->_parent->ident());
       $obj->save();
     }
   }
@@ -452,8 +469,8 @@ class Dormio_Manager_Related extends Dormio_Manager {
    */
   function create($params=array()) {
     $obj = $this->_meta->instance($this->_db, $this->dialect);
-    if (!$this->_through)
-      $obj->__set($this->_field, $this->_to->ident());
+    if (!$this->manytomany)
+      $obj->__set($this->_field, $this->_parent->ident());
     foreach ($params as $key => $value)
       $obj->__set($key, $value);
     return $obj;
@@ -476,71 +493,16 @@ class Dormio_Manager_Related extends Dormio_Manager {
    * @param  int $pk   Can optionally just remove one item
    */
   function clear($pk=null) {
-    if ($this->_through) {
+    if ($this->manytomany) {
       $set = new Dormio_Queryset($this->_through);
       if ($pk) {
-        $field = $set->_meta->getAccessorFor($this);
-        $set = $set->filter($field, '=', $pk);
+        $set = $set->filter($this->_map_self_field, '=', $pk);
       }
-      $field = $set->_meta->getAccessorFor($this->_to);
-      $sql = $set->filter($field, '=', $this->_to->ident())->delete();
-//$sql = $set->deleteById($this->_to->ident(), $field);
+      $sql = $set->filter($this->_map_parent_field, '=', $this->_parent->ident())->delete();
       return $this->batchExecute($sql);
     } else {
       throw new Dormio_Manager_Exception('Unable to clear foreign key sets');
     }
-  }
-
-}
-
-/**
- * Additional methods where there is a related object.
- * @package dormio
- * @subpackage manager
- */
-class Dormio_Manager_ReverseForeignkey extends Dormio_Manager {
-
-  function __construct($meta, $db, $dialect, $model, $field) {
-    if (!$model->ident())
-      throw new Dormio_Manager_Exception('Model needs to be saved first');
-    $this->_to = $model;
-    $this->_field = $field;
-    parent::__construct($meta, $db, $dialect);
-
-    // set the base query
-    $this->query['where'][] = $this->_resolveField($field) . " = ?";
-    // set the id by reference so when the iterator advances the model criteria update automatically
-    $this->params[] = &$this->_to->_id;
-  }
-
-  /**
-   * Adds the specified object to the related set.
-   * @param  Dormio_Model $obj  The object to add to the set
-   */
-  function add($obj) {
-    if ($obj->_meta->model != $this->_meta->model)
-      throw new Dormio_Manager_Exception('Can only add like objects');
-    $obj->__set($this->_field, $this->_to->ident());
-    $obj->save();
-  }
-
-  /**
-   * Creates a new instance of the related item.
-   * Note that manytomany relations are not automatically added, you need
-   * to manually call add()
-   * <code>
-   * $tag = $blog->tags->create(array('tag' => 'Grey'));
-   * $blog->tags->add($tag);
-   * </code>
-   * @param  array   $params   Values to set
-   * @return Dormio_Model      The created instance
-   */
-  function create($params=array()) {
-    $obj = $this->_meta->instance($this->_db, $this->dialect);
-    $obj->__set($this->_field, $this->_to->ident());
-    foreach ($params as $key => $value)
-      $obj->__set($key, $value);
-    return $obj;
   }
 
 }

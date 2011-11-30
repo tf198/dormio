@@ -100,6 +100,10 @@ class Dormio_Queryset {
   * @todo validate IN and LIKE behaviour
   */
   function filter($key, $op, $value, $clone=true) {
+    return $this->filterVar($key, $op, $value, $clone);
+  }
+  
+  function filterVar($key, $op, &$value, $clone=true) {
     $o = ($clone) ? clone $this : $this;
     $f = $o->_resolveField($key);
     $v = '?';
