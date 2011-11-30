@@ -263,8 +263,7 @@ class Dormio_Meta {
    * @param string $accessor If given, will validate that accessor
    */
   function getAccessorFor($model, $accessor=null) {
-    if (is_object($model))
-      $model = $model->_meta->model;
+    $model = (is_object($model)) ? $model = $model->_meta->model : strtolower($model);
     if (!isset($this->reverse[$model]))
       throw new Dormio_Meta_Exception("No reverse relation for '{$model}' on '{$this->model}'");
     if ($accessor) {
