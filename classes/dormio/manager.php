@@ -460,7 +460,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
   }
 
   /**
-   * Remove a specific object from the elated set.
+   * Remove a specific object from the related set.
    * This is only valid for manytomany relations
    * @param  int|Dormio_Model  $model  The model to remove from the set
    */
@@ -541,17 +541,6 @@ class Dormio_Manager_ReverseForeignkey extends Dormio_Manager {
     foreach ($params as $key => $value)
       $obj->__set($key, $value);
     return $obj;
-  }
-
-  /**
-   * Remove a specific object from the elated set.
-   * This is only valid for manytomany relations
-   * @param  int|Dormio_Model  $model  The model to remove from the set
-   */
-  function remove($model) {
-    if (is_object($model))
-      $model = $model->pk;
-    return $this->clear($model);
   }
 
 }

@@ -76,13 +76,20 @@ class TestOfModel extends TestOfDB{
     $blog = new Blog($this->db);
     
     $blog->load(1);
-    $this->assertEqual($blog->delete(), 9);
+    $this->assertEqual($blog->delete(), 9); // blog 1, comment 1, comment_tag 2+5, comment 2, comment_tag 1+4, blog_tag 1+2 => 9
+    
     $blog->load(2);
-    $this->assertEqual($blog->delete(), 2);
+    $this->assertEqual($blog->delete(), 2); // blog 2, blog_tag 3 => 2
     
     $user = new User($this->db);
     $user->load(1);
-    $this->assertEqual($user->delete(), 4); // sounds about right after the previous actions but haven't checked
+    $this->assertEqual($user->delete(), 4); // user 1, comment 3, comment_tag 3, profile 2 blanked => 3
+    
+    // profile 1 should have had its user blanked by the previous delete
+    $profile = new Profile($this->db);
+    $profile->load(1);
+    $this->assertFalse($profile->user->ident());
+    
   }
   
   function testForeignKey() {

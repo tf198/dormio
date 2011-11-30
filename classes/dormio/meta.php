@@ -36,6 +36,8 @@ class Dormio_Meta {
    */
   private static $_meta_cache = array();
 
+  private static $_model_register = array();
+  
   /**
    * Set a custom config loader
    * @var callable
@@ -120,6 +122,14 @@ class Dormio_Meta {
     }
     return self::$_meta_cache[$klass];
   }
+  
+  /**
+   * Ensure that the we know about all possible related models
+   */
+  public static function register() {
+    $models = func_get_args();
+    self::$_model_register = array_unique(array_merge(self::$_model_register, $models));
+  }
 
   /**
    * Update the fields in place
@@ -199,6 +209,7 @@ class Dormio_Meta {
           case 'reverse':
             $reverse = null; // dont generate a reverse spec
             isset($spec['accessor']) || $spec['accessor'] = null; // will call accessorFor() later
+            self::register($spec['model']); // ensure the model is loaded later if required
             break;
 
           default:
@@ -303,16 +314,30 @@ class Dormio_Meta {
     return $spec;
   }
 
+  /**
+   * Get the database column for a field
+   * @param string $name Field name
+   * @return string DB Column
+   */
   function getColumn($name) {
     $spec = $this->getSpec($name);
     return $spec['db_column'];
   }
 
   /**
+   * Ensure we have parsed all model specs we know about
+   */
+  function parseAllModels() {
+    foreach(self::$_model_register as $model) Dormio_Meta::get($model);
+    self::$_model_register = array();
+  }
+  
+  /**
    * Get all the models and fields that refer to this model
    * Used by delete routines
    */
   function reverseFields() {
+    $this->parseAllModels(); // need to parse everything before generating
     $result = array();
     foreach (self::$_meta_cache as $model => $meta) {
       if ($model != $this->model && isset($meta->reverse[$this->model])) {

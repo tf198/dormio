@@ -344,7 +344,8 @@ abstract class Dormio_Model {
     if (isset($this->_related[$name]))
       return $this->_related[$name];
 
-    //print "{$this->_klass}->{$name}\n";
+    //print "{$this->_meta->model}->{$name}\n";
+    //var_dump($spec);
     if ($spec['type'] == 'manytomany') {
       $target = Dormio_Meta::get($spec['through']);
       $through = $spec['through'];

@@ -30,7 +30,28 @@ abstract class TestOfDB extends UnitTestCase{
   }
   
   function dumpSQL() {
-    var_dump($this->db->digest());
+    $sql = $this->db->digest();
+    //var_dump($sql);
+    $params = array();
+    foreach($sql[1] as $set) $params[] = "[" . implode(', ', $set) . "]";
+    echo $sql[0] . " (" . implode(', ', $params) . ")\n";
+  }
+  
+  function dumpAllSQL() {
+    while($this->db->stack) $this->dumpSQL();
+  }
+  
+  function dumpData() {
+    $stmt = $this->db->query("SELECT name FROM sqlite_master WHERE type='table'");
+    foreach($stmt->fetchAll(PDO::FETCH_COLUMN, 0) as $table) {
+      echo "TABLE: {$table}\n";
+      $stmt = $this->db->query("SELECT * FROM {$table}");
+      foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $key=>$columns) {
+        echo "{$key}";
+        foreach($columns as $key=>$value) echo "\t{$key}: {$value}";
+        echo "\n";
+      }
+    }
   }
   
   function assertSQL() {
