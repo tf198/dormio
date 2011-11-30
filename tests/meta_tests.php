@@ -123,7 +123,7 @@ class TestOfMeta extends UnitTestCase{
     try {
       $through->getReverseSpec('Bad_Class', null);
     } catch(Dormio_Meta_Exception $dme) {
-      $this->assertEqual($dme->getMessage(), "No reverse relation for 'Bad_Class' on 'module_module'");
+      $this->assertEqual($dme->getMessage(), "No reverse relation for 'bad_class' on 'module_module'");
     }
     
     try {
