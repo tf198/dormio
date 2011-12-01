@@ -364,10 +364,11 @@ abstract class Dormio_Model {
     if ($name == 'pk')
       throw new Dormio_Model_Exception("Can't update primary key");
     $spec = $this->_meta->getSpec($name);
-    if (is_a($value, 'Dormio_Model')) { // use the primary key of objects
+    if ($value instanceof Dormio_Model) { // use the primary key of objects
       $this->_related[$name] = $value;
       $value = $value->ident();
     }
+    if(!isset($spec['is_field'])) throw new Dormio_Model_Exception("Cannot directly set a related field");
     $this->_updated[$spec['db_column']] = $value; // key is un-qualified
   }
 

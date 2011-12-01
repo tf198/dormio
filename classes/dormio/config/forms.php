@@ -19,7 +19,7 @@ $config['foreignkey'] = 'Dormio_Form_ManagerField';
 // default Phorm Field parameters
 $config['Phorms_Fields_HiddenField'] = array();
 $config['Phorms_Fields_CharField'] = array('label' => '', 'help' => '', 'size' => 25, 'max_length' => 255);
-$config['Phorms_Fields_PasswordField'] = array('label' => '', 'help' => '', 'size' => 25, 'max_length' => 255, 'hash' => 'md5');
+$config['Phorms_Fields_PasswordField'] = array('label' => '', 'help' => '', 'hash' => 'md5', 'size' => 25, 'max_length' => 255);
 $config['Phorms_Fields_TextField'] = array('label' => '', 'help' => '', 'rows' => 5, 'cols' => 40);
 $config['Phorms_Fields_IntegerField'] = array('label' => '', 'help' => '', 'max_digits' => 10, 'size' => 10);
 $config['Phorms_Fields_DecimalField'] = array('label' => '', 'help' => '', 'precision' => 10);

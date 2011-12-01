@@ -327,9 +327,18 @@ class Dormio_Meta {
   /**
    * Ensure we have parsed all model specs we know about
    */
-  function parseAllModels() {
+  static function parseAllModels() {
     foreach(self::$_model_register as $model) Dormio_Meta::get($model);
     self::$_model_register = array();
+  }
+  
+  /**
+   *
+   * @return array List of currently registered models
+   */
+  static function getModels() {
+    self::parseAllModels();
+    return array_keys(self::$_meta_cache);
   }
   
   /**

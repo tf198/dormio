@@ -112,7 +112,7 @@ class Dormio_Queryset {
       $v = '(' . implode(', ', array_fill(0, count($value), '?')) . ')';
     }
     $o->query['where'][] = "{$f} {$op} {$v}";
-    if(is_a($value, 'Dormio_Model')) $value = $value->ident();
+    if($value instanceof Dormio_Model) $value = $value->ident();
     if($op == 'IN') {
       $o->params = array_merge($o->params, $value);
     } else {
@@ -365,7 +365,7 @@ class Dormio_Queryset {
   * @return array           array(sql, params)
   */
   //function update($params, $custom_fields=array(), $custom_params=array()) {
-  function update($params) {
+  function updateSQL($params) {
     $o = clone $this;
     $o->_selectIdent();
     
@@ -382,12 +382,12 @@ class Dormio_Queryset {
   * @param  array $params   Assoc array of values to insert
   * @return array           array(sql, params)
   */
-  function insert($params) {
+  function insertSQL($params) {
     $update_fields = $this->_resolveLocal(array_keys($params));
     return array($this->dialect->insert($this->query, $update_fields), array_values($params));
   }
   
-  function delete($resolved=array(), $base=null) {
+  function deleteSQL($resolved=array(), $base=null) {
     if($base === null) $base = $this;
     $sql = array();
     $this->_selectIdent();
@@ -407,7 +407,7 @@ class Dormio_Queryset {
         $child->aliases = array_merge($child->aliases, $base->aliases);
       }
       
-      $sql = array_merge($sql, $child->delete($r, $base));
+      $sql = array_merge($sql, $child->deleteSQL($r, $base));
       
     }
     
@@ -451,7 +451,7 @@ class Dormio_Queryset {
           break;
         case "blank":
         case "set_null":
-          $sql[] = $child->filter($q, '=', $id)->update(array($q => null));
+          $sql[] = $child->filter($q, '=', $id)->updateSQL(array($q => null));
           break;
         default:
           throw new Dormio_Queryset_Exception('Unknown ON DELETE action: ' . $spec['on_delete']);
@@ -467,7 +467,7 @@ class Dormio_Queryset {
   * Creates an SELECT statement based on the current query
   * @return array           array(sql, params)
   */
-  function select() {
+  function selectSQL() {
     $o = clone $this;
     return array($this->dialect->select($o->query), $o->params);
   }

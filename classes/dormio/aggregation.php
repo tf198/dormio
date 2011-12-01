@@ -47,7 +47,7 @@ class Dormio_Aggregation {
   }
   
   function run() {
-    return $this->manager->query($this->manager->select());
+    return $this->manager->query($this->manager->selectSQL());
   }
   
   /**

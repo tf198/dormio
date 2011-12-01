@@ -114,7 +114,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
    * @return int               The number of rows updated
    */
   function update($params, $custom_fields=array(), $custom_params=array()) {
-    $sql = parent::update($params, $custom_fields, $custom_params);
+    $sql = parent::updateSQL($params, $custom_fields, $custom_params);
     return $this->batchExecute(array($sql), false);
   }
 
@@ -132,7 +132,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
    */
   function insert($fields) {
 // can just flip as we are discarding the params
-    $sql = parent::insert(array_flip($fields));
+    $sql = parent::insertSQL(array_flip($fields));
     $stmt = $this->_db->prepare($sql[0]);
     if (!$stmt) {
       $err = $this->_db->errorInfo();
@@ -151,7 +151,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
    * @return int         The number of rows deleted
    */
   function delete($preview=false) {
-    $sql = parent::delete();
+    $sql = parent::deleteSQL();
     return ($preview) ? $sql : $this->batchExecute($sql);
   }
 
@@ -239,7 +239,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     if ($this->_stmt)
       throw new Dormio_Manager_Exception('Statement already compiled');
     if (!$sql) {
-      $query = $this->select();
+      $query = $this->selectSQL();
       $sql = $query[0];
     }
     if ($params)
