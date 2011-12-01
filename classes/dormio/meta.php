@@ -209,6 +209,7 @@ class Dormio_Meta {
           case 'reverse':
             $reverse = null; // dont generate a reverse spec
             isset($spec['accessor']) || $spec['accessor'] = null; // will call accessorFor() later
+            $spec['verbose'] = self::title($key);
             self::register($spec['model']); // ensure the model is loaded later if required
             break;
 

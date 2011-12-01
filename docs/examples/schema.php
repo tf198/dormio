@@ -25,7 +25,8 @@ $models = array('Blog', 'Comment', 'User', 'Profile');
 // these 4 lines do the whole schema creation!
 foreach($models as $model) {
   $sf = Dormio_Schema::factory('sqlite', $model);
-  $sf->batchExecute($pdo, $sf->createTable());
+  $sf->createTable();
+  $sf->batchExecute($pdo, $sf->sql);
 }
 
 // have a look at the result

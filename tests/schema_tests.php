@@ -73,6 +73,17 @@ class TestOfPDOSchemaFactory extends UnitTestCase {
     $this->clients = Dormio_Schema::getSchema(Dormio_Meta::get('Client'));
     $this->clients2 = Dormio_Schema::getSchema(Dormio_Meta::get('Client2'));
   }
+  
+  function testConstruct() {
+    $meta = Dormio_Meta::get('Client2');
+    $s1 = Dormio_Schema::factory('sqlite', $meta);
+    $s2 = Dormio_Schema::factory('sqlite', 'Client2');
+    $this->assertEqual($s1, $s2);
+  }
+  
+  function testSchema() {
+    $this->assertEqual(array_keys($this->clients['columns']), array('pk', 'ClientName', 'ClientAge'));
+  }
 
   public function testFactory() {
     // nonexistent driver
