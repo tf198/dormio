@@ -72,10 +72,16 @@ class Dormio_Form extends Phorms_Forms_Form{
     foreach($defaults as $key => $value) {
       $params[] = isset($spec[$key]) ? $spec[$key] : $value;
     }
-    foreach(self::$base as $key => $value) {
-      if($key == 'attributes') $value['class'] = $type;
-      $params[] = isset($spec[$key]) ? $spec[$key] : $value;
-    }
+    
+    $validators = array();
+    if(isset($spec['validators'])) $validators = array_merge($validators, $spec['validators']);
+    if(!isset($spec['null_ok']) || !$spec['null_ok']) $validators[] = array('Dormio_Form', 'validate_not_null');
+    $params[] = $validators;
+    
+    $attributes = array('class' => $type);
+    if(isset($spec['attributes'])) $attributes = array_merge($attributes, $spec['attributes']);
+    $params[] = $attributes;
+    
     return $params;
   }
   
@@ -93,6 +99,10 @@ class Dormio_Form extends Phorms_Forms_Form{
     $rc = new ReflectionClass($phorm_type);
     $field = $rc->newInstanceArgs($params);
     return $field;
+  }
+  
+  static function validate_not_null($value) {
+    if(!$value) throw new Phorms_Validation_Error ("Field cannot be blank");
   }
 }
 

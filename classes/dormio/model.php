@@ -364,7 +364,7 @@ abstract class Dormio_Model {
     if ($name == 'pk')
       throw new Dormio_Model_Exception("Can't update primary key");
     $spec = $this->_meta->getSpec($name);
-    if (is_a($value, 'Dormio_Model')) { // use the primary key of objects
+    if ($value instanceof Dormio_Model) { // use the primary key of objects
       $this->_related[$name] = $value;
       $value = $value->ident();
     }
