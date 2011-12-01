@@ -120,7 +120,6 @@ class Dormio_Factory {
 			$config['password'],
 			$config['parameters']
 		);
-    // TODO: Add a buffered mode to the manager so this can be turned on or off as necessary
 		if($driver=='mysql') $db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
 		return $db;
 	}

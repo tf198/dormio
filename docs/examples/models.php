@@ -1,6 +1,12 @@
 <?php
 /**
-* Example models for tutorials
+ * Example models for the tutorials
+ * @package dormio
+ * @subpackage example
+ */
+
+/**
+* A minimal blog entry
 * @package dormio
 * @subpackage example
 * @filesource
@@ -17,7 +23,7 @@ class Blog extends Dormio_Model {
 }
 
 /**
-* Example models for tutorials
+* Comments for blog entries
 * @package dormio
 * @subpackage example
 * @filesource
@@ -33,7 +39,7 @@ class Comment extends Dormio_Model {
 }
 
 /**
-* Example models for tutorials
+* Basic user object
 * @package dormio
 * @subpackage example
 * @filesource
@@ -56,7 +62,7 @@ class User extends Dormio_Model {
 }
 
 /**
-* Example models for tutorials
+* A profile that is attached to a user
 * @package dormio
 * @subpackage example
 * @filesource
@@ -70,4 +76,3 @@ class Profile extends Dormio_Model {
     ),
   );
 }
-?>
