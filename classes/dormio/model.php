@@ -368,6 +368,7 @@ abstract class Dormio_Model {
       $this->_related[$name] = $value;
       $value = $value->ident();
     }
+    if(!isset($spec['is_field'])) throw new Dormio_Model_Exception("Cannot directly set a related field");
     $this->_updated[$spec['db_column']] = $value; // key is un-qualified
   }
 
