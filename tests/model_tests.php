@@ -89,7 +89,6 @@ class TestOfModel extends TestOfDB{
     $profile = new Profile($this->db);
     $profile->load(1);
     $this->assertFalse($profile->user->ident());
-    
   }
   
   function testForeignKey() {

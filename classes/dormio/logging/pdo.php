@@ -49,19 +49,18 @@ class Dormio_Logging_PDO extends PDO {
   function prepare($sql) {
     $stmt = parent::prepare($sql);
     $mock = new Dormio_Logging_PDOStatement($stmt);
-    array_push($this->stack, array($sql, $mock));
+    array_push($this->stack, array($sql, &$mock->stack));
     return $mock;
   }
   
   function exec($sql) {
-    array_push($this->stack, $sql);
+    array_push($this->stack, array($sql, array()));
     return parent::exec($sql);
   }
   
   function digest() {
     if(count($this->stack)<1) return false;
-    $q = array_shift($this->stack);
-    return array( $q[0], $q[1]->stack );
+    return array_shift($this->stack);
   }
   
   function all() {
@@ -76,8 +75,21 @@ class Dormio_Logging_PDO extends PDO {
     return count($this->stack);
   }
   
-  function dump() {
-    
+  function getSQL() {
+    $result = array();
+    while($this->stack) {
+      $pair = $this->digest();
+      $exec_params = array();
+      foreach($pair[1] as $p) $exec_params[] = $this->formatParams($p);
+      $result[] = $pair[0] . ';  [' . implode(', ', $exec_params) . ']';
+    }
+    return $result;
+  }
+  
+  function formatParams($params) {
+    $result = array();
+    foreach($params as $p) $result[] = var_export($p, true);
+    return '(' . implode(', ', $result) . ')';
   }
 }
 
