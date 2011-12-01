@@ -85,4 +85,3 @@ class Dormio_Aggregation {
     return $this->add("SUM", null, $field);
   }
 }
-?>

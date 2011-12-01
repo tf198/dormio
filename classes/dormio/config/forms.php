@@ -31,4 +31,3 @@ $config['Phorms_Fields_DateTimeField'] = array('label' => '', 'help' => '');
 $config['Dormio_Form_ManagerField'] = array('label' => '', 'help' => '', 'manager' => array());
 
 return $config;
-?>

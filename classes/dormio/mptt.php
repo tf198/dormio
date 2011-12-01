@@ -94,5 +94,3 @@ class Dormio_MPTT extends Dormio_Model {
     return ($preview) ? $sql : $this->objects()->batchExecute($sql);
   }
 }
-
-?>

@@ -67,4 +67,3 @@ class Dormio_Autoload {
     spl_autoload_register(array('Dormio_Autoload','autoload')) or die('Failed to Pom autoloader');
   }
 }
-?>

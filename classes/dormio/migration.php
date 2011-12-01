@@ -1,4 +1,4 @@
-<?
+<?php
 /**
 * Schema migration models
 *
@@ -37,4 +37,3 @@ class Dormio_Migration extends Dormio_Model {
     ),
   );
 }
-?>

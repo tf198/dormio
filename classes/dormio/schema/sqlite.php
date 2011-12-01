@@ -118,4 +118,3 @@ class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
 		$this->can_upgrade=false;
 	}
 }
-?>

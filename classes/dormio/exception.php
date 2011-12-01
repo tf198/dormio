@@ -27,4 +27,3 @@
 * @subpackage exception
 */
 class Dormio_Exception extends Exception {}
-?>

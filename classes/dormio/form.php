@@ -123,4 +123,3 @@ class Dormio_Form_ManagerField extends Phorms_Fields_ChoiceField {
   }
   
 }
-?>

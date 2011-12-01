@@ -462,5 +462,3 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
   }
 
 }
-
-?>

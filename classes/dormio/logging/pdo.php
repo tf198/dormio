@@ -25,7 +25,7 @@
 /**
  * PDO wrapper that logs all SQL executed for debugging
  * @package dormio
- * @subpackage logger
+ * @subpackage logging
  */
 class Dormio_Logging_PDO extends PDO {
   
@@ -93,6 +93,11 @@ class Dormio_Logging_PDO extends PDO {
   }
 }
 
+/**
+ * Mock PDOStatement object
+ * @package dormio
+ * @subpackage logging
+ */
 class Dormio_Logging_PDOStatement {
   public $stack = array();
 
@@ -114,4 +119,3 @@ class Dormio_Logging_PDOStatement {
   }
   
 }
-?>

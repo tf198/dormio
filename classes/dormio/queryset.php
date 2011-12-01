@@ -1,4 +1,4 @@
-<?
+<?php
 /**
 * Queryset
 *
@@ -483,4 +483,3 @@ class Dormio_Queryset {
 * @subpackage exception
 */
 class Dormio_Queryset_Exception extends Dormio_Exception {}
-?>

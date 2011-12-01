@@ -125,4 +125,3 @@ class Dormio_Factory {
 		return $db;
 	}
 }
-?>

@@ -81,4 +81,3 @@ class Dormio_Kohana {
     return self::$factories[$which];
   }
 }
-?>

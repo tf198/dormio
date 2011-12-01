@@ -1,4 +1,4 @@
-<?
+<?php
 
 /**
  * Meta Class
@@ -397,5 +397,3 @@ class Dormio_Meta {
 class Dormio_Meta_Exception extends Dormio_Exception {
   
 }
-
-?>

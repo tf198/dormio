@@ -487,5 +487,3 @@ abstract class Dormio_Model {
 class Dormio_Model_Exception extends Dormio_Exception {
   
 }
-
-?>

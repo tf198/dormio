@@ -80,4 +80,3 @@ class Dormio_Bantam {
     return self::$factories[$which];
   }
 }
-?>

@@ -548,4 +548,3 @@ class sqlsrv_pdo_statement{
 		return sqlsrv_pdo_driver::report_error($this->errors);
 	}
 }
-?>
