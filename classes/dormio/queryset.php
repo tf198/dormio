@@ -112,7 +112,7 @@ class Dormio_Queryset {
       $v = '(' . implode(', ', array_fill(0, count($value), '?')) . ')';
     }
     $o->query['where'][] = "{$f} {$op} {$v}";
-    if(is_a($value, 'Dormio_Model')) $value = $value->ident();
+    if($value instanceof Dormio_Model) $value = $value->ident();
     if($op == 'IN') {
       $o->params = array_merge($o->params, $value);
     } else {
