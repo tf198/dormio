@@ -6,5 +6,4 @@ require_once(DORMIO_PATH . '/classes/dormio/autoload.php');
 Dormio_Autoload::register();
 
 require_once(TEST_PATH . '/classes/model.php');
-require_once(TEST_PATH . '/classes/mockpdo.php');
 ?>

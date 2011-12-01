@@ -37,6 +37,8 @@ class Dormio_Factory {
   static $_cache = array();
   static $instances = array();
   
+  static $logging = false;
+  
   /**
   * Construct a new factory.
   * @param  PDO $db   The connection to use
@@ -103,6 +105,7 @@ class Dormio_Factory {
 		// use proper PDO driver if available
 		if(array_search($driver,PDO::getAvailableDrivers())!==false) {
 			$classname = 'PDO';
+                        if(self::$logging) $classname = 'Dormio_Logging_PDO';
 		// try to fall back on fake driver
 		} else {
 			$classname = "PDODB_Driver_{$driver}";

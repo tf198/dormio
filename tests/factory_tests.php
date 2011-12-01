@@ -11,7 +11,7 @@ class TestOfFactory extends UnitTestCase {
   );
 
   function setUp() {
-    $this->pdo = new MockPDO('sqlite::memory:');
+    $this->pdo = new Dormio_Logging_PDO('sqlite::memory:');
     $this->factory = new Dormio_Factory($this->pdo);
   }
 
