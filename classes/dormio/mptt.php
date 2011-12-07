@@ -25,8 +25,8 @@ class Dormio_MPTT extends Dormio_Model {
     $this->_rhs = $this->_meta->fields['rhs']['db_column'];
   }
 
-  function _hydrate($data, $prefixed=false) {
-    parent::_hydrate($data, $prefixed);
+  function _hydrate($data, $prefix=null) {
+    parent::_hydrate($data, $prefix);
     // shift old bits off the stack
     while(isset($this->_stack[0]) and $this->__get('lhs') > $this->_stack[0]) array_shift($this->_stack);
     // add ourself onto the stack

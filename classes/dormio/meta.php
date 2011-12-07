@@ -103,11 +103,13 @@ class Dormio_Meta {
     // set up the public properties
     $this->fields = $this->_spec['fields'];
     $this->reverse = $this->_spec['reverse'];
+    $this->auto = $this->_spec['auto'];
     $this->indexes = $this->_spec['indexes'];
     $this->table = $this->_spec['table'];
     $this->pk = $this->_spec['fields']['pk']['db_column'];
     $this->version = $this->_spec['version'];
     $this->verbose = $this->_spec['verbose'];
+    $this->plural = $this->verbose . "s";
   }
 
   /**
@@ -144,6 +146,7 @@ class Dormio_Meta {
         'version' => 1,
         'reverse' => array(),
         'indexes' => array(),
+        'auto' => array(),
         'verbose' => self::title($model),
     );
     $meta = array_merge($defaults, $meta);
@@ -199,6 +202,7 @@ class Dormio_Meta {
               Dormio_Meta::get($spec['through']);
             } else {
               $through = self::_generateIntermediate($model, $spec);
+              $meta['auto'][] = $through->model;
               $spec['through'] = $through->model;
               $spec['map_local_field'] = 'l_' . $model;
               $spec['map_remote_field'] = 'r_' . $spec['model'];

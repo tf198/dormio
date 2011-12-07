@@ -40,9 +40,9 @@ class TestOfModel extends TestOfDB{
     $this->load('sql/test_data.sql');
     
     $blog = $this->pom->get('Blog');
-    $this->assertEqual((string)$blog, '[blog:]');
+    $this->assertEqual((string)$blog, '[Blog]');
     $blog = $this->pom->get('Blog', 3);
-    $this->assertEqual((string)$blog, '[blog:3]');
+    $this->assertEqual((string)$blog, '[Blog 3]');
     
     // custom toString on comment
     $comment = $this->pom->get('Comment', 1);
