@@ -365,16 +365,16 @@ class Dormio_Queryset {
   * @return array           array(sql, params)
   */
   //function update($params, $custom_fields=array(), $custom_params=array()) {
-  function updateSQL($params) {
+  function updateSQL($params, $custom_fields=array(), $custom_params=array()) {
     $o = clone $this;
     $o->_selectIdent();
     
-    //$update_params = array_merge(array_values($params), $custom_params, $o->params);
-    $update_params = array_merge(array_values($params), $o->params);
+    $update_params = array_merge(array_values($params), $custom_params, $o->params);
+    //$update_params = array_merge(array_values($params), $o->params);
     $update_fields = $o->_resolveLocal(array_keys($params));
-    //foreach($custom_fields as &$field) $field = $this->_resolveString($field, true);
+    foreach($custom_fields as &$field) $field = $this->_resolveString($field, true);
     //return array($this->dialect->update($o->query, $update_fields, $custom_fields), $update_params);
-    return array($this->dialect->update($o->query, $update_fields), $update_params);
+    return array($this->dialect->update($o->query, $update_fields, $custom_fields), $update_params);
   }
   
   /**

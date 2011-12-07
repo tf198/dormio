@@ -14,6 +14,11 @@ class Dormio_MPTT extends Dormio_Model {
   private $_lhs, $_rhs;
   public $_stack = array();
 
+  static $_mptt_fields = array(
+    'lhs' => array('type' => 'integer'),
+    'rhs' => array('type' => 'integer'),
+  );
+  
   function __construct(PDO $db, $dialect=null) {
     parent::__construct($db, $dialect);
     $this->_lhs = $this->_meta->fields['lhs']['db_column'];
@@ -26,12 +31,7 @@ class Dormio_MPTT extends Dormio_Model {
     while(isset($this->_stack[0]) and $this->__get('lhs') > $this->_stack[0]) array_shift($this->_stack);
     // add ourself onto the stack
     array_unshift($this->_stack, $this->__get('rhs'));
-  }
-
-  static $_mptt_fields = array(
-    'lhs' => array('type' => 'integer'),
-    'rhs' => array('type' => 'integer'),
-  );
+  }  
 
   public static function _meta($klass) {
     $meta = parent::_meta($klass);

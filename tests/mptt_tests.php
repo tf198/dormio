@@ -39,7 +39,9 @@ class TestOfMPTT extends TestOfDB{
 
     $sql = $users->delete();
     
-    //$this->assertQueryset($this->pom->manager('ARO'), 'name', array('/', 'admin'));
+    //var_dump($this->db->getSQL());
+    
+    $this->assertQueryset($this->pom->manager('ARO'), 'name', array('/', 'admin'));
   }
 }
 ?>
