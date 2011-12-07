@@ -40,7 +40,7 @@ class TestOfModel extends TestOfDB{
     $this->load('sql/test_data.sql');
     
     $blog = $this->pom->get('Blog');
-    $this->assertEqual((string)$blog, '[Blog]');
+    $this->assertEqual((string)$blog, 'null');
     $blog = $this->pom->get('Blog', 3);
     $this->assertEqual((string)$blog, '[Blog 3]');
     

@@ -478,7 +478,7 @@ abstract class Dormio_Model {
       if($this->ident()) {
         return (string) $this->display();
       } else {
-        return "[{$this->_meta->verbose}]";
+        return "null";
       }
     } catch (Exception $e) {
       return "[{$this->_meta->model}:{$e->getMessage()}]";

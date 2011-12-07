@@ -442,16 +442,23 @@ class Dormio_Manager_Related extends Dormio_Manager {
    * @param  Dormio_Model $obj  The object to add to the set
    */
   function add($obj) {
-    if ($obj->_meta->model != $this->_meta->model)
-      throw new Dormio_Manager_Exception('Can only add like objects');
     
     if ($this->manytomany) {
-      $obj->save();
-      $intermediate = $this->_through->instance($this->_db, $this->dialect);
-      $intermediate->__set($this->_map_parent_field, $this->_parent->ident());
-      $intermediate->__set($this->_map_self_field, $obj->ident());
-      $intermediate->save();
+      if($obj instanceof Dormio_Model) {
+        $obj->save();
+        $pk = $obj->ident();
+      } else {
+        $pk = $obj;
+      }
+      
+      $intermediate = new Dormio_Manager($this->_through, $this->_db, $this->dialect);
+      $fields = array($this->_map_parent_field, $this->_map_self_field);
+      $stmt = $intermediate->insert($fields);
+      $stmt->execute(array($this->_parent->ident(), $pk));
+      
     } else {
+      if ($obj->_meta->model != $this->_meta->model)
+        throw new Dormio_Manager_Exception('Can only add like objects');
 // update the foreign key on the supplied object
       $obj->__set($this->_field, $this->_parent->ident());
       $obj->save();
