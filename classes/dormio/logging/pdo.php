@@ -46,8 +46,8 @@ class Dormio_Logging_PDO extends PDO {
    * @param string $sql the SQL to prepare
    * @return Dormio_Logging_PDOStatement a wrapped PDOStatement
    */
-  function prepare($sql) {
-    $stmt = parent::prepare($sql);
+  function prepare($sql, $driver_options=array()) {
+    $stmt = parent::prepare($sql, $driver_options);
     $mock = new Dormio_Logging_PDOStatement($stmt);
     array_push($this->stack, array($sql, &$mock->stack));
     return $mock;
@@ -80,8 +80,8 @@ class Dormio_Logging_PDO extends PDO {
     while($this->stack) {
       $pair = $this->digest();
       $exec_params = array();
-      foreach($pair[1] as $p) $exec_params[] = $this->formatParams($p);
-      $result[] = $pair[0] . ';  [' . implode(', ', $exec_params) . ']';
+      foreach($pair[1] as &$p) $p = $this->formatParams($p);
+      $result[] = $pair;
     }
     return $result;
   }
@@ -106,8 +106,9 @@ class Dormio_Logging_PDOStatement {
   }
   
   function execute($params=array()) {
+    $result = $this->_stmt->execute($params);
     array_push($this->stack, $params);
-    return $this->_stmt->execute($params);
+    return $result;
   }
   
   function __call($method, $args) {
