@@ -220,11 +220,11 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
    * @param boolean $dereference  Whether or not to dereference %fields$
    * @param boolean $qualified    Whether or not the fields are qualified
    */
-  public function customSQL($sql, $params, $dereference=true, $qualified=false) {
+  public function customSQL($sql, $params, $dereference=true, $alias=null) {
     if ($dereference)
       $sql = $this->_resolveString($sql);
     $sql = $this->dialect->quoteIdentifiers($sql);
-    $this->_qualified = $qualified;
+    if($alias) $this->_alias = $alias;
     $this->evaluate($sql, $params);
   }
 

@@ -50,12 +50,12 @@ class Dormio_MPTT extends Dormio_Model {
 
   function tree() {
     $this->refresh();
-    return $this->objects()->where('%lhs% BETWEEN ? AND ?', array($this->lhs, $this->rhs))->orderBy('lhs');
+    return $this->objects()->where('{lhs} BETWEEN ? AND ?', array($this->lhs, $this->rhs))->orderBy('lhs');
   }
 
   function path() {
     $this->refresh();
-    return $this->objects()->where('%lhs% <= ? AND %rhs% >= ?', array($this->lhs, $this->rhs))->orderBy('lhs');
+    return $this->objects()->where('{lhs} <= ? AND {rhs} >= ?', array($this->lhs, $this->rhs))->orderBy('lhs');
   }
 
   function descendants() {
@@ -67,8 +67,9 @@ class Dormio_MPTT extends Dormio_Model {
     $obj->rhs = $this->rhs + 1;
     $this->_db->beginTransaction();
     try {
-      $this->objects()->filter('lhs', '>', $this->rhs)->update(array(), array('%lhs%=%lhs%+2'));
-      $this->objects()->filter('rhs', '>=', $this->rhs)->update(array(), array('%rhs%=%rhs%+2'));
+      $this->objects()->filter('lhs', '>', $this->rhs)->update(array(), array('{lhs}={lhs}+2'));
+      $this->objects()->filter('rhs', '>=', $this->rhs)->update(array(), array('{rhs}={rhs}+2'));
+      
       $obj->save();
       $this->_db->commit();
     } catch(PDOException $e) {
@@ -92,5 +93,12 @@ class Dormio_MPTT extends Dormio_Model {
     foreach($sql as &$pair) $pair[0] = $this->_dialect->quoteIdentifiers($pair[0]);
     $sql = array_merge($sql, parent::delete(true));
     return ($preview) ? $sql : $this->objects()->batchExecute($sql);
+  }
+  
+  function createChild($params) {
+    $child = $this->_meta->instance($this->_db, $this->_dialect);
+    $child->_updated = $params;
+    $this->add($child);
+    return $child;
   }
 }

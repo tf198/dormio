@@ -244,7 +244,7 @@ class Dormio_Queryset {
   */
   function _resolveString($str, $local=false) {
     $callback = ($local) ? '_resolveStringLocalCallback' : '_resolveStringCallback';
-    return preg_replace_callback('/%([a-z_]+)%/', array($this, $callback), $str);
+    return preg_replace_callback('/{([a-z_]+)}/', array($this, $callback), $str);
   }
   /**
   * @ignore

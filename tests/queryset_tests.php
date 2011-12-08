@@ -48,7 +48,7 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($tags->_resolveField('blog_set__title'), '<@t3.@>{title}'); // manytomany_rev
     $this->assertEqual($tags->_resolveField('comment_set__title'), '<@t5.@>{title}'); // manytomany_rev
 
-    $this->assertEqual($tags->_resolveString("SELECT * FROM %table%"), "SELECT * FROM {tag}");
+    $this->assertEqual($tags->_resolveString("SELECT * FROM {table}"), "SELECT * FROM {tag}");
   }
  
   function testJoin() {
@@ -149,7 +149,7 @@ class TestOfSQL extends UnitTestCase{
   function testWhere() {
     $blogs = new Dormio_Queryset('Blog');
     
-    $this->assertEqual($blogs->where('%the_user% = ?', array(1))->selectSQL(),
+    $this->assertEqual($blogs->where('{the_user} = ?', array(1))->selectSQL(),
       array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(1)));
   }
   
