@@ -507,7 +507,7 @@ class Dormio_Manager_Related extends Dormio_Manager {
       if ($pk) {
         $set = $set->filter($this->_map_self_field, '=', $pk);
       }
-      $sql = $set->filter($this->_map_parent_field, '=', $this->_parent->ident())->delete();
+      $sql = $set->filter($this->_map_parent_field, '=', $this->_parent->ident())->deleteSQL();
       return $this->batchExecute($sql);
     } else {
       throw new Dormio_Manager_Exception('Unable to clear foreign key sets');
