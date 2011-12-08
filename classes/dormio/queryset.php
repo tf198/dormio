@@ -227,6 +227,8 @@ class Dormio_Queryset {
   
   /**
   * Resolves path to the format "{table}.{column} AS {table_column}".
+  * @param  string  $item   e.g. "author__profile__age" 
+  * @return  string "t3.{age} AS {t3_age}"
   * @access private
   */
   function _resolvePrefixed($item, $type=null) {
@@ -259,7 +261,8 @@ class Dormio_Queryset {
   }
 
   /**
-  * Resolves path to the format "{table}.{column}".
+  * Resolve to an aliased field
+  * @return string e.g. "t1.{name}"
   * @access private
   */
   function _resolveField($path, $type=null) {
@@ -283,7 +286,7 @@ class Dormio_Queryset {
   
   /**
   * Resolves paths to parent meta and field
-  * @return array array($parent_meta, $field);
+  * @return array array($parent_meta, $field, $alias);
   * @access private
   */
   function _resolvePath($path, $type=null, $strip_pk=true) {

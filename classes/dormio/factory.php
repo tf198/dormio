@@ -34,7 +34,6 @@
 * @package dormio
 */
 class Dormio_Factory {
-  static $_cache = array();
   static $instances = array();
   
   static $logging = false;
@@ -70,8 +69,7 @@ class Dormio_Factory {
   * @return Dormio_Manager
   */
   function manager($name) {
-    if(!isset(self::$_cache[$name])) self::$_cache[$name] = new Dormio_Manager($name, $this->db, $this->dialect);
-    return self::$_cache[$name];
+    return new Dormio_Manager($name, $this->db, $this->dialect);
   }
 
   /**
