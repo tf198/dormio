@@ -147,17 +147,6 @@ abstract class Dormio_Model {
   }
 
   /**
-   * Get the key for the data array.
-   * This is in the format 'table_field'
-   * @param  string  $field  The field name
-   * @return string
-   * @access private
-   */
-  function _dataIndex($field) {
-    return "{$this->_prefix}_{$field}";
-  }
-
-  /**
    * Empty the current object.
    */
   function clear() {
@@ -202,17 +191,55 @@ abstract class Dormio_Model {
   }
 
   /**
-   * Accessor for all data.
+   * Get the key for the data array.
+   * This is in the format 'table_field'
+   * @param  string  $field  The field name
+   * @return string
+   * @access private
+   */
+  function _dataIndex($field) {
+    return "{$this->_prefix}_{$field}";
+  }
+  
+  /**
+   * Get a value from the data cache
+   * No rehydration is performed
+   * @param type $column
+   * @param type $type
+   * @access private
+   */
+  function _getCachedData($column, $type) {
+    $key = $this->_dataIndex($column);
+    if(!array_key_exists($key, $this->_data)) throw new Dormio_Model_Exception("No cached data for '{$column}' on model '{$this->_meta->model}'");
+    return $this->_fromDB($this->_data[$key], $type);
+  }
+  
+  /**
+   * Gets values from the data cache, rehydrating if neccessary
    * All internal functions should use this as it takes care of qualifying the
    * indexes and rehydrating the object if required
    * @access private
    */
-  function _getData($column, $type='string') {
-    $key = $this->_dataIndex($column);
-    if (!array_key_exists($key, $this->_data)) {
-      $this->_rehydrate(); // first try rehydrating
+  function _getModelData($column, $type) {
+    try {
+      return $this->_getCachedData($column, $type);
+    } catch(Dormio_Model_Exception $dme) {
+      $this->_rehydrate();
+      return $this->_getCachedData($column, $type);
     }
-    return $this->_fromDB($this->_data[$key], $type);
+  }
+  
+  /**
+   * Gets values from the cache or update queue
+   * returns updated values if they have been set but not committed
+   * @param string $name
+   * @param array $spec
+   * @return mixed Field value
+   */
+  function _getCurrentData($column, $type) {
+    if (array_key_exists($column, $this->_updated))
+      return $this->_updated[$column];
+    return $this->_getModelData($column, $type);
   }
 
   /**
@@ -228,10 +255,13 @@ abstract class Dormio_Model {
     switch ($type) {
       case 'integer':
         return (int) $data;
-      case 'float': return (float) $data;
+      case 'float': 
+        return (float) $data;
       case 'date':
       case 'datetime':
         return ($data instanceof DateTime) ? $data : new DateTime($data);
+      case 'boolean':
+        return (bool) $data;
       default:
         return $data;
     }
@@ -270,42 +300,39 @@ abstract class Dormio_Model {
    * @return mixed Field value or related object
    */
   function getField($name) {
-    // need to do this first so any aggregate results appear
-    // might speed up everyday access as well to bypass resolve/check proceedure
-    $key = $this->_dataIndex($name);
-    if (array_key_exists($key, $this->_data))
-      return $this->_data[$key];
 
-
-    $spec = $this->_meta->getSpec($name);
+    try {
+      $spec = $this->_meta->getSpec($name);
+    } catch(Dormio_Meta_Exception $dme) {
+      return $this->_getCachedData($name, "string");
+    }
     isset($spec['db_column']) || $spec['db_column'] = $this->_meta->pk;
 
     switch ($spec['type']) {
       case 'foreignkey':
       case 'onetoone':
       case 'onetoone_rev':
-        return $this->_getRelated($name, $spec);
+        return $this->_getForwardRelation($name, $spec);
       case 'manytomany':
       case 'foreignkey_rev':
-        return $this->_getReverseRelated($name, $spec);
+        return $this->_getReverseRelation($name, $spec);
       default:
         // everything else is concidered a field on the table
-        return $this->_getUpdatedOrData($name, $spec);
+        return $this->_getCurrentData($spec['db_column'], $spec['type']);
     }
   }
-
+  
   /**
-   * Gets plain fields from the cache
-   * returns updated values if they have been set but not committed
-   * @param string $name
-   * @param array $spec
-   * @return mixed Field value
+   * Get the value for a field on this model
+   * no model dereferencing is done so the PK for a foreignkey will be returned
+   * @param type $name 
    */
-  function _getUpdatedOrData($name, $spec) {
-    $column = $spec['db_column'];
-    if (isset($this->_updated[$column]))
-      return $this->_updated[$column];
-    return $this->_getData($column);
+  function getValue($name) {
+    // check it is a field
+    $spec = $this->_meta->getSpec($name);
+    if(!isset($spec['is_field'])) throw new Dormio_Model_Exception("No local field '{$name}' on model '{$this->_meta->model}'");
+    
+    return $this->_getCurrentData($spec['db_column'], $spec['type']);
   }
 
   /**
@@ -314,10 +341,10 @@ abstract class Dormio_Model {
    * @param array $spec
    * @return Dormio_Model Related model
    */
-  function _getRelated($name, $spec) {
+  function _getForwardRelation($name, $spec) {
     if (!isset($this->_related[$name]))
       $this->_related[$name] = new $spec['model']($this->_db, $this->_dialect);
-    $id = $this->_getData($spec['db_column']);
+    $id = $this->_getCurrentData($spec['db_column'], $spec['type']);
     isset(self::$logger) && self::$logger->log("Preparing {$spec['model']}({$id})");
     if ($this->_related[$name]->ident() != $id) {
       $this->_related[$name]->load($id); // clears the stale data
@@ -339,7 +366,7 @@ abstract class Dormio_Model {
    * @param array $spec
    * @return Dormio_Manager Related manager
    */
-  function _getReverseRelated($name, $spec) {
+  function _getReverseRelation($name, $spec) {
     // relations that return a manager
     // due to the parameters being referenced we dont need to do anything if these are cached
     if (!isset($this->_related[$name])) {
@@ -382,7 +409,6 @@ abstract class Dormio_Model {
     $this->clear();
     $this->_setData($this->_meta->pk, $id);
     $this->_id = $id;
-    //$this->_qualified = true;
   }
 
   /**
@@ -413,7 +439,7 @@ abstract class Dormio_Model {
       throw new Dormio_Model_Exception('Insert failed');
     //$this->_insert = false;
     $this->_updated[$this->_meta->pk] = $this->_db->lastInsertId();
-    $this->_merge();
+    $this->_mergeUpdated();
   }
 
   /**
@@ -430,7 +456,7 @@ abstract class Dormio_Model {
     $stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     if ($stmt->execute($params) != 1)
       throw new Dormio_Model_Exception('Insert failed');
-    $this->_merge();
+    $this->_mergeUpdated();
   }
 
   /**
@@ -438,7 +464,7 @@ abstract class Dormio_Model {
    * Resets the updated array
    * @access private
    */
-  function _merge() {
+  function _mergeUpdated() {
     $data = $this->_prefixData($this->_updated);
     $this->_hydrate($data);
     //$this->_qualified = true;

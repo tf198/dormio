@@ -238,6 +238,24 @@ class TestOfModel extends TestOfDB{
     
     $this->assertDigestedAll();
   }
+  
+  function testFromDB() {
+    $blog = new Blog($this->db);
+    
+    $this->assertIdentical($blog->_fromDB('testing', 'string'), 'testing');
+    
+    $this->assertIdentical($blog->_fromDB('1', 'boolean'), true);
+    $this->assertIdentical($blog->_fromDB(true, 'boolean'), true);
+    $this->assertIdentical($blog->_fromDB('yes', 'boolean'), true);
+    $this->assertIdentical($blog->_fromDB('0', 'boolean'), false);
+    $this->assertIdentical($blog->_fromDB('', 'boolean'), false);
+    $this->assertIdentical($blog->_fromDB(null, 'boolean'), null);
+    
+    $this->assertIdentical($blog->_fromDB('1', 'integer'), 1);
+    $this->assertIdentical($blog->_fromDB('1.6', 'integer'), 1);
+    $this->assertIdentical($blog->_fromDB('', 'integer'), 0);
+    $this->assertIdentical($blog->_fromDB(null, 'integer'), null);
+  }
 }
 
 ?>
