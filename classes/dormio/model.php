@@ -75,16 +75,17 @@ abstract class Dormio_Model {
    */
   function _setAliases($alias_table, $prefix="t1") {
     $this->_table_aliases = $alias_table;
-    $this->_prefix = $prefix;
-    $this->_data = array();
+    //$this->_prefix = $prefix;
+    //$this->_data = array();
   }
 
   /**
    * Bulk load prefixed data onto the object
    * @access private
    */
-  function _hydrate($data) {
+  function _hydrate($data, $prefix=null) {
     $this->_data = array_merge($this->_data, $data);
+    if($prefix) $this->_prefix = $prefix;
     $pk = $this->_dataIndex($this->_meta->pk);
     $this->_id = (isset($this->_data[$pk])) ? $this->_data[$pk] : false;
   }
@@ -115,8 +116,7 @@ abstract class Dormio_Model {
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
     $stmt->closeCursor();
     if ($data) {
-      $this->_hydrate($data);
-      $this->_prefix = $this->_meta->model;
+      $this->_hydrate($data, $this->_meta->model);
     } else {
       throw new Dormio_Model_Exception('No result found for primary key ' . $this->_id);
     }
@@ -209,8 +209,9 @@ abstract class Dormio_Model {
    */
   function _getData($column, $type='string') {
     $key = $this->_dataIndex($column);
-    if (!isset($this->_data[$key]))
+    if (!array_key_exists($key, $this->_data)) {
       $this->_rehydrate(); // first try rehydrating
+    }
     return $this->_fromDB($this->_data[$key], $type);
   }
 
@@ -325,8 +326,8 @@ abstract class Dormio_Model {
       $key = "{$this->_meta->model}.{$spec['local_field']}__{$spec['model']}.{$spec['remote_field']}";
       if (isset($this->_table_aliases[$key])) {
         //echo "Reusing data for {$key}\n";
-        $this->_related[$name]->_setAliases($this->_table_aliases, $this->_table_aliases[$key]);
-        $this->_related[$name]->_hydrate($this->_data);
+        $this->_related[$name]->_setAliases($this->_table_aliases);
+        $this->_related[$name]->_hydrate($this->_data, $this->_table_aliases[$key]);
       }
     }
     return $this->_related[$name];
@@ -397,14 +398,16 @@ abstract class Dormio_Model {
   /**
    * Perform an INSERT of the current record.
    */
-  function insert() {
-    $fields = array_keys($this->_updated);
+  function insert($additional=array()) {
+    $merged = array_merge($this->_updated, $additional);
+    
+    $fields = array_keys($merged);
     foreach ($fields as &$field)
       $field = '{' . $field . '}';
     $fields = implode(', ', $fields);
     $values = implode(', ', array_fill(0, count($this->_updated), '?'));
     $sql = "INSERT INTO {{$this->_meta->table}} ({$fields}) VALUES ({$values})";
-    $params = array_values($this->_updated);
+    $params = array_values($merged);
     $stmt = $this->_db->prepare($this->_dialect->quoteIdentifiers($sql));
     if ($stmt->execute($params) != 1)
       throw new Dormio_Model_Exception('Insert failed');
@@ -416,9 +419,10 @@ abstract class Dormio_Model {
   /**
    * Perform an UPDATE of the current record.
    */
-  function update() {
-    $params = array_values($this->_updated);
-    foreach (array_keys($this->_updated) as $key)
+  function update($additional=array()) {
+    $merged = array_merge($this->_updated, $additional);
+    $params = array_values($merged);
+    foreach (array_keys($merged) as $key)
       $pairs[] = "{{$key}}=?";
     $params[] = $this->ident();
     $pairs = implode(', ', $pairs);
@@ -460,7 +464,7 @@ abstract class Dormio_Model {
    * @return string The text to display
    */
   function display() {
-    return "[{$this->_meta->model}:{$this->ident()}]";
+    return "[{$this->_meta->verbose} {$this->ident()}]";
   }
 
   /**
@@ -471,12 +475,40 @@ abstract class Dormio_Model {
    */
   function __toString() {
     try {
-      return (string) $this->display();
+      if($this->ident()) {
+        return (string) $this->display();
+      } else {
+        return "null";
+      }
     } catch (Exception $e) {
       return "[{$this->_meta->model}:{$e->getMessage()}]";
     }
   }
-
+  
+  /**
+   * Allows submodels to override the default output for a field
+   * Checks for render_field_<field>, render_type_<type> and render_default
+   * @param string $field the field to render
+   * @return string output [defaults to raw value]
+   */
+  function render($field) {
+    $spec = $this->_meta->getSpec($field);
+    
+    $renderers = array("render_field_{$field}", "render_type_{$spec['type']}", "render_default");
+    foreach($renderers as $renderer) {
+      if(method_exists($this, $renderer)) return $this->$renderer($field, $this->__get($field));
+    }
+    return $this->__get($field);
+  }
+  
+  function render_type_password($field, $value) {
+    return '********';
+  }
+  
+  function render_type_boolean($field, $value) {
+    $value = ($value) ? "yes" : "no";
+    return "<p style=\"text-align: center\">{$value}</p>";
+  }
 }
 
 /**

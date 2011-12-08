@@ -82,7 +82,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
       throw new Dormio_Manager_Exception('No record returned');
     $model = $this->_meta->instance($this->_db, $this->dialect);
     $model->_setAliases($this->aliases);
-    $model->_hydrate($data[0]);
+    $model->_hydrate($data[0], $this->_alias);
     return $model;
   }
 
@@ -260,7 +260,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
       $model = $this->_meta->instance($this->_db, $this->dialect);
       $model->_setAliases($this->aliases);
       $klass = ($this->unbuffered) ? "Dormio_Iterator_Unbuffered" : "Dormio_Iterator";
-      $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_qualified);
+      $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_alias);
     }
     return $this->_iter;
   }
@@ -278,11 +278,11 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
  */
 class Dormio_Iterator implements Iterator {
 
-  function __construct($stmt, $params, $model, $qualified=true) {
+  function __construct($stmt, $params, $model, $alias) {
     $this->_model = $model;
     $this->_stmt = $stmt;
     $this->_params = $params;
-    $this->_qualified = $qualified;
+    $this->_alias = $alias;
   }
 
   /**
@@ -317,7 +317,7 @@ class Dormio_Iterator implements Iterator {
   function current() {
     $data = $this->_iter->current();
     if ($data) {
-      $this->_model->_hydrate($data, $this->_qualified); // dont need to clear as should be the same fields each time
+      $this->_model->_hydrate($data, $this->_alias); // dont need to clear as should be the same fields each time
     } else {
       $this->_model->clear();
       $this->_data = null;
@@ -343,10 +343,11 @@ class Dormio_Iterator implements Iterator {
  */
 class Dormio_Iterator_Unbuffered implements Iterator {
 
-  function __construct($stmt, $params, $model) {
+  function __construct($stmt, $params, $model, $alias) {
     $this->_model = $model;
     $this->_stmt = $stmt;
     $this->_params = $params;
+    $this->_alias = $alias;
   }
 
   /**
@@ -364,7 +365,7 @@ class Dormio_Iterator_Unbuffered implements Iterator {
   function next() {
     $data = $this->_stmt->fetch(PDO::FETCH_ASSOC);
     if ($data) {
-      $this->_model->_hydrate($data, true);
+      $this->_model->_hydrate($data, $this->_alias);
     } else {
       $this->_model->clear();
     }
@@ -441,15 +442,23 @@ class Dormio_Manager_Related extends Dormio_Manager {
    * @param  Dormio_Model $obj  The object to add to the set
    */
   function add($obj) {
-    if ($obj->_meta->model != $this->_meta->model)
-      throw new Dormio_Manager_Exception('Can only add like objects');
+    
     if ($this->manytomany) {
-      $obj->save();
-      $intermediate = $this->_through->instance($this->_db, $this->dialect);
-      $intermediate->__set($this->_map_parent_field, $this->_parent->ident());
-      $intermediate->__set($this->_map_self_field, $obj->ident());
-      $intermediate->save();
+      if($obj instanceof Dormio_Model) {
+        $obj->save();
+        $pk = $obj->ident();
+      } else {
+        $pk = $obj;
+      }
+      
+      $intermediate = new Dormio_Manager($this->_through, $this->_db, $this->dialect);
+      $fields = array($this->_map_parent_field, $this->_map_self_field);
+      $stmt = $intermediate->insert($fields);
+      $stmt->execute(array($this->_parent->ident(), $pk));
+      
     } else {
+      if ($obj->_meta->model != $this->_meta->model)
+        throw new Dormio_Manager_Exception('Can only add like objects');
 // update the foreign key on the supplied object
       $obj->__set($this->_field, $this->_parent->ident());
       $obj->save();

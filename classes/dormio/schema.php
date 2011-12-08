@@ -206,7 +206,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
     $primitive = $this->getPrimitive($colspec);
     if ($colspec['type'] == 'ident')
       return $primitive;
-    if (isset($colspec['notnull']))
+    if (!isset($colspec['null_ok']) || $colspec['null_ok'] == false)
       $primitive.=' NOT NULL';
     if (isset($colspec['unique']))
       $primitive.=' UNIQUE';

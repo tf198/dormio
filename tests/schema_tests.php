@@ -20,11 +20,11 @@ class Client2 extends Dormio_Model {
       'table' => 'detailed_client',
       'fields' => array(
           'pk' => array('type' => 'ident', 'db_column' => 'ClientId'),
-          'NickName' => array('type' => 'string'),
+          'NickName' => array('type' => 'string', 'null_ok' => true),
           'ClientName' => array('type' => 'integer'),
-          'AgeAtStartOfYear' => array('type' => 'integer'),
-          'ClientDOB' => array('type' => 'timestamp'),
-          'Notes' => array('type' => 'text')
+          'AgeAtStartOfYear' => array('type' => 'integer', 'null_ok' => true),
+          'ClientDOB' => array('type' => 'timestamp', 'null_ok' => true),
+          'Notes' => array('type' => 'text', 'null_ok' => true)
       ),
   );
 
@@ -111,7 +111,7 @@ class TestOfPDOSchemaFactory extends UnitTestCase {
     $schema = Dormio_Schema::factory('sqlite', $this->clients);
     $schema->sql = array();
     $schema->createTable();
-    $this->assertEqual($schema->sql[0], 'CREATE TABLE "client" ("ClientId" INTEGER PRIMARY KEY AUTOINCREMENT, "ClientName" TEXT, "ClientAge" INTEGER)');
+    $this->assertEqual($schema->sql[0], 'CREATE TABLE "client" ("ClientId" INTEGER PRIMARY KEY AUTOINCREMENT, "ClientName" TEXT NOT NULL, "ClientAge" INTEGER NOT NULL)');
     $schema->sql = array();
     $schema->renameTable('new_client');
     $this->assertEqual($schema->sql[0], 'ALTER TABLE "client" RENAME TO "new_client"');
@@ -124,7 +124,7 @@ class TestOfPDOSchemaFactory extends UnitTestCase {
     $schema = Dormio_Schema::factory('mysql', $this->clients);
     $schema->sql = array();
     $schema->addColumn('Address', array('type' => 'string'));
-    $this->assertEqual($schema->sql[0], 'ALTER TABLE `client` ADD COLUMN `Address` VARCHAR(255)');
+    $this->assertEqual($schema->sql[0], 'ALTER TABLE `client` ADD COLUMN `Address` VARCHAR(255) NOT NULL');
   }
 
   public function testIndexOps() {
@@ -214,10 +214,10 @@ class TestOfPDOSchemaFactory extends UnitTestCase {
   public function testTypes() {
     $schema = Dormio_Schema::factory('sqlite', $this->clients);
     // Attributes
-    $this->assertEqual($schema->getType(array('type' => 'integer', 'notnull' => true)), 'INTEGER NOT NULL');
-    $this->assertEqual($schema->getType(array('type' => 'integer', 'unique' => true)), 'INTEGER UNIQUE');
-    $this->assertEqual($schema->getType(array('type' => 'integer', 'default' => 9)), 'INTEGER DEFAULT 9');
-    $this->assertEqual($schema->getType(array('type' => 'integer', 'notnull' => true, 'default' => 9)), "INTEGER NOT NULL DEFAULT 9");
+    $this->assertEqual($schema->getType(array('type' => 'integer', 'null_ok' => true)), 'INTEGER');
+    $this->assertEqual($schema->getType(array('type' => 'integer', 'unique' => true)), 'INTEGER NOT NULL UNIQUE');
+    $this->assertEqual($schema->getType(array('type' => 'integer', 'default' => 9, 'null_ok' => true)), 'INTEGER DEFAULT 9');
+    $this->assertEqual($schema->getType(array('type' => 'integer', 'default' => 9)), "INTEGER NOT NULL DEFAULT 9");
     // Value quoting
     $this->assertEqual($schema->quoteValue(9, 'integer'), "9");
     $this->assertEqual($schema->quoteValue(9, 'string'), "'9'");
