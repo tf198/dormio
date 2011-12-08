@@ -41,6 +41,8 @@ abstract class Dormio_Model {
   // overridable meta fields for sub classes
   static $meta = array();
   static $logger = null;
+  
+  public $display_field = null;
 
   /**
    * Create a new Model instance using the provided PDO connection.
@@ -304,8 +306,14 @@ abstract class Dormio_Model {
     try {
       $spec = $this->_meta->getSpec($name);
     } catch(Dormio_Meta_Exception $dme) {
-      return $this->_getCachedData($name, "string");
+      try {
+        // this will return any non field data e.g. aggregated results
+        return $this->_getCachedData($name, "string");
+      } catch(Dormio_Model_Exception $e) {
+        throw $dme;
+      }
     }
+    
     isset($spec['db_column']) || $spec['db_column'] = $this->_meta->pk;
 
     switch ($spec['type']) {
@@ -490,7 +498,7 @@ abstract class Dormio_Model {
    * @return string The text to display
    */
   function display() {
-    return "[{$this->_meta->verbose} {$this->ident()}]";
+    return ($this->display_field) ? $this->getValue($this->display_field) : "[{$this->_meta->verbose} {$this->ident()}]";
   }
 
   /**
