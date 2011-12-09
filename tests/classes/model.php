@@ -53,7 +53,6 @@ class Tag extends Dormio_Model {
     'fields' => array(
       'tag' => array('type' => 'text', 'max_length' => 30),
       'blogs' => array('type' => 'reverse', 'model' => 'Blog'),
-      'comments' => array('type' => 'reverse', 'model' => 'Comment'),
     ),
   );
 }

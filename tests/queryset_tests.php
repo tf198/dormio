@@ -21,37 +21,61 @@ class TestOfSQL extends UnitTestCase{
   }
   
   function testResolve() {
+    //Dormio_Queryset::$logger = new Debugger();
     $blogs = new Dormio_Queryset('Blog');
-    $this->assertEqual($blogs->_resolveField('title'), '<@t1.@>{title}');
-    $this->assertEqual($blogs->_resolveField('pk'), '<@t1.@>{blog_id}');
-    $this->assertEqual($blogs->_resolveField('the_user'), '<@t1.@>{the_blog_user}'); // foreign pk
-    $this->assertEqual($blogs->_resolveField('the_user__pk'), '<@t1.@>{the_blog_user}'); // no need to actually get the user
-    $this->assertEqual($blogs->_resolveField('the_user__name'), '<@t2.@>{name}'); // foreignkey
-    $this->assertEqual($blogs->_resolveField('comment_set__title'), '<@t3.@>{title}'); // foreignkey_rev
-    $this->assertEqual($blogs->_resolveField('tags__tag'), '<@t5.@>{tag}'); // manytomany
+    
+    // DIRECT
+    $this->assertEqual($blogs->_resolveField('title'), '<@t1.@>{title}'); // standard field
+    $this->assertEqual($blogs->_resolveField('pk'), '<@t1.@>{blog_id}'); // want blog id
+    
+    // FOREIGNKEY
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('the_user__name'), '<@t2.@>{name}'); // standard field
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('the_user'), '<@t1.@>{the_blog_user}'); // want user id
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('the_user__pk'), '<@t1.@>{the_blog_user}'); // want user id
+    
+    // FOREIGNKEY_REV (with reverse field)
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('comment_set__title'), '<@t2.@>{title}'); // standard field
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('comment_set'), '<@t2.@>{comment_id}'); // want comment ids
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('comment_set__pk'), '<@t2.@>{comment_id}'); // want comment ids
+    
+    // MANYTOMANY (forward)
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('tags__tag'), '<@t3.@>{tag}'); // standard field via link table
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('tags'), '<@t2.@>{the_tag_id}'); // want tag ids but only with half join
+    $this->assertEqual($blogs->_resetAliases()->_resolveField('tags__pk'), '<@t2.@>{the_tag_id}'); // want tag ids but only with half join
+    
+    // MANYTOMANY (reverse with reverse field and defined intermediate)
+    $tags = new Dormio_Queryset('Tag');
+    $this->assertEqual($tags->_resetAliases()->_resolveField('blogs__title'), '<@t3.@>{title}'); // standard field 
+    $this->assertEqual($tags->_resetAliases()->_resolveField('blogs'), '<@t2.@>{the_blog_id}'); // standard field 
+    $this->assertEqual($tags->_resetAliases()->_resolveField('blogs__pk'), '<@t2.@>{the_blog_id}'); // standard field 
+    
+    // MANYTOMANY (reverse no reverse field)
+    $tags = new Dormio_Queryset('Tag');
+    $this->assertEqual($tags->_resetAliases()->_resolveField('comment_set__title'), '<@t3.@>{title}'); // standard field 
+    $this->assertEqual($tags->_resetAliases()->_resolveField('comment_set'), '<@t2.@>{l_comment_id}'); // standard field 
+    $this->assertEqual($tags->_resetAliases()->_resolveField('comment_set__pk'), '<@t2.@>{l_comment_id}'); // standard field 
+    
+    // OTHER RANDOM USAGE TESTS
     
     $comments = new Dormio_Queryset('Comment');
-    $this->assertEqual($comments->_resolveField('pk'), '<@t1.@>{comment_id}');
-    $this->assertEqual($comments->_resolveField('blog'), '<@t1.@>{blog_id}'); // foreign pk
-    $this->assertEqual($comments->_resolveField('blog__title'), '<@t2.@>{title}'); // foreignkey
-    $this->assertEqual($comments->_resolveField('blog__the_user__name'), '<@t3.@>{name}'); // multistage
-    $this->assertEqual($comments->_resolveField('tags__tag'), '<@t5.@>{tag}'); // manytomany
+    $this->assertEqual($comments->_resetAliases()->_resolveField('pk'), '<@t1.@>{comment_id}');
+    $this->assertEqual($comments->_resetAliases()->_resolveField('blog'), '<@t1.@>{blog_id}'); // foreign pk
+    $this->assertEqual($comments->_resetAliases()->_resolveField('blog__title'), '<@t2.@>{title}'); // foreignkey
+    $this->assertEqual($comments->_resetAliases()->_resolveField('blog__the_user__name'), '<@t3.@>{name}'); // multistage
+    $this->assertEqual($comments->_resetAliases()->_resolveField('tags__tag'), '<@t3.@>{tag}'); // manytomany
+    $this->assertEqual($comments->_resetAliases()->_resolveField('blog__the_user__profile'), '<@t4.@>{profile_id}'); // multistage with pk
     
     $users = new Dormio_Queryset('User');
-    $this->assertEqual($users->_resolveField('profile_set__age'), '<@t2.@>{age}'); // onetoone_rev
+    $this->assertEqual($users->_resetAliases()->_resolveField('profile_set__age'), '<@t2.@>{age}'); // onetoone_rev
     
     $profile = new Dormio_Queryset('Profile');
-    $this->assertEqual($profile->_resolveField('user__name'), '<@t2.@>{name}'); // onetoone
+    $this->assertEqual($profile->_resetAliases()->_resolveField('user__name'), '<@t2.@>{name}'); // onetoone
     
-    $tags = new Dormio_Queryset('Tag');
-    $this->assertEqual($tags->_resolveField('pk'), '<@t1.@>{tag_id}');
-    $this->assertEqual($tags->_resolveField('blog_set__title'), '<@t3.@>{title}'); // manytomany_rev
-    $this->assertEqual($tags->_resolveField('comment_set__title'), '<@t5.@>{title}'); // manytomany_rev
-
     $this->assertEqual($tags->_resolveString("SELECT * FROM {table}"), "SELECT * FROM {tag}");
   }
  
   function testJoin() {
+    //Dormio_Queryset::$logger = new Debugger;
     $blogs = new Dormio_Queryset('Blog');
     $this->assertEqual($blogs->with('the_user')->query['join'], //foreignkey
       array('LEFT JOIN {user} AS t2 ON t1.{the_blog_user}=t2.{user_id}'));
@@ -315,4 +339,10 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($qs->selectSQL(), $this->all_blogs);
   }
 
+}
+
+class Debugger {
+  function log($message) {
+    print "DEBUG: {$message}\n";
+  }
 }

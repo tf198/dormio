@@ -57,6 +57,8 @@ class Dormio_Queryset {
   
   public $aliases, $_alias;
   
+  public static $logger = null;
+  
   /**
   * Create a new Queryset
   * @param  string|Dormio_Meta  $meta   A meta object or the name of a model
@@ -68,14 +70,18 @@ class Dormio_Queryset {
     $this->dialect = is_object($dialect) ? $dialect : Dormio_Dialect::factory($dialect);
     $this->params = array();
     
-    $this->_alias = 't' . $alias;
-    $this->aliases = array($this->_meta->model => $this->_alias);
+    $this->_resetAliases($alias);
     
     // add the base table and its primary key
     $this->query['from'] = "{{$this->_meta->table}}<@ AS {$this->_alias}@>";
     $this->_addFields($this->_meta, $this->_alias);
-    
-    $this->_next_alias = $alias+1;
+  }
+  
+  function _resetAliases($id=1) {
+    $this->_alias = 't' . $id;
+    $this->aliases = array($this->_meta->model => $this->_alias);
+    $this->_next_alias = $id + 1;
+    return $this;
   }
   
   /**
@@ -171,7 +177,8 @@ class Dormio_Queryset {
   function with() {
     $o = clone $this;
     foreach(func_get_args() as $table) {
-      list($spec, $alias) = $o->_resolveArray(explode('__', $table), 'LEFT');
+      $parts = explode('__', $table);
+      list($spec, $alias) = $o->_resolveArray($parts, 'LEFT', true);
       $o->_addFields($spec, $alias);
     }
     return $o;
@@ -290,19 +297,15 @@ class Dormio_Queryset {
   * @access private
   */
   function _resolvePath($path, $type=null, $strip_pk=true) {
-    $parts = explode('__', $path);
-    $field = array_pop($parts);
-    // strip the pk
-    if($strip_pk && $field=='pk' && $parts) {
-      // need to check it is a local field
-      $parent = $parts[count($parts) - 1];
-      if($this->_meta->isLocalField($parent)) {
-        $field = array_pop($parts);
-      }
-    }
-    list($meta, $alias) = $this->_resolveArray($parts, $type);
     
-    if(!isset($meta->fields[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
+    self::$logger && self::$logger->log("_resolvePath('{$path}')");
+    try {
+      list($meta, $alias, $field) = $this->_resolveArray(explode('__', $path), $type);
+    } catch(Dormio_Meta_Exception $dme) {
+      throw new Dormio_Queryset_Exception("Failed to resolve path '{$path}': " . $dme->getMessage());
+    }
+    
+    //if(!isset($meta->fields[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
     return array($meta, $meta->fields[$field]['db_column'], $alias);
   }
   
@@ -313,14 +316,68 @@ class Dormio_Queryset {
   * @return object          The top level meta object
   * @access private
   */
-  function _resolveArray($parts, $type=null) {
+  function _resolveArray($parts, $type=null, $full_joins=false) {
     $meta = $this->_meta;
     $alias = $this->_alias;
-    for($i=0,$c=count($parts); $i<$c; $i++) {
-      $spec = $meta->getSpec($parts[$i]);
+    
+    // last part is field unless specified
+    //$field = ($has_field) ? array_pop($parts) : null;
+    
+    // default to INNER JOIN
+    if($type==null) $type = "INNER";
+    
+    $c = count($parts);
+    // remove any pk
+    if($c>1 && $parts[$c-1] == 'pk') $c--;
+    
+    for($i=0; $i<$c; $i++) {
+      
+      // get the field spec
+      $field = $parts[$i];
+      $spec = $meta->getSpec($field);
+      
+      // do the first hop of any link tables and set up the second
+      if(isset($spec['through'])) {
+        if($type!='INNER') trigger_error("Trying to {$type} JOIN onto {$spec['model']} - may have unexpected results", E_USER_WARNING);
+      
+        // do the reverse bit
+        $through_meta = Dormio_Meta::get($spec['through']);
+        $reverse_spec = $through_meta->getReverseSpec($meta->model, $spec['map_local_field']);
+        $meta = $this->_addJoin($meta, $reverse_spec, "INNER", $alias);
+
+        // update the field
+        if(!$spec['map_remote_field']) $spec['map_remote_field'] = $meta->getAccessorFor($spec['model']);
+        $field = $spec['map_remote_field'];
+        
+        // if we are the last hop then no field has been requested so we can return the PK of the mid table
+        if(!$full_joins && $i==$c-1) {
+          self::$logger && self::$logger->log("Only half join required for {$field}");
+          return array($meta, $alias, $field);
+        }
+        
+        // update the spec so the default join will continue as expected
+        $spec = $meta->getSpec($spec['map_remote_field']);
+      }
+      
+      //print "HOP: {$meta->model} ->  {$field}\n";
+      
+      // check whether this join is actually needed on final run
+      
+      if($i==$c-1 && $meta->isLocalField($field)) {
+        if(!$full_joins) break;
+      }
+      
+      // finally, do the join
       $meta = $this->_addJoin($meta, $spec, $type, $alias);
     }
-    return array($meta, $alias);
+    
+    // check whether it is a reverse field
+    if(!isset($spec['is_field'])) {
+      $field = $spec['local_field'];
+    }
+    
+    self::$logger && self::$logger->log("_resolveArray() returning {$meta->model} and {$alias}.{$field}");
+    return array($meta, $alias, $field);
   }
   
   /**
@@ -333,22 +390,8 @@ class Dormio_Queryset {
   * @access private
   */
   function _addJoin($left, $spec, $type, &$left_alias) {
-    if(!$type) $type='INNER';
     
-    // if manytomany redispatch in two queries
-    if(isset($spec['through'])) {
-      if($type!='INNER') trigger_error("Trying to {$type} JOIN onto {$spec['model']} - may have unexpected results", E_USER_WARNING);
-      
-      // do the reverse bit
-      $through_meta = Dormio_Meta::get($spec['through']);
-      $reverse_spec = $through_meta->getReverseSpec($left->model, $spec['map_local_field']);
-      $mid = $this->_addJoin($left, $reverse_spec, "INNER", $left_alias);
-      
-      // do the forward bit
-      if(!$spec['map_remote_field']) $spec['map_remote_field'] = $mid->getAccessorFor($spec['model']);
-      $spec = $mid->getSpec($spec['map_remote_field']);
-      return $this->_addJoin($mid, $spec, "INNER", $left_alias);
-    }
+    
     
     $right = Dormio_Meta::get($spec['model']);
     
@@ -365,6 +408,8 @@ class Dormio_Queryset {
       $this->aliases[$key] = $right_alias;
       $left_alias = $right_alias;
     }
+    
+    self::$logger && self::$logger->log("_addJoin() {$left->model} -> {$right->model} AS {$left_alias}");
     return $right;
   }
   
@@ -410,7 +455,7 @@ class Dormio_Queryset {
       
       $r = $resolved;
       array_unshift($r, $spec['accessor']);
-      $child->_resolveArray($r);
+      $child->_resolveArray($r, 'INNER', true);
       
       if($base->query['join']) {
         $child->query['join'] = array_merge($child->query['join'], $base->query['join']);
