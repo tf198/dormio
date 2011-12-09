@@ -343,7 +343,8 @@ class Dormio_Queryset {
         // do the reverse bit
         $through_meta = Dormio_Meta::get($spec['through']);
         $reverse_spec = $through_meta->getReverseSpec($meta->model, $spec['map_local_field']);
-        $meta = $this->_addJoin($meta, $reverse_spec, "INNER", $alias);
+        // use a left join to preserve current results
+        $meta = $this->_addJoin($meta, $reverse_spec, "LEFT", $alias);
 
         // update the field
         if(!$spec['map_remote_field']) $spec['map_remote_field'] = $meta->getAccessorFor($spec['model']);

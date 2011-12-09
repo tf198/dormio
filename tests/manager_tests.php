@@ -10,14 +10,13 @@ class TestOfManager extends TestOfDB{
     $blogs = new Dormio_Manager('Blog', $this->db);
     
     // without any parameters
-    /*
     try {
       $blogs->get();
       $this->fail("Should have thrown exception");
     } catch(Dormio_Manager_Exception $e) {
-      $this->assertEqual($e->getMessage(), "Need some criteria for get()");
+      $this->assertEqual($e->getMessage(), "More than one record returned");
     }
-    */
+    $this->db->digest();
     
     // basic pk load
     $blog = $blogs->get(2);
@@ -229,7 +228,7 @@ class TestOfManager extends TestOfDB{
     $this->expectError();
     $set = $blogs->with('tags');
     $this->assertQueryset($set, 'title',
-      array('Andy Blog 1', 'Andy Blog 1', 'Andy Blog 2'));
+      array('Andy Blog 1', 'Andy Blog 1', 'Andy Blog 2', 'Bob Blog 1'));
     
     // doesn't de-dup automatically
     $set = $blogs->where('{tags__tag} IN (?, ?)', array('Yellow', 'Indigo'));
@@ -240,7 +239,7 @@ class TestOfManager extends TestOfDB{
     $set = $set->distinct();
     $this->assertQueryset($set, 'title',
       array('Andy Blog 1'));
-      
+    
     // additional field
     $set = $users->field('profile__age', 'age');
     $this->assertQueryset($set, 'age',
