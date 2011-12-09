@@ -138,6 +138,15 @@ class TestOfMeta extends UnitTestCase{
     $blog = Dormio_Meta::get('blog');
   }
   
+  function testLocalField() {
+    $blog = Dormio_Meta::get('Blog');
+    $this->assertTrue($blog->isLocalField('pk'));
+    $this->assertTrue($blog->isLocalField('title'));
+    $this->assertFalse($blog->isLocalField('comments'));
+    $this->assertTrue($blog->isLocalField('the_user'));
+    $this->assertFalse($blog->isLocalField('rubbish_field'));
+  }
+  
 }
 
 ?>

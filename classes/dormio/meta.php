@@ -317,6 +317,12 @@ class Dormio_Meta {
 
     return $spec;
   }
+  
+  function isLocalField($name) {
+    if(!isset($this->fields[$name])) return false;
+    if($this->fields[$name]['type']=='reverse' || $this->fields[$name]['type']=='manytomany') return false;
+    return true;
+  }
 
   /**
    * Get the database column for a field

@@ -292,7 +292,14 @@ class Dormio_Queryset {
   function _resolvePath($path, $type=null, $strip_pk=true) {
     $parts = explode('__', $path);
     $field = array_pop($parts);
-    if($strip_pk && $field=='pk' && $parts) $field = array_pop($parts);
+    // strip the pk
+    if($strip_pk && $field=='pk' && $parts) {
+      // need to check it is a local field
+      $parent = $parts[count($parts) - 1];
+      if($this->_meta->isLocalField($parent)) {
+        $field = array_pop($parts);
+      }
+    }
     list($meta, $alias) = $this->_resolveArray($parts, $type);
     
     if(!isset($meta->fields[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
