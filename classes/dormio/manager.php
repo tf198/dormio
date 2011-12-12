@@ -193,15 +193,17 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     try {
       $stmt = $this->_db->prepare($query[0]);
       $stmt->execute($query[1]);
-      return $stmt->fetch($fetch);
+      $result = $stmt->fetch($fetch);
+      $stmt->closeCursor();
+      return $result;
     } catch (PDOException $e) {
       throw new Dormio_Exception("Failed to execute: {$query[0]}\n{$e}");
     }
   }
 
   /**
-   * Execute a single sql statement.
-   *
+   * Execute a single sql statement that doesn't return a result set
+   * e.g. UPDATE, INSERT, DELETE
    * @param  $query    The query in the form array('SQL', array('param1', ...))
    * @return int       The number of affected rows
    * @throws Dormio_Exception If it cannot execute the query
