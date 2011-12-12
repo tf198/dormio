@@ -31,13 +31,19 @@
  * @package dormio
  * @example usage.php Example usage
  */
-class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
+class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Countable {
 
   protected $_db = null;
   protected $_stmt = null;
   protected $_iter = null;
   protected $_qualified = true;
   public $unbuffered = false;
+  
+  const ITERATOR_BUFFERED = 0;
+  const ITERATOR_UNBUFFERED = 1;
+  const ITERATOR_VALUES = 2;
+  
+  public $iterator = self::ITERATOR_BUFFERED;
 
   /**
    * Create a new manager object based on the supplied meta.
@@ -224,7 +230,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
 
   /**
    * Execute many queries in a single transaction.
-   *
+   * Use for INSERT, UPDATE and DELETE only
    * @param  array   $sql          An array of queries suitable for passing to execute()
    * @param boolean $transaction   Whether to wrap in a transaction or not
    * @return int                   The total number of affected rows
@@ -287,12 +293,27 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     if (!$this->_stmt)
       $this->evaluate();
     if (!$this->_iter) {
+      
+      if($this->iterator==self::ITERATOR_VALUES) {
+        $this->_iter = $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
+        break;
+      }
+      
       $model = $this->_meta->instance($this->_db, $this->dialect);
       $model->_setAliases($this->aliases);
-      $klass = ($this->unbuffered) ? "Dormio_Iterator_Unbuffered" : "Dormio_Iterator";
+      $klass = ($this->iterator==self::ITERATOR_UNBUFFERED) ? "Dormio_Iterator_Unbuffered" : "Dormio_Iterator";
       $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_alias);
     }
     return $this->_iter;
+  }
+  
+  public function count() {
+    if($this->_iter) return $this->_iter->count();
+    
+    $o = clone($this);
+    $o->query['select'] = array("COUNT(*) AS result");
+    $result = $this->query($o->selectSQL());
+    return $result['result'];
   }
 
   public function __toString() {
@@ -305,8 +326,9 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
  * Traversable dataset - buffers the results
  * @package dormio
  * @subpackage manager
+ * @todo This should probably subclass ArrayIterator
  */
-class Dormio_Iterator implements Iterator {
+class Dormio_Iterator implements Iterator, Countable {
 
   function __construct($stmt, $params, $model, $alias) {
     $this->_model = $model;
@@ -362,6 +384,10 @@ class Dormio_Iterator implements Iterator {
    */
   function key() {
     return $this->_iter->key();
+  }
+  
+  function count() {
+    return $this->_iter->count();
   }
 
 }

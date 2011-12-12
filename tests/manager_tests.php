@@ -235,6 +235,17 @@ class TestOfManager extends TestOfDB{
     $this->assertDigestedAll();
   }
   */
+  
+  function testCount() {
+    $this->load("sql/test_schema.sql");
+    $this->load("sql/test_data.sql");
+    
+    $blogs = $this->pom->manager('Blog');
+    
+    $this->assertEqual($blogs->count(), 3);
+    $this->assertSQL('SELECT COUNT(*) AS result FROM "blog" AS t1');
+  }
+  
   function testJoinSanity() {
     $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
