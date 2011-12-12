@@ -524,8 +524,7 @@ class Dormio_Queryset {
   * @return array           array(sql, params)
   */
   function selectSQL() {
-    $o = clone $this;
-    return array($this->dialect->select($o->query), $o->params);
+    return array($this->dialect->select($this->query), $this->params);
   }
   
   function __toString() {
