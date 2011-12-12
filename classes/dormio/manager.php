@@ -85,6 +85,34 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate {
     $model->_hydrate($data[0], $this->_alias);
     return $model;
   }
+  
+  /**
+   * Create a new instance of the underlying model
+   * @param array  $values Default values for fields
+   * @return Dormio_Model
+   */
+  function create($values=array()) {
+    $obj = $this->_meta->instance($this->_db, $this->dialect);
+    $obj->setBulk($values);
+    return $obj;
+  }
+  
+  /**
+   * Load a specific model from the database or return a new instance if it doesn't exist
+   * Will populate the new model with the given values if a create() is required
+   * Will use the current query if $pk is null.
+   * @param int $pk Select the given primary key
+   * @param array $values Default values for fields
+   * @return Dormio_Model
+   */
+  function getOrCreate($pk=null, $values=array()) {
+    try {
+      return $this->get($pk);
+    } catch(Dormio_Manager_Exception $dme) {
+      if($dme->getMessage()=='No record returned') return $this->create($values);
+      throw $dme;
+    }
+  }
 
   /**
    * Get an Aggregation object.

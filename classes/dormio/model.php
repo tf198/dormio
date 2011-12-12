@@ -407,6 +407,15 @@ abstract class Dormio_Model {
     if(!isset($spec['is_field'])) throw new Dormio_Model_Exception("Cannot directly set a related field");
     $this->_updated[$spec['db_column']] = $value; // key is un-qualified
   }
+  
+  /**
+   * Bulk set values
+   * note: this does not actually save the object
+   * @param array $values e.g. array('name' => 'Bob', 'age' => 43)
+   */
+  function setBulk($values) {
+    foreach($values as $key=>$value) $this->setField($key, $value);
+  }
 
   /**
    * Load a record by id.
@@ -534,6 +543,8 @@ abstract class Dormio_Model {
     }
     return $this->__get($field);
   }
+  
+  /* A couple of default renderers */
   
   function render_type_password($field, $value) {
     return '********';

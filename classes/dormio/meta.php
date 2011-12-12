@@ -306,7 +306,7 @@ class Dormio_Meta {
       $spec = array('type' => 'reverse', 'model' => $name, 'accessor' => null);
     } else {
       if (!isset($this->fields[$name]))
-        throw new Dormio_Meta_Exception("No field '{$name} on '{$this->model}'");
+        throw new Dormio_Meta_Exception("No field '{$name}' on '{$this->model}'");
       $spec = $this->fields[$name];
     }
 

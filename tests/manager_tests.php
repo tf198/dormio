@@ -59,6 +59,47 @@ class TestOfManager extends TestOfDB{
     $this->assertDigestedAll();
   }
   
+  function testCreate() {
+    $this->load("sql/test_schema.sql");
+    $blogs = new Dormio_Manager('Blog', $this->db);
+    
+    $b1 = $blogs->create();
+    $this->assertIsA($b1, 'Dormio_Model');
+    
+    $b2 = $blogs->create(array('title' => 'Test Blog 1'));
+    $this->assertEqual($b2->title, 'Test Blog 1');
+    $b2->save();
+    
+    try {
+      $b3 = $blogs->create(array('rubbish' => 'duff'));
+      $this->fail("Should bhave thrown exception");
+    } catch(Dormio_Meta_Exception $dme) {
+      $this->assertEqual($dme->getMessage(), "No field 'rubbish' on 'blog'");
+    }
+  }
+  
+  function testGetOrCreate() {
+    $this->load("sql/test_schema.sql");
+    $this->load("sql/test_data.sql");
+    
+    $blogs = new Dormio_Manager('Blog', $this->db);
+    
+    // get
+    $b1 = $blogs->getOrCreate(1);
+    $this->assertEqual($b1->ident(), 1);
+    $this->assertEqual($b1->title, 'Andy Blog 1');
+    
+    // create
+    $b1 = $blogs->getOrCreate(23);
+    $this->assertFalse($b1->ident());
+    
+    // create with defaults
+    $b1 = $blogs->getOrCreate(23, array('title' => 'Extra Blog'));
+    $this->assertFalse($b1->ident());
+    $this->assertEqual($b1->title, 'Extra Blog');
+    $b1->save();
+  }
+  
   function testAggregationMethods() {
     $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
