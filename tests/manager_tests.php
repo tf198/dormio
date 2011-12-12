@@ -200,7 +200,7 @@ class TestOfManager extends TestOfDB{
     
     $this->assertDigestedAll();
   }
-  /*
+  
   function testClear() {
     $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");
@@ -234,7 +234,7 @@ class TestOfManager extends TestOfDB{
     
     $this->assertDigestedAll();
   }
-  */
+  
   
   function testCount() {
     $this->load("sql/test_schema.sql");
