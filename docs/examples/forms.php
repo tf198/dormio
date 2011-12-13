@@ -26,7 +26,7 @@ if(isset($argc)) {
 }
 
 $blog = $dormio->get('Blog', 3);
-$form = new Dormio_Form($blog);
+$form = new Dormio_Form(Dormio_Form::POST, false, $blog);
 
 if($form->isValid()) {
   $form->save();
@@ -37,16 +37,7 @@ if($form->isValid()) {
 <html>
   <head><title>Example Form</title></head>
   <body>
-    <form action="" method="post">
-      <table border="1">
-        {$form->asTable()}
-        <tr>
-          <td colspan="2" style="text-align: right">
-            <input type="submit" value="Save"/>
-          </td>
-        </tr>
-      </table>
-    </form>
+    {$form}
   </body>
 </html>
 EOF;

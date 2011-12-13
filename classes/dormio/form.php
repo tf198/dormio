@@ -32,8 +32,8 @@ class Dormio_Form extends Phorms_Forms_Form{
 
   static $base = array('validators' => array(), 'attributes' => array());
   
-  function __construct($obj) {
-    $this->obj = $obj;
+  function __construct($method=Phorms_Forms_Form::GET, $multi_part=false, $data=array()) {
+    $this->obj = $data;
     $this->form_config = Dormio_Meta::config('forms');
     // get the existing data
     $data = array();
@@ -43,7 +43,7 @@ class Dormio_Form extends Phorms_Forms_Form{
         if($this->obj->ident()) $data[$name] = $this->obj->_getModelData($spec['db_column'], $spec['type']);
       }
     }
-    parent::__construct(Phorms_Forms_Form::POST, false, $data);
+    parent::__construct($method, $multi_part, $data);
   }
 
   function save() {
@@ -62,12 +62,11 @@ class Dormio_Form extends Phorms_Forms_Form{
   
   protected function defineFields() {
     foreach($this->model_fields as $name => $spec) {
-      $this->$name = $this->field_for($name, $spec);
+      $this->$name = $this->fieldFor($name, $spec);
     }
   }
   
-  function params_for($type, $spec) {
-    //$defaults = bCommon::config("forms.{$type}");
+  function paramsFor($type, $spec) {
     $defaults = $this->form_config[$type];
     foreach($defaults as $key => $value) {
       $params[] = isset($spec[$key]) ? $spec[$key] : $value;
@@ -85,7 +84,7 @@ class Dormio_Form extends Phorms_Forms_Form{
     return $params;
   }
   
-  function field_for($name, $spec) {
+  function fieldFor($name, $spec) {
     $spec['label'] = isset($spec['verbose']) ? $spec['verbose'] : ucwords(str_replace('_', ' ', $name));
     if(!isset($this->form_config[$spec['type']])) return new TextField($spec['label'], 25, 255);
     $phorm_type = $this->form_config[$spec['type']];
@@ -94,7 +93,7 @@ class Dormio_Form extends Phorms_Forms_Form{
       $spec['manager'] = $this->obj->manager($name);
     }
     
-    $params = $this->params_for($phorm_type, $spec);
+    $params = $this->paramsFor($phorm_type, $spec);
     
     $rc = new ReflectionClass($phorm_type);
     $field = $rc->newInstanceArgs($params);
@@ -103,6 +102,22 @@ class Dormio_Form extends Phorms_Forms_Form{
   
   static function validate_not_null($value) {
     if(!$value) throw new Phorms_Validation_Error ("Field cannot be blank");
+  }
+  
+  function __toString() {
+    return <<< EOF
+{$this->open()}
+  <table class="phorm dormio-form auto-form">
+    {$this->asTable()}
+    <tr>
+      <td colspan="2" style="text-align: right;">
+        <input type="submit" value="Save"/>
+      </tr>
+    </tr>
+  </table>
+{$this->close()}
+
+EOF;
   }
 }
 
