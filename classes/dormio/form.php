@@ -40,7 +40,7 @@ class Dormio_Form extends Phorms_Forms_Form{
     foreach($this->obj->_meta->fields as $name => $spec) {
       if(isset($spec['is_field'])) {
         $this->model_fields[$name] = $spec;
-        if($this->obj->ident()) $data[$name] = $this->obj->_getModelData($spec['db_column']);
+        if($this->obj->ident()) $data[$name] = $this->obj->_getModelData($spec['db_column'], $spec['type']);
       }
     }
     parent::__construct(Phorms_Forms_Form::POST, false, $data);
