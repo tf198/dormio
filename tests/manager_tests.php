@@ -246,6 +246,35 @@ class TestOfManager extends TestOfDB{
     $this->assertSQL('SELECT COUNT(*) AS result FROM "blog" AS t1');
   }
   
+  function testTypeValues() {
+    $this->load("sql/test_schema.sql");
+    $this->load("sql/test_data.sql");
+    
+    $blogs = $this->pom->manager('Blog');
+    
+    $all = $blogs->values();
+    $this->assertTrue(is_array($all));
+    $this->assertEqual(count($all), 3);
+    $this->assertEqual($all[1]['t1_title'], 'Andy Blog 2');
+  }
+  
+  function testFilterIn() {
+    $this->load("sql/test_schema.sql");
+    $this->load("sql/test_data.sql");
+    
+    $blogs = $this->pom->manager('Blog');
+    $comments = $this->pom->manager('Comment');
+    
+    $blog_set = $blogs->filter('the_user', '=', 1);
+    
+    $comment_set = $comments->filter('blog', 'IN', $blog_set);
+    
+    $result = $comment_set->values();
+    $this->assertEqual(count($result), 2);
+    $this->assertEqual($result[0]['t1_title'], 'Andy Comment 1 on Andy Blog 1');
+    $this->assertEqual($result[1]['t1_title'], 'Bob Comment 1 on Andy Blog 1');
+  }
+  
   function testJoinSanity() {
     $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");

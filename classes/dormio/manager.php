@@ -38,12 +38,6 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
   protected $_iter = null;
   protected $_qualified = true;
   public $unbuffered = false;
-  
-  const ITERATOR_BUFFERED = 0;
-  const ITERATOR_UNBUFFERED = 1;
-  const ITERATOR_VALUES = 2;
-  
-  public $iterator = self::ITERATOR_BUFFERED;
 
   /**
    * Create a new manager object based on the supplied meta.
@@ -283,6 +277,17 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
 //print_r($query);
     $this->_stmt = $this->_db->prepare($sql);
   }
+  
+  /**
+   * Execute the query and return the values
+   * @return array
+   */
+  public function values($fetch=PDO::FETCH_ASSOC) {
+    if(!$this->_stmt)
+      $this->evaluate();
+    $this->_stmt->execute($this->params);
+    return $this->_stmt->fetchAll($fetch);
+  }
 
   /**
    * Get an iterator for the current queryset
@@ -293,15 +298,9 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
     if (!$this->_stmt)
       $this->evaluate();
     if (!$this->_iter) {
-      
-      if($this->iterator==self::ITERATOR_VALUES) {
-        $this->_iter = $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
-        break;
-      }
-      
       $model = $this->_meta->instance($this->_db, $this->dialect);
       $model->_setAliases($this->aliases);
-      $klass = ($this->iterator==self::ITERATOR_UNBUFFERED) ? "Dormio_Iterator_Unbuffered" : "Dormio_Iterator";
+      $klass = ($this->unbuffered) ? "Dormio_Iterator_Unbuffered" : "Dormio_Iterator";
       $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_alias);
     }
     return $this->_iter;

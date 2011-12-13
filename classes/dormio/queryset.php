@@ -114,6 +114,11 @@ class Dormio_Queryset {
     $f = $o->_resolveField($key);
     $v = '?';
     if($op == 'IN') {
+      if($value instanceof Dormio_Manager) {
+        $set = $value->values(PDO::FETCH_NUM);
+        $value = array();
+        foreach($set as $a) $value[] = $a[0];
+      }
       if(!is_array($value)) throw new Dormio_Queryset_Exception('Need array for IN operator');
       $v = '(' . implode(', ', array_fill(0, count($value), '?')) . ')';
     }
