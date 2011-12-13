@@ -275,6 +275,28 @@ class TestOfManager extends TestOfDB{
     $this->assertEqual($result[1]['t1_title'], 'Bob Comment 1 on Andy Blog 1');
   }
   
+  function testHasResults() {
+    $this->load("sql/test_schema.sql");
+    $this->load("sql/test_data.sql");
+    
+    $blogs = $this->pom->manager('Blog');
+    
+    $this->assertEqual($blogs->hasResults(), true);
+    $this->assertEqual($blogs->filter('title', '=', 'Fictional title')->hasResults(), false);
+    
+    $this->db->clear();
+    
+    // should just execute the query once
+    $query = $blogs->filter('title', '=', 'Andy Blog 1');
+    $this->assertEqual($query->hasResults(), true);
+    
+    $this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" = ?', 'Andy Blog 1');
+    
+    // this shouldn't hit the db again
+    foreach($query as $result) $result->title;
+    $this->assertDigestedAll();
+  }
+  
   function testJoinSanity() {
     $this->load("sql/test_schema.sql");
     $this->load("sql/test_data.sql");

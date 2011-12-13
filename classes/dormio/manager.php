@@ -300,8 +300,12 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
     if (!$this->_iter) {
       $model = $this->_meta->instance($this->_db, $this->dialect);
       $model->_setAliases($this->aliases);
-      $klass = ($this->unbuffered) ? "Dormio_Iterator_Unbuffered" : "Dormio_Iterator";
-      $this->_iter = new $klass($this->_stmt, $this->params, $model, $this->_alias);
+      
+      if($this->unbuffered) {
+        $this->_iter = new Dormio_Iterator_Unbuffered($this->_stmt, $this->params, $model, $this->_alias);
+      } else {
+        $this->_iter = new Dormio_Iterator($this->_stmt, $this->params, $model, $this->_alias);
+      }
     }
     return $this->_iter;
   }
@@ -313,6 +317,17 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
     $o->query['select'] = array("COUNT(*) AS result");
     $result = $this->query($o->selectSQL());
     return $result['result'];
+  }
+  
+  /**
+   * Find out whether a there are results for this query
+   * This actually executes the query on the basis you are going to want the results if they are available
+   * use count() if you do not want to execute the full query
+   * @return bool Whether results are available
+   */
+  public function hasResults() {
+    $this->getIterator();
+    return ($this->_iter->count()>0);
   }
 
   public function __toString() {
@@ -334,6 +349,7 @@ class Dormio_Iterator implements Iterator, Countable {
     $this->_stmt = $stmt;
     $this->_params = $params;
     $this->_alias = $alias;
+    $this->_iter = null;
   }
 
   /**
@@ -386,6 +402,7 @@ class Dormio_Iterator implements Iterator, Countable {
   }
   
   function count() {
+    if(!$this->_iter) $this->rewind();
     return $this->_iter->count();
   }
 
@@ -446,6 +463,10 @@ class Dormio_Iterator_Unbuffered implements Iterator {
    */
   function key() {
     return $this->_model->ident();
+  }
+  
+  function count() {
+    throw new Dormio_Manager_Exception("Unable to count an unbuffered query");
   }
 
 }
