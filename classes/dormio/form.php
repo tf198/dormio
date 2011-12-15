@@ -38,7 +38,6 @@ class Dormio_Form {
         $this->errors[$key] = $dve->getMessage();
       }
     }
-    var_dump($this->errors);
     return count($this->errors) == 0;
   }
   
