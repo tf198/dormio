@@ -2,9 +2,7 @@
 /**
 * This is a runable example
 *   > php docs/examples/forms.php > form_output.html
-*   > php docs/examples/forms.php title="Test Title"
-*   > php docs/examples/forms.php author=26 # this fails validation
-*   > php docs/examples/forms.php author=2 # this is OK (2 is Bob)
+*   > php docs/examples/forms.php pk=3 title="Test Title" body="Hello World" user=2
 * @package dormio
 * @subpackage example
 * @filesource
@@ -26,9 +24,9 @@ if(isset($argc)) {
 }
 
 $blog = $dormio->get('Blog', 3);
-$form = new Dormio_Form(Dormio_Form::POST, false, $blog);
+$form = new Dormio_Form($blog, $_POST);
 
-if($form->isValid()) {
+if($_POST && $form->isValid()) {
   $form->save();
   echo "Blog saved\n";
   var_dump($blog->data());
@@ -37,7 +35,7 @@ if($form->isValid()) {
 <html>
   <head><title>Example Form</title></head>
   <body>
-    {$form}
+    {$form->asTable()}
   </body>
 </html>
 EOF;

@@ -1,140 +1,135 @@
 <?php
-/**
-* Form generation from meta definitions
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU Lesser General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*
-* @author Tris Forster <tris.701437@tfconsulting.com.au>
-* @version 0.3
-* @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
-* @package dormio
-*/
 
-// Need to use the Phorms autoloader as the cases are different
-require_once(dirname(__FILE__) . '/../Phorms/init.php');
-
-/**
-* Class to generate a Phorms form based on a Dormio model
-* @package dormio
-*/
-class Dormio_Form extends Phorms_Forms_Form{
-
-  static $base = array('validators' => array(), 'attributes' => array());
+class Dormio_Form {
   
-  function __construct($method=Phorms_Forms_Form::GET, $multi_part=false, $data=array()) {
-    $this->obj = $data;
-    $this->form_config = Dormio_Meta::config('forms');
-    // get the existing data
-    $data = array();
-    foreach($this->obj->_meta->fields as $name => $spec) {
-      if(isset($spec['is_field'])) {
-        $this->model_fields[$name] = $spec;
-        if($this->obj->ident()) $data[$name] = $this->obj->_getModelData($spec['db_column'], $spec['type']);
+  public $errors = array();
+  public $fields = array();
+  
+  public function __construct($model, $data) {
+    $this->obj = $model;
+    $this->data = $data;
+    
+    $this->defineFields();
+  }
+  
+  public function defineFields() {
+    foreach($this->obj->_meta->fields as $key=>$spec) {
+      $value = isset($this->data[$key]) ? $this->data[$key] : null;
+      $field_type = $spec['type'];
+      if(isset($spec['form_field'])) $field_type = $spec['form_field'];
+      
+      $klass = "Dormio_Field_" . ucfirst($field_type);
+      if($spec['type']!='reverse') {
+        $this->fields[$key] = new $klass($key, $spec, $value);
+        if(isset($spec['model'])) {
+          $this->fields[$key]->setModel($this->obj);
+        }
       }
     }
-    parent::__construct($method, $multi_part, $data);
   }
-
-  function save() {
-    foreach($this->model_fields as $name => $spec) {
-      $value = $this->$name->getValue();
-      if($spec['type'] == 'ident') {
+  
+  public function isValid() {
+    if(!$this->data) return false;
+    $this->errors = array();
+    foreach($this->fields as $key=>$field) {
+      try {
+        $field->validate();
+      } catch(Dormio_Validation_Exception $dve) {
+        $this->errors[$key] = $dve->getMessage();
+      }
+    }
+    var_dump($this->errors);
+    return count($this->errors) == 0;
+  }
+  
+  public function valueFor($name) {
+    if(isset($this->data[$name])) return $this->data[$name];
+    if($this->obj->ident()) {
+      $value = $this->obj->__get($name);
+      if($value instanceof Dormio_Model) return $value->ident();
+      if($value instanceof Dormio_Manager) return null;
+      return $value;
+    }
+    $spec = $this->obj->_meta->getSpec($name);
+    if(isset($spec['default'])) return $spec['default'];
+    return "";
+  }
+  
+  public function save() {
+    foreach($this->fields as $key=>$field) {
+      $value = $this->fields[$key]->cleaned;
+      if($field instanceof Dormio_Field_Ident) {
         // double check the record is the save
         if($value!=$this->obj->ident()) throw new Exception('Attempt to modify different primary key');
+      } elseif($field instanceof Dormio_Field_ManyToMany) {
+        if($value!==null) $this->obj->__get($key)->add($value);
       } else {
-        $this->obj->__set($name, $value);
+        if($this->obj->ident()) {
+          if($value !== $this->obj->getValue($key)) {
+            $this->obj->__set($key, $value);
+          }
+        } else {
+          $this->obj->__set($key, $value);
+        }
       }
     }
     $this->obj->save();
-    return $this->obj->ident();
   }
   
-  protected function defineFields() {
-    foreach($this->model_fields as $name => $spec) {
-      $this->$name = $this->fieldFor($name, $spec);
+  public function asTable($action="", $method="post") {
+    $result[] = "<form action=\"{$action}\" method=\"{$method}\">";
+    $result[] = "<table class=\"dormio-auto dormio-form\">";
+    foreach($this->fields as $key=>$field) {
+      $value = $this->valueFor($key);
+      $input = $field->widget($value);
+      $error = isset($this->errors[$key]) ? "<br/><span class=\"field_error\">" . htmlentities($this->errors[$key]) . "</span>" : "";
+      if($field instanceof Dormio_Field_Hidden) {
+        $result[] = $input;
+      } else {     
+        $result[] = "<tr><th>{$field->label}</th><td>{$input}{$error}</td></tr>";
+      }
     }
-  }
-  
-  function paramsFor($type, $spec) {
-    $defaults = $this->form_config[$type];
-    foreach($defaults as $key => $value) {
-      $params[] = isset($spec[$key]) ? $spec[$key] : $value;
-    }
-    
-    $validators = array();
-    if(isset($spec['validators'])) $validators = array_merge($validators, $spec['validators']);
-    if(!isset($spec['null_ok']) || !$spec['null_ok']) $validators[] = array('Dormio_Form', 'validate_not_null');
-    $params[] = $validators;
-    
-    $attributes = array('class' => $type);
-    if(isset($spec['attributes'])) $attributes = array_merge($attributes, $spec['attributes']);
-    $params[] = $attributes;
-    
-    return $params;
-  }
-  
-  function fieldFor($name, $spec) {
-    $spec['label'] = isset($spec['verbose']) ? $spec['verbose'] : ucwords(str_replace('_', ' ', $name));
-    if(!isset($this->form_config[$spec['type']])) return new TextField($spec['label'], 25, 255);
-    $phorm_type = $this->form_config[$spec['type']];
-    
-    if($phorm_type == 'Dormio_Form_ManagerField') {
-      $spec['manager'] = $this->obj->manager($name);
-    }
-    
-    $params = $this->paramsFor($phorm_type, $spec);
-    
-    $rc = new ReflectionClass($phorm_type);
-    $field = $rc->newInstanceArgs($params);
-    return $field;
-  }
-  
-  static function validate_not_null($value) {
-    if(!$value) throw new Phorms_Validation_Error ("Field cannot be blank");
-  }
-  
-  function __toString() {
-    return <<< EOF
-{$this->open()}
-  <table class="phorm dormio-form auto-form">
-    {$this->asTable()}
-    <tr>
-      <td colspan="2" style="text-align: right;">
-        <input type="submit" value="Save"/>
-      </tr>
-    </tr>
-  </table>
-{$this->close()}
-
-EOF;
+    $result[] = "<tr><td colspan=\"2\">" . Dormio_Form_Widget::input("save", "Save", array('type' => 'submit')) . "</td></tr>";
+    $result[] = "</table>";
+    $result[] = "</form>";
+    return implode(PHP_EOL, $result);
   }
 }
 
-/**
-* @package dormio
-* @subpackage form
-*/
-class Dormio_Form_ManagerField extends Phorms_Fields_ChoiceField {
-  function __construct($label, $help, $manager, $validators=array(), $attributes=array()) {
-    $choices['-'] = 'Select...';
-    foreach($manager as $obj) $choices[$obj->ident()] = (string)$obj;
-    parent::__construct($label, $help, $choices, $validators, $attributes);
+class Dormio_Form_Widget {
+  static function input($name, $value=null, $attrs=array()) {
+    $attrs['name'] = $name;
+    $attrs['value'] = $value;
+    return self::element('input', $attrs);
   }
   
-  function validate($value) {
-    if($value=='-') throw new Phorms_Validation_Error('Invalid selection');
-    parent::validate($value);
+  static function select($name, $choices, $value=null, $attrs=array()) {
+    $options = array();
+    foreach($choices as $key=>$text) {
+      $opt = array('value' => $key);
+      if($key==$value) $opt['selected'] = '1';
+      $options[] = self::element('option', $opt, $text);
+    }
+    
+    $attrs['name'] = $name;
+    return self::element('select', $attrs, implode(PHP_EOL, $options));
   }
   
+  public static function element($type, $attrs=array(), $inner=null) {
+    $result = "<{$type} " . self::attrs($attrs);
+    if($inner!==null) {
+      $result .= ">\n{$inner}\n</$type>";
+    } else {
+      $result .= " />";
+    }
+    return $result;
+  }
+  
+  public static function attrs($input) {
+    $result = array();
+    foreach($input as $key=>$value) $result[] = sprintf('%s="%s"', htmlentities($key), htmlentities($value));
+    return implode(' ', $result);
+  }
 }
+
+class Dormio_Validation_Exception extends Exception {}

@@ -1,9 +1,24 @@
 Dormio
 ======
 
-**Note that Dormio is currently pre-alpha - feel free to play but dont use it
-for anything important.
-The API is likely to change - you have been warned!**
+Current Status
+--------------
+
+Code is currently at Alpha stage - use at your own risk.
+
+Core ORM: Dormio_Meta Dormio_Model Dormio_Queryset Dormio_Manager Dormio_Factory
+API for this should be pretty fixed now and it is all pretty well tested and documented.
+There may (almost certainly are) be bugs with some edge case usage but its fairly solid now.
+
+Form Generation: Dormio_Form
+The API for this is still up in the air.  I'll endevour to keep the example code up to date
+and working but be prepared to update your code.
+
+Schema Generation: Dormio_Schema
+SQLite dialect is fairly well tested.
+MySQL dialect should be okay for simple usage but not tested.
+Other dialects unlikely to work without hacking
+API very likely to change as I look at this more.
 
 Documentation
 -------------
@@ -38,8 +53,10 @@ Model definition
 
     class Blog extends Dormio_Model {
       static $meta = array(
-        'title' => array('type' => 'string', 'max_length' => 30),
-        'author' => array('type' => 'foreignkey', 'model' => 'User'),
+        'fields' => array(
+          'title' => array('type' => 'string', 'max_length' => 30),
+          'author' => array('type' => 'foreignkey', 'model' => 'User'),
+        ),
       );
     }
 
@@ -98,7 +115,8 @@ Generate schemas directly from your models. Can even upgrade them for you.
 
     $pdo = new PDO('sqlite::memory:');
     $sf = Dormio_Schema::factory('sqlite', 'Blog');
-    $sf->batchExecute($pdo, $sf->createTable());
+    $sf->createTable();
+    $sf->batchExecute($pdo, $sf->sql);
     
 Blistering performance
 ~~~~~~~~~~~~~~~~~~~~~~
