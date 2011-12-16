@@ -38,6 +38,8 @@ class Dormio_Meta {
 
   private static $_model_register = array();
   
+  public static $prefix = "";
+  
   /**
    * Set a custom config loader
    * @var callable
@@ -141,18 +143,19 @@ class Dormio_Meta {
     if (!isset($meta['fields']))
       throw new Dormio_Meta_Exception("Missing required 'fields' on meta");
     // check the basic array structure
+    $base = (self::$prefix) ? substr($model, strlen(self::$prefix)) : $model;
     $defaults = array(
-        'table' => $model,
+        'table' => $base,
         'version' => 1,
         'reverse' => array(),
         'indexes' => array(),
         'auto' => array(),
-        'verbose' => self::title($model),
+        'verbose' => self::title($base),
     );
     $meta = array_merge($defaults, $meta);
 
     // default pk - can be overriden by the fields
-    $columns['pk'] = array('type' => 'ident', 'db_column' => $model . "_id", 'is_field' => true, 'verbose' => 'ID');
+    $columns['pk'] = array('type' => 'ident', 'db_column' => $base . "_id", 'is_field' => true, 'verbose' => 'ID');
 
 
     foreach ($meta['fields'] as $key => $spec) {
@@ -247,6 +250,7 @@ class Dormio_Meta {
             "l_{$model}" => array('type' => 'foreignkey', 'model' => $model),
             "r_{$spec['model']}" => array('type' => 'foreignkey', 'model' => $spec['model']),
         ),
+        'is_auto' => 'true',
     );
     $obj = new Dormio_Meta($table, $meta);
     self::$_meta_cache[$table] = $obj;
