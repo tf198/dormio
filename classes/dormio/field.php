@@ -62,11 +62,12 @@ class Dormio_Field_Text extends Dormio_Field {
 }
 
 class Dormio_Field_Hidden extends Dormio_Field_Integer {
+  protected $type = 'hidden';
 }
 
 class Dormio_Field_Ident extends Dormio_Field_Hidden {
   function validate() {
-    if(!$this->_value) $this->_value = 0;
+    if(!$this->cleaned) $this->cleaned = 0;
     parent::validate();
   }
 }
@@ -87,10 +88,11 @@ class Dormio_Field_Integer extends Dormio_Field_Input {
   
   function validate() {
     parent::validate();
-    if(!is_numeric($this->_value)) throw new Dormio_Validation_Exception("Integer required");
+    if($this->cleaned && !is_numeric($this->cleaned)) throw new Dormio_Validation_Exception("Integer required");
   }
   
   function clean($value) {
+    if($value=='') return null;
     return (int)$value;
   }
   
