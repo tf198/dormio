@@ -72,11 +72,20 @@ class Dormio_Form {
         }
       }
     }
-    $this->obj->save();
+    try {
+      $this->obj->save();
+      return true;
+    } catch(Dormio_Validation_Exception $dve) {
+      $this->errors['form'] = $dve->getMessage();
+      return false;
+    }
   }
   
   public function asTable($action="", $method="post") {
     $result[] = "<form action=\"{$action}\" method=\"{$method}\">";
+    if(isset($this->errors['form'])) {
+      $result[] = "<div><span class=\"field_error\">" . htmlentities($this->errors['form']) . "</span></div>";
+    }
     $result[] = "<table class=\"dormio-auto dormio-form\">";
     foreach($this->fields as $key=>$field) {
       $value = $this->valueFor($key);

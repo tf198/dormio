@@ -25,7 +25,7 @@ abstract class Dormio_Field {
   }
 
   function validate() {
-    if($this->cleaned===null) {
+    if($this->cleaned===null || $this->cleaned==='') {
       if(!isset($this->spec['null_ok']) || $this->spec['null_ok']==false) throw new Dormio_Validation_Exception("Required");
     }
   }
