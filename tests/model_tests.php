@@ -155,7 +155,7 @@ class TestOfModel extends TestOfDB{
     $this->assertSQL('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1');
     // only one prepared statement with two execution sets.  Params evaluate to 3 now as they are a reference
     //var_dump($this->db->digest());
-    $this->assertEqual($this->db->digest(), array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(array(3), array(3), array(3))));
+    $this->assertEqual($this->db->digest(), array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(array(1), array(2), array(3))));
     
     $this->assertDigestedAll();
   }
@@ -205,7 +205,7 @@ class TestOfModel extends TestOfDB{
     $expected = array('Orange', 'Violet');
     //var_dump($c1->tags);
     $this->assertQueryset($c1->tags, 'tag', $expected);
-    $this->assertSQL('SELECT t1."tag_id" AS "t1_tag_id", t1."tag" AS "t1_tag" FROM "tag" AS t1 INNER JOIN "comment_tag" AS t2 ON t1."tag_id"=t2."r_tag_id" WHERE t2."l_comment_id" = ?', 2);
+    $this->assertSQL('SELECT t1."tag_id" AS "t1_tag_id", t1."tag" AS "t1_tag" FROM "tag" AS t1 INNER JOIN "comment_x_tag" AS t2 ON t1."tag_id"=t2."r_tag_id" WHERE t2."l_comment_id" = ?', 2);
     
     // manytomany on self
     /*
@@ -234,7 +234,7 @@ class TestOfModel extends TestOfDB{
     // default fields
     $expected = array('Andy Comment 1 on Andy Blog 1', 'Andy Comment 1 on Bob Blog 1');
     $this->assertQueryset($tag->comment_set, 'title', $expected);
-    $this->assertSQL('SELECT t1."comment_id" AS "t1_comment_id", t1."title" AS "t1_title", t1."the_comment_user" AS "t1_the_comment_user", t1."blog_id" AS "t1_blog_id" FROM "comment" AS t1 INNER JOIN "comment_tag" AS t2 ON t1."comment_id"=t2."l_comment_id" WHERE t2."r_tag_id" = ?', 4);
+    $this->assertSQL('SELECT t1."comment_id" AS "t1_comment_id", t1."title" AS "t1_title", t1."the_comment_user" AS "t1_the_comment_user", t1."blog_id" AS "t1_blog_id" FROM "comment" AS t1 INNER JOIN "comment_x_tag" AS t2 ON t1."comment_id"=t2."l_comment_id" WHERE t2."r_tag_id" = ?', 4);
     
     $this->assertDigestedAll();
   }

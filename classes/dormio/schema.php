@@ -143,7 +143,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
   protected $version = 'mysql';
 
   public function __construct($spec) {
-    // check new spec
+    // check new spec  
     if (!isset($spec['table']))
       throw new Dormio_Schema_Exception("Require 'table' key");
     if (!isset($spec['columns']))
@@ -192,6 +192,8 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
         return 'DATE';
       case 'timestamp':
         return 'TIMESTAMP';
+      case 'ipv4address':
+        return 'INTEGER(32)';
       case 'foreignkey':
       case 'onetoone':
         return 'INTEGER';
@@ -288,8 +290,26 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
     return $actions;
   }
 
+  public function createPHP() {
+    $output = array('<?php');
+    
+    $output[] = '$new_schema = ' . var_export($this->spec, true) . ';';
+    $output[] = '$schema = Dormio_Schema::factory($pdo, $new_schema);';
+    $output[] = '$schema->startUpgrade($new_schema);';
+    $output[] = '$schema->createTable();';
+    $output[] = '$schema->finishUpgrade($new_schema);';
+    $output[] = '$schema->commitUpgrade($pdo);';
+    $output[] = 'return $new_schema;';
+    
+    $output[] = "?>\n";
+    return implode("\n", $output);
+  }
+  
   public function upgradePHP($newspec) {
     $actions = $this->_upgradePath($newspec);
+    
+    if(count($actions)==0) return null;
+    
     $output = array('<?php');
 
     $output[] = '$old_schema = ' . var_export($this->spec, true) . ';';
@@ -308,6 +328,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 
     $output[] = '$schema->finishUpgrade($new_schema);';
     $output[] = '$schema->commitUpgrade($pdo);';
+    $output[] = 'return $new_schema;';
     $output[] = "?>\n";
 
     return implode("\n", $output);
@@ -325,7 +346,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
   }
 
   public function commitUpgrade($pdo) {
-    $this->batchExecute($pdo, $this->sql);
+    $this->batchExecute($pdo, $this->sql, false);
   }
 
   public function upgradeSQL($newspec) {

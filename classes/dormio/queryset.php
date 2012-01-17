@@ -89,6 +89,7 @@ class Dormio_Queryset {
   */
   function _selectIdent() {
     $this->query['select'] = array("<@{$this->_alias}.@>{{$this->_meta->pk}}");
+    return $this;
   }
   
   /**
@@ -132,6 +133,19 @@ class Dormio_Queryset {
     return $o;
   }
   
+  /**
+   * Add a non value based filter
+   * e.g. 'IS NOT NULL', 'IS NULL'
+   * @param string field descriptor
+   * @param string $special special expression
+   * @return Dormio_Queryset 
+   */
+  function filterSpecial($key, $special) {
+    $o = clone $this;
+    $o->query['where'][] = $o->_resolveField($key) . " " . $special;
+    return $o;
+  }
+  
   function field($path, $alias=null) {
     // this needs to left join
     $o = clone $this;
@@ -166,7 +180,7 @@ class Dormio_Queryset {
   * @param  array   $params   Substitution parameters for query
   * @return Dormio_Queryset Cloned copy of the queryset
   */
-  function where($clause, $params) {
+  function where($clause, $params=array()) {
     $o = clone $this;
     $o->query['where'][] = $o->_resolveString($clause);
     $o->params = array_merge($o->params, $params);
@@ -343,7 +357,7 @@ class Dormio_Queryset {
       
       // do the first hop of any link tables and set up the second
       if(isset($spec['through'])) {
-        if($type!='INNER') trigger_error("Trying to {$type} JOIN onto {$spec['model']} - may have unexpected results", E_USER_WARNING);
+        if($type!='INNER') self::$logger && self::$logger->log("Trying to {$type} JOIN onto {$spec['model']} - may have unexpected results", "WARN");
       
         // do the reverse bit
         $through_meta = Dormio_Meta::get($spec['through']);
@@ -505,17 +519,22 @@ class Dormio_Queryset {
       $r = $resolved;
       array_unshift($r, $spec['accessor']);
       
-      $q = implode('__', $r);
-      switch($spec['on_delete']) {
-        case "cascade":
-          $sql = array_merge($sql, $child->deleteById($id, $q, $r));
-          break;
-        case "blank":
-        case "set_null":
-          $sql[] = $child->filter($q, '=', $id)->updateSQL(array($q => null));
-          break;
-        default:
-          throw new Dormio_Queryset_Exception('Unknown ON DELETE action: ' . $spec['on_delete']);
+      if($spec['type'] == 'manytomany') { // just delete the entry
+        var_dump($spec);
+      } else {
+        $q = implode('__', $r);
+        switch($spec['on_delete']) {
+          case "cascade":
+            $sql = array_merge($sql, $child->deleteById($id, $q, $r));
+            break;
+          case "blank":
+          case "set_null":
+            $sql[] = $child->filter($q, '=', $id)->updateSQL(array($q => null));
+            break;
+          default:
+            var_dump($spec);
+            throw new Dormio_Queryset_Exception("Unknown ON DELETE action '{$spec['on_delete']}' for field '{$spec['db_column']}'");
+        }
       }
     }
     $o = $this->filter($query, '=', $id);

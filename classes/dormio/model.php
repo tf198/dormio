@@ -405,6 +405,7 @@ abstract class Dormio_Model {
       $value = $value->ident();
     }
     if(!isset($spec['is_field'])) throw new Dormio_Model_Exception("Cannot directly set a related field");
+    
     $this->_updated[$spec['db_column']] = $value; // key is un-qualified
   }
   
@@ -435,7 +436,12 @@ abstract class Dormio_Model {
   function save() {
     if (count($this->_updated) == 0)
       return;
-    return ($this->ident() === false) ? $this->insert() : $this->update();
+    if ($this->ident() === false) {
+      $this->insert();
+    } else {
+      $this->update();
+    }
+    return $this;
   }
 
   /**
@@ -552,7 +558,15 @@ abstract class Dormio_Model {
   
   function render_type_boolean($field, $value) {
     $value = ($value) ? "yes" : "no";
-    return "<p style=\"text-align: center\">{$value}</p>";
+    return $value;
+  }
+  
+  function render_type_timestamp($field, $value) {
+    return date("d/m/y H:i", $value);
+  }
+  
+  function render_type_ipv4address($field, $value) {
+    return ($value===null || $value=='') ? '' : long2ip($value);
   }
 }
 

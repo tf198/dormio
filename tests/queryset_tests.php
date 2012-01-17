@@ -86,7 +86,7 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($comments->with('blog')->query['join'], // foreignkey
       array('LEFT JOIN {blog} AS t2 ON t1.{blog_id}=t2.{blog_id}')); 
     $this->assertEqual($comments->filter('tags__tag', '=', 'Red')->query['join'], // manytomany
-      array('LEFT JOIN {comment_tag} AS t2 ON t1.{comment_id}=t2.{l_comment_id}', 'INNER JOIN {tag} AS t3 ON t2.{r_tag_id}=t3.{tag_id}')); 
+      array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{comment_id}=t2.{l_comment_id}', 'INNER JOIN {tag} AS t3 ON t2.{r_tag_id}=t3.{tag_id}')); 
     
     $profiles = new Dormio_Queryset('Profile');
     $this->assertEqual($profiles->with('user')->query['join'], // onetoone
@@ -100,7 +100,7 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($tags->filter('blog_set__title', '=', 'Test')->query['join'], // manytomany_rev
       array('LEFT JOIN {blog_tag} AS t2 ON t1.{tag_id}=t2.{the_tag_id}', 'INNER JOIN {blog} AS t3 ON t2.{the_blog_id}=t3.{blog_id}'));
     $this->assertEqual($tags->filter('comment_set__title', '=', 'Test')->query['join'], // manytomany_rev
-      array('LEFT JOIN {comment_tag} AS t2 ON t1.{tag_id}=t2.{r_tag_id}', 'INNER JOIN {comment} AS t3 ON t2.{l_comment_id}=t3.{comment_id}'));
+      array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{tag_id}=t2.{r_tag_id}', 'INNER JOIN {comment} AS t3 ON t2.{l_comment_id}=t3.{comment_id}'));
     
     $nodes = new Dormio_Queryset('Tree');
     $this->assertEqual($nodes->filter('parent__name', '=', 'Bob')->query['join'],
@@ -111,9 +111,9 @@ class TestOfSQL extends UnitTestCase{
     
     $modules = new Dormio_Queryset('Module');
     $this->assertEqual($modules->filter('depends_on__name', '=', 'core')->query['join'], // manytomany self
-      array('LEFT JOIN {module_module} AS t2 ON t1.{module_id}=t2.{l_module_id}', 'INNER JOIN {module} AS t3 ON t2.{r_module_id}=t3.{module_id}'));
+      array('LEFT JOIN {module_x_module} AS t2 ON t1.{module_id}=t2.{l_module_id}', 'INNER JOIN {module} AS t3 ON t2.{r_module_id}=t3.{module_id}'));
     $this->assertEqual($modules->filter('required_by__name', '=', 'core')->query['join'], // manytomany self
-      array('LEFT JOIN {module_module} AS t2 ON t1.{module_id}=t2.{r_module_id}', 'INNER JOIN {module} AS t3 ON t2.{l_module_id}=t3.{module_id}'));
+      array('LEFT JOIN {module_x_module} AS t2 ON t1.{module_id}=t2.{r_module_id}', 'INNER JOIN {module} AS t3 ON t2.{l_module_id}=t3.{module_id}'));
   }
  
   function testField() {
@@ -243,8 +243,8 @@ class TestOfSQL extends UnitTestCase{
     $this->assertEqual($set->aliases, array(
         "comment" => "t1", 
         "comment.blog__blog.pk" => "t2",
-        "comment.pk__comment_tag.l_comment" => "t3",
-        "comment_tag.r_tag__tag.pk" => "t4",
+        "comment.pk__comment_x_tag.l_comment" => "t3",
+        "comment_x_tag.r_tag__tag.pk" => "t4",
     ));
   
   }
@@ -277,7 +277,7 @@ class TestOfSQL extends UnitTestCase{
     $sql = $blogs->deleteById(3);
     $this->assertEqual($sql, array(
       array('DELETE FROM "blog_tag" WHERE "the_blog_id" = ?', array(3)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t1."comment_tag_id" FROM "comment_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" WHERE t2."blog_id" = ?)', array(3)),
+      array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t1."comment_x_tag_id" FROM "comment_x_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" WHERE t2."blog_id" = ?)', array(3)),
       array('DELETE FROM "comment" WHERE "blog_id" = ?', array(3)),
       array('DELETE FROM "blog" WHERE "blog_id" = ?', array(3)),
     ));
@@ -285,10 +285,10 @@ class TestOfSQL extends UnitTestCase{
     $users = new Dormio_Queryset('User');
     $this->assertEqual($users->deleteById(1), array(
       array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t1."blog_tag_id" FROM "blog_tag" AS t1 INNER JOIN "blog" AS t2 ON t1."the_blog_id"=t2."blog_id" WHERE t2."the_blog_user" = ?)', array(1)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t1."comment_tag_id" FROM "comment_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" INNER JOIN "blog" AS t3 ON t2."blog_id"=t3."blog_id" WHERE t3."the_blog_user" = ?)', array(1)),
+      array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t1."comment_x_tag_id" FROM "comment_x_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" INNER JOIN "blog" AS t3 ON t2."blog_id"=t3."blog_id" WHERE t3."the_blog_user" = ?)', array(1)),
       array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t1."comment_id" FROM "comment" AS t1 INNER JOIN "blog" AS t2 ON t1."blog_id"=t2."blog_id" WHERE t2."the_blog_user" = ?)', array(1)), 
       array('DELETE FROM "blog" WHERE "the_blog_user" = ?', array(1)),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t1."comment_tag_id" FROM "comment_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" WHERE t2."the_comment_user" = ?)', array(1)),
+      array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t1."comment_x_tag_id" FROM "comment_x_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" WHERE t2."the_comment_user" = ?)', array(1)),
       array('DELETE FROM "comment" WHERE "the_comment_user" = ?', array(1)),
       array('UPDATE "profile" SET "user_id"=? WHERE "user_id" = ?', array(null, 1)),
       array('DELETE FROM "user" WHERE "user_id" = ?', array(1)),
@@ -305,7 +305,7 @@ class TestOfSQL extends UnitTestCase{
     //foreach($sql as $parts) echo $parts[0]."\n";    
     $this->assertEqual($sql, array(
       array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t2."blog_tag_id" FROM "blog_tag" AS t2 INNER JOIN "blog" AS t1 ON t2."the_blog_id"=t1."blog_id" WHERE t1."title" = ?)', array('My First Blog')),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t4."comment_tag_id" FROM "comment_tag" AS t4 INNER JOIN "comment" AS t5 ON t4."l_comment_id"=t5."comment_id" INNER JOIN "blog" AS t1 ON t5."blog_id"=t1."blog_id" WHERE t1."title" = ?)', array('My First Blog')),
+      array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t4."comment_x_tag_id" FROM "comment_x_tag" AS t4 INNER JOIN "comment" AS t5 ON t4."l_comment_id"=t5."comment_id" INNER JOIN "blog" AS t1 ON t5."blog_id"=t1."blog_id" WHERE t1."title" = ?)', array('My First Blog')),
       array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t2."comment_id" FROM "comment" AS t2 INNER JOIN "blog" AS t1 ON t2."blog_id"=t1."blog_id" WHERE t1."title" = ?)', array('My First Blog')),
       array('DELETE FROM "blog" WHERE "title" = ?', array('My First Blog')),
     ));
@@ -316,7 +316,7 @@ class TestOfSQL extends UnitTestCase{
     //foreach($sql as $parts) echo $parts[0]."\n";    
     $this->assertEqual($sql, array(
       array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t3."blog_tag_id" FROM "blog_tag" AS t3 INNER JOIN "blog" AS t1 ON t3."the_blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
-      array('DELETE FROM "comment_tag" WHERE "comment_tag_id" IN (SELECT t5."comment_tag_id" FROM "comment_tag" AS t5 INNER JOIN "comment" AS t6 ON t5."l_comment_id"=t6."comment_id" INNER JOIN "blog" AS t1 ON t6."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
+      array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t5."comment_x_tag_id" FROM "comment_x_tag" AS t5 INNER JOIN "comment" AS t6 ON t5."l_comment_id"=t6."comment_id" INNER JOIN "blog" AS t1 ON t6."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
       array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t3."comment_id" FROM "comment" AS t3 INNER JOIN "blog" AS t1 ON t3."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
       array('DELETE FROM "blog" WHERE "blog_id" IN (SELECT t1."blog_id" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
     ));
