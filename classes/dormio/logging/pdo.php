@@ -107,7 +107,7 @@ class Dormio_Logging_PDOStatement {
   
   function execute($params=array()) {
     $result = $this->_stmt->execute($params);
-    array_push($this->stack, $params);
+    array_push($this->stack, array_map('trim', $params)); // copy the reference
     return $result;
   }
   
