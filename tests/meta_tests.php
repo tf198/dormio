@@ -56,7 +56,7 @@ class TestOfMeta extends UnitTestCase{
       'blog_0' => array('blog_id' => true),
     ));
     
-    $intermediate = Dormio_Meta::get('comment_tag');
+    $intermediate = Dormio_Meta::get('comment__tag');
     $this->assertEqual($intermediate->indexes, array(
       'l_comment_0' => array('l_comment_id' => true),
       'r_tag_0' => array('r_tag_id' => true),
@@ -105,31 +105,31 @@ class TestOfMeta extends UnitTestCase{
     
     // forward manytomany onto self
     $spec = $module->getSpec('depends_on');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'verbose'=>'Depends On', 'through'=>'module_module', 'map_local_field'=>'l_module', 'map_remote_field'=>'r_module'));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'verbose'=>'Depends On', 'through'=>'module__module', 'map_local_field'=>'l_module', 'map_remote_field'=>'r_module'));
     
     // reverse manytomany onto self
     $spec = $module->getSpec('module_set');
-    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'through'=>'module_module', 'map_local_field'=>'r_module', 'map_remote_field'=>'l_module'));
+    $this->assertEqual($spec, array('type'=>'manytomany', 'model'=>'module', 'through'=>'module__module', 'map_local_field'=>'r_module', 'map_remote_field'=>'l_module'));
     
   }
   
   function testReverseSpec() {
     $module = Dormio_Meta::get('module');
-    $through = Dormio_Meta::get('module_module');
+    $through = Dormio_Meta::get('module__module');
     
-    $this->assertEqual($through->getReverseSpec('module', 'l_module'), array('type'=>'foreignkey_rev', 'local_field'=>'pk', 'remote_field'=>'l_module', 'model'=>'module_module', 'on_delete'=>'cascade'));
-    $this->assertEqual($through->getReverseSpec('module', 'r_module'), array('type'=>'foreignkey_rev', 'local_field'=>'pk', 'remote_field'=>'r_module', 'model'=>'module_module', 'on_delete'=>'cascade'));
+    $this->assertEqual($through->getReverseSpec('module', 'l_module'), array('type'=>'foreignkey_rev', 'local_field'=>'pk', 'remote_field'=>'l_module', 'model'=>'module__module', 'on_delete'=>'cascade'));
+    $this->assertEqual($through->getReverseSpec('module', 'r_module'), array('type'=>'foreignkey_rev', 'local_field'=>'pk', 'remote_field'=>'r_module', 'model'=>'module__module', 'on_delete'=>'cascade'));
     
     try {
       $through->getReverseSpec('Bad_Class', null);
     } catch(Dormio_Meta_Exception $dme) {
-      $this->assertEqual($dme->getMessage(), "No reverse relation for 'bad_class' on 'module_module'");
+      $this->assertEqual($dme->getMessage(), "No reverse relation for 'bad_class' on 'module__module'");
     }
     
     try {
       $through->getReverseSpec('module', 'bad_accessor');
     } catch(Dormio_Meta_Exception $dme) {
-      $this->assertEqual($dme->getMessage(), "No reverse accessor 'module.bad_accessor' on 'module_module'");
+      $this->assertEqual($dme->getMessage(), "No reverse accessor 'module.bad_accessor' on 'module__module'");
     }
     
   }

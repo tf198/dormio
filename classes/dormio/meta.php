@@ -239,11 +239,18 @@ class Dormio_Meta {
     return $meta;
   }
 
+  private static function base($model) {
+    return (self::$prefix) ? substr($model, strlen(self::$prefix)) : $model;
+  }
+  
   /**
    * Create a fake model for use in joins and schema generation
    */
   private static function _generateIntermediate($model, $spec) {
-    $table = ($model < $spec['model']) ? "{$model}_{$spec['model']}" : "{$spec['model']}_{$model}";
+    $l_model = self::base($model);
+    $r_model = self::base($spec['model']);
+    
+    $table = ($l_model < $r_model) ? "{$l_model}__{$r_model}" : "{$r_model}__{$l_model}";
     $meta = array(
         'table' => $table,
         'fields' => array(
