@@ -250,7 +250,7 @@ class Dormio_Meta {
     $l_model = self::base($model);
     $r_model = self::base($spec['model']);
     
-    $table = ($l_model < $r_model) ? "{$l_model}__{$r_model}" : "{$r_model}__{$l_model}";
+    $table = ($l_model < $r_model) ? "{$l_model}_x_{$r_model}" : "{$r_model}_x_{$l_model}";
     $meta = array(
         'table' => $table,
         'fields' => array(
