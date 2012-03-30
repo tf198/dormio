@@ -91,9 +91,12 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
    * @param array  $values Default values for fields
    * @return Dormio_Model
    */
-  function create($values=array()) {
+  function create($values=array(), $save=true) {
     $obj = $this->_meta->instance($this->_db, $this->dialect);
     $obj->setBulk($values);
+    if($save) {
+      $obj->save();
+    }
     return $obj;
   }
   
@@ -552,12 +555,14 @@ class Dormio_Manager_Related extends Dormio_Manager {
    * @param  array   $params   Values to set
    * @return Dormio_Model      The created instance
    */
-  function create($params=array()) {
+  function create($params=array(), $save=true) {
     $obj = $this->_meta->instance($this->_db, $this->dialect);
     if (!$this->manytomany)
       $obj->__set($this->_field, $this->_parent->ident());
-    foreach ($params as $key => $value)
-      $obj->__set($key, $value);
+    $obj->setBulk($params);
+    if($save) {
+      $obj->save();
+    }
     return $obj;
   }
 

@@ -344,6 +344,15 @@ class Dormio_Meta {
     $spec = $this->getSpec($name);
     return $spec['db_column'];
   }
+  
+  /**
+   * Test whether a field exists
+   * @param string $name Field name
+   * @return boolean
+   */
+  function hasField($name) {
+    return isset($this->fields[$name]);
+  }
 
   /**
    * Ensure we have parsed all model specs we know about

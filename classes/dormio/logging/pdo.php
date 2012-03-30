@@ -35,6 +35,8 @@ class Dormio_Logging_PDO extends PDO {
    */
   public $stack = array();
   
+  public static $logger = null;
+  
 
   function __construct($dsn, $username=null, $password=null, $driver_options=null) {
     parent::__construct($dsn, $username, $password, $driver_options);
@@ -55,6 +57,7 @@ class Dormio_Logging_PDO extends PDO {
   
   function exec($sql) {
     array_push($this->stack, array($sql, array()));
+    self::$logger && self::$logger->log($sql);
     return parent::exec($sql);
   }
   
@@ -80,13 +83,13 @@ class Dormio_Logging_PDO extends PDO {
     while($this->stack) {
       $pair = $this->digest();
       $exec_params = array();
-      foreach($pair[1] as &$p) $p = $this->formatParams($p);
+      foreach($pair[1] as &$p) $p = self::formatParams($p);
       $result[] = $pair;
     }
     return $result;
   }
   
-  function formatParams($params) {
+  static function formatParams($params) {
     $result = array();
     foreach($params as $p) $result[] = var_export($p, true);
     return '(' . implode(', ', $result) . ')';
@@ -106,6 +109,7 @@ class Dormio_Logging_PDOStatement {
   }
   
   function execute($params=array()) {
+    Dormio_Logging_PDO::$logger && Dormio_Logging_PDO::$logger->log($this->_stmt->queryString . '; PARAMS => ' . Dormio_Logging_PDO::formatParams($params));
     $result = $this->_stmt->execute($params);
     array_push($this->stack, array_map('trim', $params)); // copy the reference
     return $result;
