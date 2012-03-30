@@ -1,4 +1,5 @@
 <?
+error_reporting(E_ALL & ~E_DEPRECATED);
 
 require_once('simpletest/autorun.php');
 require_once('bootstrap.php');
