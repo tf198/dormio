@@ -1,8 +1,8 @@
 <?php
 
 define('DORMIOPATH', dirname(__FILE__));
-#require DORMIOPATH . "/classes/dormio/autoload.php";
-#Dormio_Autoload::register();
+require DORMIOPATH . "/classes/dormio/autoload.php";
+Dormio_Autoload::register();
 
 if(Kohana::$environment === Kohana::DEVELOPMENT) {
   Dormio_Factory::$logging = true;
