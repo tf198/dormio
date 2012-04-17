@@ -119,6 +119,10 @@ class Dormio_Logging_PDOStatement {
     return call_user_func_array(array($this->_stmt, $method), $args);
   }
   
+  function __get($name) {
+  	return $this->_stmt->$name;
+  }
+  
   function run_count() {
     return count($this->stack);
   }

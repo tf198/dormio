@@ -45,6 +45,9 @@ class Dormio_Admin {
     
     Dormio_Meta::parseAllModels();
     
+    $pdo = Dormio::instance();
+    $pdo->exec("PRAGMA ignore_check_constraints=1;");
+    
     foreach($data as $entry) {
       $model = $entry['model'];
       unset($entry['model']);
@@ -54,8 +57,15 @@ class Dormio_Admin {
       $keys = array_keys($entry);
       foreach($keys as &$value) if(substr($value,0,1)=='_') $value = substr($value, 1);
       $stmt = $manager->insert($keys);
+      
+      // hack to use REPLACE instead of INSERT
+      $sql = str_replace('INSERT', 'REPLACE', $stmt->queryString);
+      $stmt = $pdo->prepare($sql);
+      
       $stmt->execute(array_values($entry));
     }
+    
+    $pdo->exec("PRAGMA ignore_check_constraints=0;");
     
     self::$logger && self::$logger->log($file . ": " . count($data));
   }
