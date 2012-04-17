@@ -22,11 +22,17 @@ class Dormio_Admin {
     $models = Dormio_Meta::getModels();
     $result = array();
     
+    $dialect = Dormio_Dialect::factory($driver);
+    $current = $pdo->query($dialect->tableNames())->fetchAll(PDO::FETCH_COLUMN, 0);
+    
     foreach($models as $model) {
-      self::$logger && self::$logger->log("Installing {$model}");
-      $sf = Dormio_Schema::factory($driver, $model);
-      $sf->createTable();
-      $sf->batchExecute($pdo, $sf->sql);
+    	$meta = Dormio_Meta::get($model);
+    	if(array_search($meta->table, $current)===false) {
+    		self::$logger && self::$logger->log("Installing {$model}");
+      		$sf = Dormio_Schema::factory($driver, $model);
+      		$sf->createTable();
+      		$sf->batchExecute($pdo, $sf->sql);
+    	}
     }
   }
   
