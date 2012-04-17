@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Kohana factory class for Dormio library.
+ * Allows database configuration via the existing Kohana config structure.
+ * @author tris
+ * @package dormio
+ */
 class Dormio {
 
   /**
