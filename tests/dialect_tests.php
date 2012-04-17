@@ -31,5 +31,9 @@ class TestOfDialect extends UnitTestCase {
       $this->assertEqual($e->getMessage(), "Offset not supported by MSSQL");
     }
   }
+  
+  function testTableNames() {
+  	$this->assertEqual($this->sqlite->tableNames(), "SELECT name FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence' ORDER BY name");
+  }
 }
 ?>

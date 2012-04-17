@@ -133,6 +133,14 @@ class Dormio_Dialect_Generic {
     if($should_alias) return str_replace('<@', '', str_replace('@>', '', $sql));
     return preg_replace('/<@.*?@>/', '', $sql);
   }
+  
+  /**
+   * Get a list of current tables in the database
+   * @todo Implement for other flavours
+   */
+  function tableNames() {
+  	return "SELECT name FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence' ORDER BY name";
+  }
 }
 
 /**
