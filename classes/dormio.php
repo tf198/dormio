@@ -40,7 +40,7 @@ class Dormio {
     if (!isset(self::$db[$which])) {
       $config = Kohana::$config->load('dormio');
       if (!$config)
-        throw new Kohana_Exception('No PDODB config file found');
+        throw new Kohana_Exception('No dormio config file found');
       self::$db[$which] = Dormio_Factory::PDO($config->get($which));
     }
     return self::$db[$which];
