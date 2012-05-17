@@ -50,14 +50,16 @@ class Dormio_Logging_PDO extends PDO {
    */
   function prepare($sql, $driver_options=array()) {
     $stmt = parent::prepare($sql, $driver_options);
-    $mock = new Dormio_Logging_PDOStatement($stmt);
+    $id = count($this->stack);
+    $mock = new Dormio_Logging_PDOStatement($stmt, $id);
     array_push($this->stack, array($sql, &$mock->stack));
+    self::$logger && self::$logger->log("<PREPARE:{$id}>: {$sql}", "DEBUG");
     return $mock;
   }
   
   function exec($sql) {
     array_push($this->stack, array($sql, array()));
-    self::$logger && self::$logger->log($sql);
+    self::$logger && self::$logger->log($sql, 'DEBUG');
     return parent::exec($sql);
   }
   
@@ -104,12 +106,14 @@ class Dormio_Logging_PDO extends PDO {
 class Dormio_Logging_PDOStatement {
   public $stack = array();
 
-  function __construct($stmt) {
+  function __construct($stmt, $id) {
     $this->_stmt = $stmt;
+    $this->id = $id;
   }
   
   function execute($params=array()) {
-    Dormio_Logging_PDO::$logger && Dormio_Logging_PDO::$logger->log($this->_stmt->queryString . '; PARAMS => ' . Dormio_Logging_PDO::formatParams($params));
+    //Dormio_Logging_PDO::$logger && Dormio_Logging_PDO::$logger->log($this->_stmt->queryString . '; PARAMS => ' . Dormio_Logging_PDO::formatParams($params), 'DEBUG');
+    Dormio_Logging_PDO::$logger && Dormio_Logging_PDO::$logger->log("<EXECUTE:{$this->id}>: " . Dormio_Logging_PDO::formatParams($params), 'DEBUG');
     $result = $this->_stmt->execute($params);
     array_push($this->stack, array_map('trim', $params)); // copy the reference
     return $result;

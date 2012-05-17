@@ -76,6 +76,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
     $o->evaluate();
     $o->_stmt->execute($o->params);
     $data = $o->_stmt->fetchall(PDO::FETCH_ASSOC);
+    unset($o);
     if (isset($data[1]))
       throw new Dormio_Result_Multiple_Exception('More than one record returned');
     if (!isset($data[0]))
@@ -83,6 +84,7 @@ class Dormio_Manager extends Dormio_Queryset implements IteratorAggregate, Count
     $model = $this->_meta->instance($this->_db, $this->dialect);
     $model->_setAliases($this->aliases);
     $model->_hydrate($data[0], $this->_alias);
+    unset($data);
     return $model;
   }
   
