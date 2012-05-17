@@ -6,7 +6,7 @@ Dormio_Autoload::register();
 
 if(Kohana::$environment === Kohana::DEVELOPMENT) {
   Dormio_Factory::$logging = true;
-  $logger = new Dormio_Logger();
+  $logger = new Pluggable_Dormio_Logger();
   Dormio_Logging_PDO::$logger = $logger;
 }
 Dormio_Meta::$prefix = "model_";
@@ -29,15 +29,17 @@ Route::set('dormio', 'dormio/<controller>(/<action>)')
            'action' => 'index',
         ));
 
-class Dormio_Logger {
+class Pluggable_Dormio_Logger {
   
   static $levels = array(
+  	  'DEBUG' => Log::STRACE,
       'INFO' => Log::INFO,
       'ERROR' => Log::ERROR,
       'WARN' => Log::WARNING,
   );
   
   function log($message, $level='INFO') {
+  	$level = strtoupper($level);
     Kohana::$log->add(self::$levels[$level], $message);
   }
 }
