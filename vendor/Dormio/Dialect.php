@@ -132,6 +132,7 @@ class Dormio_Dialect_Generic {
   
   /**
    * Get a list of current tables in the database
+   * Must return a single column
    * @todo Implement for other flavours
    */
   function tableNames() {
@@ -145,6 +146,10 @@ class Dormio_Dialect_Generic {
 class Dormio_Dialect_MySQL extends Dormio_Dialect_Generic {
   function quoteIdentifiers($sql) {
     return strtr($sql, '{}', '``');
+  }
+  
+  function tableNames() {
+  	return "SHOW TABLES";
   }
 }
 
@@ -161,5 +166,9 @@ class Dormio_Dialect_MSSQL extends Dormio_Dialect_Generic {
   
   function quoteIdentifiers($sql) {
     return strtr($sql, '{}', '[]');
+  }
+  
+  function tableNames() {
+  	return "SELECT name FROM sys.tables";
   }
 }
