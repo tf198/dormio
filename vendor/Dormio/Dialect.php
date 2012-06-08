@@ -64,6 +64,8 @@ class Dormio_Dialect_Generic {
   * Takes an array and turns it into a statement using simple logic
   * If a field has a value then "$FIELD $value" is appended to the statement
   * All value arrays are concatenated using commas, except 'where' which uses ' AND '
+  * @param multitype:mixed $spec
+  * @return string			SQL statement
   */
   function compile($spec) {
     if(isset($spec['where'])) $spec['where'] = array(implode(' AND ', $spec['where']));
@@ -73,6 +75,11 @@ class Dormio_Dialect_Generic {
     return implode(' ', $result);
   }
   
+  /**
+   * Create a SELECT statement
+   * @param multitype:mixed $spec
+   * @return string			SQL statement
+   */
   function select($spec) {
     $spec['select'] = array_unique($spec['select']);
     if(isset($spec['modifiers'])) {
@@ -86,6 +93,13 @@ class Dormio_Dialect_Generic {
     return $this->quoteIdentifiers($this->aliasFields($this->compile($spec), true));
   }
   
+  /**
+   * Create an UPDATE statements
+   * @param multitype:mixed $spec
+   * @param multitype:mixed $fields
+   * @param multitype:mixed $custom_fields
+   * @return string					SQL statement
+   */
   function update($spec, $fields, $custom_fields=array()) {
     $set = array();
     foreach($fields as $field) $set[] = "{$field}=?";
@@ -100,6 +114,12 @@ class Dormio_Dialect_Generic {
     return $this->quoteIdentifiers($this->aliasFields($base . $this->compile($spec), false));
   }
   
+  /**
+   * Create an INSERT statement
+   * @param multitype:mixed $spec
+   * @param multitype:string $fields list of fields
+   * @return string 	SQL statement
+   */
   function insert($spec, $fields) {
     $values = implode(', ', array_fill(0, count($fields), '?'));
     $fields = implode(', ', $fields);
@@ -107,6 +127,11 @@ class Dormio_Dialect_Generic {
     return $this->quoteIdentifiers($this->aliasFields($sql, false));
   }
   
+  /**
+   * Create a DELETE statement
+   * @param multitype:mixed $spec
+   * @return string 		SQL statement
+   */
   function delete($spec) {
     if(isset($spec['join'])){
       $spec['where'] = array("{$spec['select'][0]} IN ({$this->select($spec)})");
@@ -116,15 +141,33 @@ class Dormio_Dialect_Generic {
     return $this->quoteIdentifiers($this->aliasFields("DELETE " . $this->compile($spec), false));
   }
   
+  /**
+   * Adds curly brackets around all input strings
+   * @param multitype:string $fields
+   * @return multitype:string
+   */
   function quoteFields($fields) {
     foreach($fields as $field) $result[] = '{' . $field . '}';
     return $result;
   }
   
+  /**
+   * Quotes items in curly brackets
+   * e.g. 'SELECT * FROM {table}' > 'SELECT * FROM "table"'
+   * @param unknown_type $sql
+   * @return string
+   */
   function quoteIdentifiers($sql) {
     return strtr($sql, '{}', '""');
   }
   
+  /**
+   * Removes any aliases in the string
+   * e.g '<@t2.@>field' > 't2.field' or 'field'
+   * @param string $sql  input
+   * @param boolean $should_alias 	remove alias if false
+   * @return string
+   */
   function aliasFields($sql, $should_alias) {
     if($should_alias) return str_replace('<@', '', str_replace('@>', '', $sql));
     return preg_replace('/<@.*?@>/', '', $sql);
@@ -133,7 +176,7 @@ class Dormio_Dialect_Generic {
   /**
    * Get a list of current tables in the database
    * Must return a single column
-   * @todo Implement for other flavours
+   * @return string	 	SQL statement
    */
   function tableNames() {
   	return "SELECT name FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence' ORDER BY name";
