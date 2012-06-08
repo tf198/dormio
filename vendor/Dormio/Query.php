@@ -288,7 +288,6 @@ class Dormio_Query {
 	 * @access private
 	 */
 	function _addFields($entity, $alias, $path='') {
-		// TODO: get a validated array direct from the entity
 		foreach($entity->getFields() as $key=>$spec) {
 			if(isset($spec['is_field']) && $spec['is_field']) {
 				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
@@ -323,6 +322,7 @@ class Dormio_Query {
 	}
 	/*
 	 * @ignore
+	 * @todo Check whether anything actually utilises this
 	*/
 	function _resolveStringLocalCallback($matches) {
 	 return $this->_meta->fields[$matches[1]]['db_column'];
@@ -399,12 +399,10 @@ class Dormio_Query {
 				// do the reverse bit
 				$through_entity = $entity->config->getEntity($spec['through']);
 				$through_spec = $through_entity->getReverse($spec['map_local_field']);
-				//$reverse_spec = $through_meta->getReverseSpec($meta->model, $spec['map_local_field']);
 				// use a left join to preserve current results
 				$entity = $this->_addJoin($entity, $through_spec, "LEFT", $alias);
 
 				// update the field
-				//if(!$spec['map_remote_field']) $spec['map_remote_field'] = $meta->getAccessorFor($spec['model']);
 				$field = $spec['map_remote_field'];
 
 				// if we are the last hop then no field has been requested so we can return the PK of the mid table
@@ -420,7 +418,6 @@ class Dormio_Query {
 			//self::$logger && self::$logger->log("HOP: {$entity->name} -> {$field}");
 
 			// check whether this join is actually needed on final run
-
 			if($i==$c-1 && isset($spec['is_field'])) {
 				if(!$full_joins) break;
 			}
@@ -480,10 +477,10 @@ class Dormio_Query {
 		$o->selectIdent();
 
 		$update_params = array_merge(array_values($params), $custom_params, $o->params);
-		//$update_params = array_merge(array_values($params), $o->params);
 		$update_fields = $o->_resolveLocal(array_keys($params));
+		
 		foreach($custom_fields as &$field) $field = $this->_resolveString($field, true);
-		//return array($this->dialect->update($o->query, $update_fields, $custom_fields), $update_params);
+		
 		return array($this->dialect->update($o->query, $update_fields, $custom_fields), $update_params);
 	}
 
@@ -527,7 +524,7 @@ class Dormio_Query {
 
 		// rewrite all references to the base model
 		$base_key = "__{$base->entity->name}.pk";
-		//var_dump($this->aliases, $base_key);
+		
 		foreach($this->aliases as $key=>$alias) {
 			if(substr($key, -strlen($base_key)) == $base_key) {
 				$result[0] = str_replace($alias, $base->alias, $result[0]);
@@ -622,7 +619,6 @@ class Dormio_Query {
 }
 
 /**
- * @package Dormio
- * @subpackage Exception
+ * @package Dormio/Exception
  */
 class Dormio_Query_Exception extends Exception {}
