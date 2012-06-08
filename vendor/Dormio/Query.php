@@ -152,10 +152,10 @@ class Dormio_Query {
 	 * @todo validate IN and LIKE behaviour
 	 */
 	function filter($key, $op, $value, $clone=true) {
-		return $this->filterVar($key, $op, $value, $clone);
+		return $this->filterBind($key, $op, $value, $clone);
 	}
 
-	function filterVar($key, $op, &$value, $clone=true) {
+	function filterBind($key, $op, &$value, $clone=true) {
 		$o = ($clone) ? clone $this : $this;
 		$f = $o->_resolveField($key);
 		$v = '?';
@@ -302,17 +302,6 @@ class Dormio_Query {
 		if(!$as) $as = "{$table_alias}_{$db_column}";
 		$this->query['select'][] = "{$table_alias}.{{$db_column}} AS {{$as}}";
 		return $as;
-	}
-
-	/**
-	 * Resolves path to the format "{table}.{column} AS {table_column}".
-	 * @param  string  $item   e.g. "author__profile__age"
-	 * @return  string "t3.{age} AS {t3_age}"
-	 * @access private
-	 */
-	function _resolvePrefixed($item, $type=null) {
-		$p = $this->_resolvePath($item, $type);
-		return "<@{$p[2]}.@>{{$p[1]}}<@ AS {{$p[2]}{$p[1]}}@>";
 	}
 
 	/**

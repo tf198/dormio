@@ -182,6 +182,18 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($blogs->filter('the_user__name', 'IN', array('Andy', 'Dave'))->select(),
 				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" IN (?, ?)', array('Andy', 'Dave')));
 	}
+	
+	function testFilterSpecial() {
+		$blogs = new Dormio_Query('Blog');
+		$this->assertEquals($blogs->filterSpecial('title', 'IS NOT NULL')->select(),
+				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" IS NOT NULL', array()));
+	}
+	
+	function testDistinct() {
+		$blogs = new Dormio_Query('Blog');
+		$this->assertEquals($blogs->distinct()->select(),
+				array('SELECT DISTINCT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1', array()));
+	}
 
 	function testWhere() {
 		$blogs = new Dormio_Query('Blog');
@@ -351,6 +363,11 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($qs->select(), $this->all_blogs);
 		$qs->orderBy('the_user');
 		$this->assertEquals($qs->select(), $this->all_blogs);
+	}
+	
+	function testToString() {
+		$qs = new Dormio_Query('Blog');
+		$this->assertEquals($this->all_blogs[0] . '; ()', (string)$qs);
 	}
 
 }
