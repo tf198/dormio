@@ -1,0 +1,13 @@
+     ms     |     KB     |
+ Total Step | Total Step |
+---------------------------------------------------------
+  0.09 0.09 |   343    0 | Bench ready
+  0.45 0.36 |   355   11 | AutoLoader registered
+  1.61 1.17 |   472  116 | Dormio_Config parse
+  1.66 0.05 |   472    0 | Dormio_Config create
+  1.78 0.12 |   481    9 | Add entities
+  2.05 0.27 |   491    9 | Generate auto entities
+  2.42 0.37 |   503   12 | Create Blog
+  2.45 0.03 |   503    0 | Parse default
+  2.50 0.04 |   503    0 | Get reverse
+  2.53 0.03 |   503    0 | Parse manytomany

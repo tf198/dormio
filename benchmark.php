@@ -2,7 +2,7 @@
 function bench($message) {
 	$now = microtime(true);
 	$mem = memory_get_usage();
-	fputs(STDERR, sprintf(" %5.2f %0.2f | %5d %4d | %s\n", ($now-BENCH_START)*1000, ($now-$GLOBALS['bench_last'])*1000, $mem/1024, ($mem-$GLOBALS['mem_last'])/1024, $message));
+	fputs(STDOUT, sprintf(" %5.2f %0.2f | %5d %4d | %s\n", ($now-BENCH_START)*1000, ($now-$GLOBALS['bench_last'])*1000, $mem/1024, ($mem-$GLOBALS['mem_last'])/1024, $message));
 	$GLOBALS['bench_last'] = $now;
 	$GLOBALS['mem_last'] = $mem;
 }
@@ -10,7 +10,7 @@ function bench($message) {
 define('BENCH_START', microtime(true));
 $GLOBALS['bench_last'] = BENCH_START;
 $GLOBALS['mem_last'] = memory_get_usage();
-fputs(STDERR, "     ms     |     KB     |\n Total Step | Total Step |\n---------------------------------------------------------\n");
+fputs(STDOUT, "     ms     |     KB     |\n Total Step | Total Step |\n---------------------------------------------------------\n");
 bench('Bench ready');
 
 $entities = array(
