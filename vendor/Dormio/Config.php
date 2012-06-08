@@ -1,7 +1,8 @@
 <?php
 /**
  * Basic entity manager
-* @author tris
+* @author Tris Forster
+* @package Dormio
 */
 class Dormio_Config {
 
@@ -11,9 +12,24 @@ class Dormio_Config {
 
 	public $_relations = array('auto' => array());
 
+	private static $instance;
+	
+	/**
+	 * Singleton
+	 * @return Dormio_Config
+	 */
+	static function instance() {
+		if(!self::$instance) self::$instance = new Dormio_Config;
+		return self::$instance;
+	}
+	
+	static function reset() {
+		self::$instance = null;
+	}
+	
 	/**
 	 * Register entities with the config manager
-	 * @param multitype:array $entities
+	 * @param multitype:multitype:multitype:string $entities
 	 */
 	function addEntities($entities) {
 		$this->_config = array_merge($this->_config, $entities);
@@ -26,14 +42,19 @@ class Dormio_Config {
 	 */
 	function findRelations($entities) {
 		foreach($entities as $entity) {
-			foreach($this->_config[$entity]['fields'] as $field=>$spec) {
+			foreach($this->_config[$entity]['fields'] as $field=>&$spec) {
 				if(isset($spec['entity'])) {
-					$reverse = array($entity, $field);
-					if(isset($spec['related_name'])) $this->_relations[$spec['entity']][$spec['related_name']] = $reverse;
-					$this->_relations[$spec['entity']][$entity . "_Set"] = $reverse;
+					if(!isset($spec['related_name'])) $spec['related_name'] = strtolower($entity) . "_set";
+					$key = $spec['related_name'];
+					
+					$reverse = &$this->_relations[$spec['entity']];
+					if(isset($reverse[$key])) {
+						throw new Dormio_Config_Exception("Reverse field [{$key}] already exists for entity [{$spec['entity']}] - add a [related_name] element");
+					}
+					$reverse[$key] = array($entity, $field);
 						
 					// flag manytomany fields so intermediates can be generated
-					if($spec['type'] =='manytomany' && !isset($spec['through'])) $this->_relations['auto'][] = $reverse;
+					if($spec['type'] =='manytomany' && !isset($spec['through'])) $this->_relations['auto'][] = $entity;
 				}
 			}
 		}
@@ -43,22 +64,36 @@ class Dormio_Config {
 	 * Forces parsing of fields that result in extra entities
 	 */
 	function generateAutoEntities() {
-		foreach($this->_relations['auto'] as $pair) {
-			$this->getEntity($pair[0])->getField($pair[1]);
+		foreach($this->_relations['auto'] as $entity) {
+			$this->getEntity($entity);
 		}
 	}
 
 	/**
-	 * Get
-	 * @param unknown_type $entity
-	 * @param unknown_type $accessor
+	 * Get the reverse field spec for an entity
+	 * @param string $entity	entity name
+	 * @param string $accessor	the related_name or <entity>_set
 	 * @throws Dormio_Config_Exception
+	 * @return multitype:string
 	 */
 	function getReverseField($entity, $accessor) {
-		if(!isset($this->_relations[$entity])) throw new Dormio_Config_Exception("Entity [{$entity} has no reverse fields");
-		if(!isset($this->_relations[$entity][$accessor])) throw new Dormio_Config_Exception("Entity [{$entity}] has no reverse field [{$accessor}]");
+		if(!isset($this->_relations[$entity])) {
+			throw new Dormio_Config_Exception("Entity [{$entity}] has no reverse fields");
+		}
+		if(!isset($this->_relations[$entity][$accessor])) {
+			throw new Dormio_Config_Exception("Entity [{$entity}] has no reverse field [{$accessor}]");
+		}
 		$reverse = $this->_relations[$entity][$accessor];
 		return $this->getEntity($reverse[0])->getReverse($reverse[1]);
+	}
+	
+	/**
+	 * Get all reverse pairs for an entity (entity, field)
+	 * @param string $entity
+	 * @return multitype:multitype:string
+	 */
+	function getReverseFields($entity) {
+		return $this->_relations[$entity]; 
 	}
 
 	/**
@@ -77,7 +112,9 @@ class Dormio_Config {
 	 */
 	function getEntity($entity) {
 		if(!isset($this->_entities[$entity])) {
-			if(!isset($this->_config[$entity])) throw new Dormio_Config_Exception("Entity [{$entity}] is not defined in configuration");
+			if(!isset($this->_config[$entity])) {
+				throw new Dormio_Config_Exception("Entity [{$entity}] is not defined in configuration");
+			}
 			$this->_entities[$entity] = new Dormio_Config_Entity($entity, $this->_config[$entity], $this);
 		}
 		return $this->_entities[$entity];
@@ -87,8 +124,8 @@ class Dormio_Config {
 /**
  * Entity
  * Features a progressive parser for maximum efficiency
- * @author tris
- *
+ * @author Tris Forster
+ * @package Dormio
  */
 class Dormio_Config_Entity {
 
@@ -98,6 +135,12 @@ class Dormio_Config_Entity {
 	 */
 	public $table;
 
+	/**
+	 * DB column for primary key
+	 * @var string
+	 */
+	public $pk;
+	
 	/**
 	 * Verbose name for entity
 	 * @var string
@@ -114,12 +157,12 @@ class Dormio_Config_Entity {
 	 * Field specs
 	 * @var multitype:array
 	 */
-	public $_fields;
+	public $fields;
 
 	/**
 	 * @var Dormio_Config
 	 */
-	public $_config;
+	public $config;
 
 	/**
 	 * Construct a new Dormio_Dormio_Config_Entity
@@ -129,14 +172,25 @@ class Dormio_Config_Entity {
 	 * @throws Dormio_Config_Exception
 	 */
 	function __construct($name, $entity, $config) {
-		if(!isset($entity['fields'])) throw new Dormio_Config_Exception("Entity [{$name}] is missing a [fields] element");
+		if(!isset($entity['fields'])) {
+			throw new Dormio_Config_Exception("Entity [{$name}] is missing a [fields] element");
+		}
 
+		$this->config = $config;
+		
 		$this->name = $name;
 		$this->table = (isset($entity['table'])) ? $entity['table'] : strtolower($name);
 		$this->verbose = (isset($entity['verbose'])) ? $entity['verbose'] : self::title($name);
 		$this->indexes = (isset($entity['indexes'])) ? $entity['indexes'] : array();
-		$this->_fields = $entity['fields'];
-		$this->_config = $config;
+		
+		// set a primary key field (can be overridden)
+		$this->fields['pk'] = array('type' => 'ident', 'db_column' => strtolower($name) . "_id", 'is_field' => true, 'verbose' => 'ID', 'validated' => true);
+		
+		// validate all the fields
+		foreach($entity['fields'] as $field=>$spec) {
+			$this->fields[strtolower($field)] = $this->validateField($field, $spec);
+		}
+		$this->pk = $this->getField('pk');
 	}
 
 	/**
@@ -145,14 +199,11 @@ class Dormio_Config_Entity {
 	 * @return multitype:string
 	 */
 	function getField($field) {
-		if(!isset($this->_fields[$field])) {
-			return $this->_config->getReverseField($this->name, $field);
+		$field = strtolower($field);
+		if(!isset($this->fields[$field])) {
+			return $this->config->getReverseField($this->name, $field);
 		}
-		if(!isset($this->_fields[$field]['validated'])) {
-			$this->_fields[$field] = $this->validateField($field, $this->_fields[$field]);
-			$this->_fields[$field]['validated'] = true;
-		}
-		return $this->_fields[$field];
+		return $this->fields[$field];
 	}
 
 	/**
@@ -163,13 +214,42 @@ class Dormio_Config_Entity {
 	 */
 	function getReverse($field) {
 		$spec = $this->getField($field);
-		if(!isset($spec['reverse'])) throw new Dormio_Config_Exception("Field [{$field}] is not reversable");
+		if(!isset($spec['reverse'])) {
+			throw new Dormio_Config_Exception("Field [{$field}] is not reversable");
+		}
 		return $spec['reverse'];
+	}
+	
+	function getRelatedEntity($field) {
+		$spec = $this->getField($field);
+		if(!isset($spec['entity'])) {
+			throw new Dormio_Config_Exception("Field [{$field}] is not a related field");
+		}
+		return $this->config->getEntity($spec['entity']);
+	}
+	
+	function getFields() {
+		return $this->fields;
+	}
+	
+	function getFieldNames() {
+		return array_keys($this->fields);
+	}
+	
+	function getDBColumn($field) {
+		$f = $this->getField($field);
+		return $f['db_column'];
+	}
+	
+	function isField($field) {
+		return isset($this->fields[$field]);
 	}
 
 	function validateField($field, $spec) {
 		// check it has a type
-		if(!isset($spec['type'])) throw new Dormio_Config_Exception("Field [{$field}] is missing a [type] element");
+		if(!isset($spec['type'])) {
+			throw new Dormio_Config_Exception("Field [{$field}] is missing a [type] element");
+		}
 
 		switch($spec['type']) {
 			case 'foreignkey':
@@ -184,11 +264,15 @@ class Dormio_Config_Entity {
 	}
 
 	function validateRelated($field, $spec) {
-		if(!isset($spec['entity'])) throw new Dormio_Config_Exception("Field [{$field}] is missing an [entity] element");
+		if(!isset($spec['entity'])) {
+			throw new Dormio_Config_Exception("Field [{$field}] is missing an [entity] element");
+		}
 	}
 
 	function validateDefault($field, $spec) {
-		if(isset($spec['entity'])) throw new Dormio_Config_Exception("Field [{$field}] has an [entity] element defined but is not a recognised related type");
+		if(isset($spec['entity'])) {
+			throw new Dormio_Config_Exception("Field [{$field}] has an [entity] element defined but is not a recognised related type");
+		}
 
 		$defaults = array('verbose' => self::title($field), 'db_column' => strtolower($field), 'null_ok' => false, 'is_field' => true);
 		$spec = array_merge($defaults, $spec);
@@ -206,7 +290,6 @@ class Dormio_Config_Entity {
 			'remote_field' => 'pk',
 			'on_delete' => ($spec['type'] == 'onetoone') ? 'blank' : 'cascade',
 			'is_field' => true,
-			'related_name' => $this->name . "_Set",
 		);
 		$spec = array_merge($defaults, $spec);
 
@@ -216,6 +299,7 @@ class Dormio_Config_Entity {
 			'local_field' => $spec['remote_field'],
 			'remote_field' => $spec['local_field'],
 			'entity' => $this->name,
+			'verbose' => self::title($spec['related_name']),
 			'on_delete' => $spec['on_delete']
 		);
 
@@ -234,7 +318,6 @@ class Dormio_Config_Entity {
 			'through' => null,
 			'map_local_field' => null,
 			'map_remote_field' => null,
-			'related_name' => $this->name . "_Set",
 		);
 		$spec = array_merge($defaults, $spec);
 
@@ -242,12 +325,12 @@ class Dormio_Config_Entity {
 		if ($spec['through']) {
 			// auto-discover local and remote map fields
 			if(!isset($spec['map_local_field'])) {
-				$local_spec = $this->getField($spec['through'] . "_Set");
+				$local_spec = $this->getField($spec['through'] . "_set");
 				$spec['map_local_field'] = $local_spec['remote_field'];
 			}
 			if(!isset($spec['map_remote_field'])) {
-				$remote_entity = $this->_config->getEntity($spec['entity']);
-				$remote_spec = $remote_entity->getField($spec['through'] . "_Set");
+				$remote_entity = $this->config->getEntity($spec['entity']);
+				$remote_spec = $remote_entity->getField($spec['through'] . "_set");
 				$spec['map_remote_field'] = $remote_spec['remote_field'];
 			}
 		} else {
@@ -278,14 +361,14 @@ class Dormio_Config_Entity {
 		$through = array(
 			'table' => strtolower($key),
 			'fields' => array(
-				"lhs" => array('type' => 'foreignkey', 'entity' => $l_entity),
-				"rhs" => array('type' => 'foreignkey', 'entity' => $r_entity),
+				"lhs" => array('type' => 'foreignkey', 'entity' => $l_entity, 'related_name' => 'through_left'),
+				"rhs" => array('type' => 'foreignkey', 'entity' => $r_entity, 'related_name' => 'through_right'),
 			),
 			'verbose' => "{$l_entity} > {$r_entity}",
 			);
 
 		// add it to the entities
-		$this->_config->addEntities(array($key => $through));
+		$this->config->addEntities(array($key => $through));
 		return $key;
 	}
 
@@ -301,4 +384,8 @@ class Dormio_Config_Entity {
 	}
 }
 
+/**
+ * @package Dormio
+ * @subpackage Exception
+ */
 class Dormio_Config_Exception extends Exception {}
