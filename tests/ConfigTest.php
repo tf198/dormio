@@ -100,4 +100,24 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 			$this->assertStringStartsWith($expected, $output);
 		}
 	}
+	
+	function testCleanUp() {
+		$start = memory_get_usage();
+		$this->config->getEntity('Blog');
+		$this->config->getEntity('Comment');
+		$mid = memory_get_usage();
+		unset($this->config);
+		gc_collect_cycles();
+		$end = memory_get_usage();
+		$diff = ($end - $start) / 1024;
+		
+		// should be about 14KB
+		//var_dump($start, $mid, $end, $diff);
+		$this->assertApprox(-14, $diff);
+	}
+	
+	function assertApprox($expected, $actual, $diff=1, $message='') {
+		$result = abs($expected-$actual);
+		$this->assertTrue($result <= $diff, "Expected within {$diff} of {$expected}: got {$actual}");
+	}
 }
