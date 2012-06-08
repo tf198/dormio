@@ -13,70 +13,45 @@ $GLOBALS['mem_last'] = memory_get_usage();
 fputs(STDOUT, "     ms     |     KB     |\n Total Step | Total Step |\n---------------------------------------------------------\n");
 bench('Bench ready');
 
-$entities = array(
-	'User' => array(
-		'fields' => array(
-			'name' => array('type' => 'text', 'max_length' => 3),
-			//'blogs' => array('type' => 'reverse', 'model' => 'Blog'),
-			//'comments' => array('type' => 'reverse', 'model' => 'Comment'),
-			//'profile' => array('type' => 'reverse', 'model' => 'Profile'),
-		),
-	),
-	'Blog' => array(
-		'fields' => array(
-			'title' => array('type' => 'text', 'max_length' => 30),
-			'the_user' => array('type' => 'foreignkey', 'entity' => 'User', 'db_column' => 'the_blog_user'),
-			'tags' => array('type' => 'manytomany', 'entity' => 'Tag', 'through' => 'My_Blog_Tag'),
-			//'comments' => array('type' => 'reverse', 'model' => 'Comment'),
-		),
-	),
-	'My_Blog_Tag' => array(
-		'table' => 'blog_tag',
-		'fields' => array(
-			'pk' => array('type' => 'ident', 'db_column' => 'blog_tag_id'),
-			'the_blog' => array('type' => 'foreignkey', 'entity' => 'Blog', 'db_column' => 'the_blog_id'),
-			'tag' => array('type' => 'foreignkey', 'entity' => 'Tag', 'db_column' => 'the_tag_id'),
-		),
-	),
-	'Comment' => array(
-		'fields' => array(
-			'title' => array('type' => 'text', 'max_length' => 30),
-			'user' => array('type' => 'foreignkey', 'entity' => 'User', 'db_column' => 'the_comment_user'),
-			'blog' => array('type' => 'foreignkey', 'entity' => 'Blog'),
-			'tags' => array('type' => 'manytomany', 'entity' => 'Tag'),
-		),
-	),
-	'Tag' => array(
-		'fields' => array(
-			'tag' => array('type' => 'string'),
-		),
-	),
-);
-
-require "vendor/Dormio/AutoLoader.php";
-Dormio_AutoLoader::register();
-bench('AutoLoader registered');
+require "tests/bootstrap.php";
+bench('Bootstrapped');
 
 class_exists('Dormio_Config');
-bench('Dormio_Config parse');
+bench('Dormio_Config include');
 
-$config = new Dormio_Config;
-bench('Dormio_Config create');
+$config = Dormio_Config::instance();
+bench('Dormio_Config::instance()');
 
-$config->addEntities($entities);
-bench('Add entities');
+$config->addEntities($GLOBALS['test_entities']);
+bench('addEntities()');
 
 $config->generateAutoEntities();
-bench('Generate auto entities');
+bench('generateAutoEntities()');
 
-$o = $config->getEntity('Blog');
-bench('Create Blog');
+$blog = $config->getEntity('Blog');
+bench('getEntity()');
 
-$o->getField('title');
-bench('Parse default');
+$blog->getField('title');
+bench('getField() - default type');
 
-$o->getField('Comment_Set');
-bench('Get reverse');
+$blog->getField('the_user');
+bench('getField() - foreignkey');
 
-$o->getField('tags');
-bench('Parse manytomany');
+$blog->getField('comments');
+bench('getField() - reverse foreignkey');
+
+$blog->getField('tags');
+bench('getField() - manytomany');
+
+class_exists('Dormio_Query');
+bench('Dormio_Query include');
+
+// query tests
+$query = new Dormio_Query($blog, 'sqlite');
+bench('Dormio_Query::__construct()');
+
+$query->select();
+bench('select() - basic');
+
+$query->filter('the_user__profile__age', '>', 12)->select();
+bench('select() - complex filter');

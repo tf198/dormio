@@ -1,13 +1,18 @@
      ms     |     KB     |
  Total Step | Total Step |
 ---------------------------------------------------------
-  0.09 0.09 |   343    0 | Bench ready
-  0.45 0.36 |   355   11 | AutoLoader registered
-  1.61 1.17 |   472  116 | Dormio_Config parse
-  1.66 0.05 |   472    0 | Dormio_Config create
-  1.78 0.12 |   481    9 | Add entities
-  2.05 0.27 |   491    9 | Generate auto entities
-  2.42 0.37 |   503   12 | Create Blog
-  2.45 0.03 |   503    0 | Parse default
-  2.50 0.04 |   503    0 | Get reverse
-  2.53 0.03 |   503    0 | Parse manytomany
+  0.12 0.12 |   343    0 | Bench ready
+  0.70 0.58 |   358   15 | Bootstrapped
+  1.90 1.20 |   479  120 | Dormio_Config include
+  1.96 0.06 |   479    0 | Dormio_Config::instance()
+  2.13 0.17 |   493   13 | addEntities()
+  2.52 0.39 |   509   15 | generateAutoEntities()
+  2.86 0.34 |   521   12 | getEntity()
+  2.89 0.03 |   521    0 | getField() - default type
+  2.91 0.03 |   521    0 | getField() - foreignkey
+  2.96 0.04 |   521    0 | getField() - reverse foreignkey
+  2.99 0.03 |   521    0 | getField() - manytomany
+  4.37 1.38 |   712  190 | Dormio_Query include
+  5.07 0.70 |   783   71 | Dormio_Query::__construct()
+  5.19 0.12 |   783    0 | select() - basic
+  5.57 0.37 |   790    6 | select() - complex filter
