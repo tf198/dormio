@@ -93,6 +93,7 @@ class Dormio_Config {
 	 * @return multitype:multitype:string
 	 */
 	function getReverseFields($entity) {
+		if(!isset($this->_relations[$entity])) return array();
 		return $this->_relations[$entity]; 
 	}
 
@@ -228,6 +229,10 @@ class Dormio_Config_Entity {
 		return $this->config->getEntity($spec['entity']);
 	}
 	
+	function getRelatedFields() {
+		return array_keys($this->config->getReverseFields($this->name));
+	}
+	
 	function getFields() {
 		return $this->fields;
 	}
@@ -361,8 +366,8 @@ class Dormio_Config_Entity {
 		$through = array(
 			'table' => strtolower($key),
 			'fields' => array(
-				"lhs" => array('type' => 'foreignkey', 'entity' => $l_entity, 'related_name' => 'through_left'),
-				"rhs" => array('type' => 'foreignkey', 'entity' => $r_entity, 'related_name' => 'through_right'),
+				"lhs" => array('type' => 'foreignkey', 'entity' => $l_entity, 'related_name' => 'through_left', 'db_column' => 'l_' . strtolower($l_entity). "_id"),
+				"rhs" => array('type' => 'foreignkey', 'entity' => $r_entity, 'related_name' => 'through_right', 'db_column' => 'r_' . strtolower($r_entity). "_id"),
 			),
 			'verbose' => "{$l_entity} > {$r_entity}",
 			);

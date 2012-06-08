@@ -513,14 +513,15 @@ class Dormio_Query {
 		$sql = array();
 		$this->selectIdent();
 		
-		foreach($this->_meta->reverseFields() as $spec) {
-			$child = new Dormio_Queryset($spec['model'], $this->dialect, $this->_next_alias);
+		foreach($this->entity->getRelatedFields() as $name) {
+			$spec = $this->entity->getField($name);
+			$child = new Dormio_Query($spec['entity'], $this->dialect, $this->next_alias);
 
 			$child->query['where'] = $this->query['where'];
 			$child->params = $this->params;
 
 			$r = $resolved;
-			array_unshift($r, $spec['accessor']);
+			array_unshift($r, $spec['remote_field']);
 			$child->_resolveArray($r, 'INNER', true);
 
 			if($base->query['join']) {
@@ -536,11 +537,11 @@ class Dormio_Query {
 		$result = array($this->dialect->delete($this->query), $this->params);
 
 		// rewrite all references to the base model
-		$base_key = "__{$base->_meta->model}.pk";
+		$base_key = "__{$base->entity->name}.pk";
 		//var_dump($this->aliases, $base_key);
 		foreach($this->aliases as $key=>$alias) {
 			if(substr($key, -strlen($base_key)) == $base_key) {
-				$result[0] = str_replace($alias, $base->_alias, $result[0]);
+				$result[0] = str_replace($alias, $base->alias, $result[0]);
 			}
 		}
 		$sql[] = $result;
@@ -558,15 +559,17 @@ class Dormio_Query {
 	function deleteById($id, $query='pk', $resolved=array()) {
 		if($this->query['where']) throw new Dormio_Queryset_Exception("Cannot delete item if filters are set");
 		$sql = array();
-		foreach($this->_meta->reverseFields() as $spec) {
-			$child = new Dormio_Queryset($spec['model']);
-			$child->_selectIdent();
+		
+		foreach($this->entity->getRelatedFields() as $name) {
+			$spec = $this->entity->getField($name);
+			$child = new Dormio_Query($spec['entity'], $this->dialect);
+			$child->selectIdent();
 
 			$r = $resolved;
-			array_unshift($r, $spec['accessor']);
-
+			array_unshift($r, $spec['remote_field']);
+			
 			if($spec['type'] == 'manytomany') { // just delete the entry
-				var_dump($spec);
+				// pass
 			} else {
 				$q = implode('__', $r);
 				switch($spec['on_delete']) {
@@ -575,7 +578,7 @@ class Dormio_Query {
 	 				break;
 	 			case "blank":
 	 			case "set_null":
-	 				$sql[] = $child->filter($q, '=', $id)->updateSQL(array($q => null));
+	 				$sql[] = $child->filter($q, '=', $id)->update(array($q => null));
 	 				break;
 	 			default:
 	 				var_dump($spec);
@@ -583,9 +586,14 @@ class Dormio_Query {
 				}
 			}
 		}
+		
+		//self::$logger && self::$logger->log("DELETEID: {$this->entity->name} {$query}");
 		$o = $this->filter($query, '=', $id);
-		$sql[] = array($this->dialect->delete($o->query), $o->params);
-
+		
+		$delete = array($this->dialect->delete($o->query), $o->params);
+		//self::$logger && self::$logger->log($delete);
+		$sql[] = $delete;
+		
 		return $sql;
 	}
 

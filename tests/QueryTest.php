@@ -56,8 +56,8 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		// MANYTOMANY (reverse no reverse field)
 		$tags = new Dormio_Query('Tag');
 		$this->assertEquals($tags->setAlias()->_resolveField('comment_set__title'), '<@t3.@>{title}'); // standard field
-		$this->assertEquals($tags->setAlias()->_resolveField('comment_set'), '<@t2.@>{lhs_id}'); // standard field
-		$this->assertEquals($tags->setAlias()->_resolveField('comment_set__pk'), '<@t2.@>{lhs_id}'); // standard field
+		$this->assertEquals($tags->setAlias()->_resolveField('comment_set'), '<@t2.@>{l_comment_id}'); // standard field
+		$this->assertEquals($tags->setAlias()->_resolveField('comment_set__pk'), '<@t2.@>{l_comment_id}'); // standard field
 
 		// OTHER RANDOM USAGE TESTS
 
@@ -95,7 +95,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($comments->with('blog')->query['join'], // foreignkey
 				array('LEFT JOIN {blog} AS t2 ON t1.{blog_id}=t2.{blog_id}'));
 		$this->assertEquals($comments->filter('tags__tag', '=', 'Red')->query['join'], // manytomany
-				array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{comment_id}=t2.{lhs_id}', 'INNER JOIN {tag} AS t3 ON t2.{rhs_id}=t3.{tag_id}'));
+				array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{comment_id}=t2.{l_comment_id}', 'INNER JOIN {tag} AS t3 ON t2.{r_tag_id}=t3.{tag_id}'));
 
 		$profiles = new Dormio_Query('Profile');
 		$this->assertEquals($profiles->with('user')->query['join'], // onetoone
@@ -109,7 +109,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($tags->filter('blog_set__title', '=', 'Test')->query['join'], // manytomany_rev
 				array('LEFT JOIN {blog_tag} AS t2 ON t1.{tag_id}=t2.{the_tag_id}', 'INNER JOIN {blog} AS t3 ON t2.{the_blog_id}=t3.{blog_id}'));
 		$this->assertEquals($tags->filter('comment_set__title', '=', 'Test')->query['join'], // manytomany_rev
-				array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{tag_id}=t2.{rhs_id}', 'INNER JOIN {comment} AS t3 ON t2.{lhs_id}=t3.{comment_id}'));
+				array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{tag_id}=t2.{r_tag_id}', 'INNER JOIN {comment} AS t3 ON t2.{l_comment_id}=t3.{comment_id}'));
 
 		$nodes = new Dormio_Query('Tree');
 		$this->assertEquals($nodes->filter('parent__name', '=', 'Bob')->query['join'],
@@ -120,9 +120,9 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 		$modules = new Dormio_Query('MultiDep');
 		$this->assertEquals($modules->filter('depends_on__name', '=', 'core')->query['join'], // manytomany self
-				array('LEFT JOIN {multidep_x_multidep} AS t2 ON t1.{multidep_id}=t2.{lhs_id}', 'INNER JOIN {multidep} AS t3 ON t2.{rhs_id}=t3.{multidep_id}'));
+				array('LEFT JOIN {multidep_x_multidep} AS t2 ON t1.{multidep_id}=t2.{l_multidep_id}', 'INNER JOIN {multidep} AS t3 ON t2.{r_multidep_id}=t3.{multidep_id}'));
 		$this->assertEquals($modules->filter('required_by__name', '=', 'core')->query['join'], // manytomany self
-				array('LEFT JOIN {multidep_x_multidep} AS t2 ON t1.{multidep_id}=t2.{rhs_id}', 'INNER JOIN {multidep} AS t3 ON t2.{lhs_id}=t3.{multidep_id}'));
+				array('LEFT JOIN {multidep_x_multidep} AS t2 ON t1.{multidep_id}=t2.{r_multidep_id}', 'INNER JOIN {multidep} AS t3 ON t2.{l_multidep_id}=t3.{multidep_id}'));
 	}
 
 	function testField() {
@@ -288,8 +288,9 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 				array('INSERT INTO "blog" ("the_blog_user", "title") VALUES (?, ?)', array(1, 'A blog')));
 	}
 
-/*
+
 	function testDeleteById() {
+		//Dormio_Query::$logger = new Query_Debugger;
 		$blogs = new Dormio_Query('Blog');
 		$sql = $blogs->deleteById(3);
 		$this->assertEquals($sql, array(
@@ -314,6 +315,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testDelete() {
+		//Dormio_Query::$logger = new Query_Debugger;
 		$blogs = new Dormio_Query('Blog');
 
 		// simple(ish) delete
@@ -338,7 +340,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 			array('DELETE FROM "blog" WHERE "blog_id" IN (SELECT t1."blog_id" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
 		));
 	}
-*/
+
 	function testNonMutation() {
 		$qs = new Dormio_Query('Blog');
 		$qs->filter('title', '=', 'hello');
