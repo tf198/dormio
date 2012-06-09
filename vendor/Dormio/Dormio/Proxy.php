@@ -1,12 +1,11 @@
 <?php
 class Dormio_Proxy {
 
-	function __construct($obj, $entity, $dormio, $data=array()) {
+	function __construct($obj, $entity, $dormio) {
 		$this->obj = $obj;
 		$this->entity = $entity;
 		$this->dormio = $dormio;
-		$this->data = $data;
-		$this->id = isset($data['pk']) ? $data['pk'] : null;
+		$this->id = null;
 		$this->query = new Dormio_Query($entity, $this->dormio->dialect);
 	}
 
@@ -15,13 +14,17 @@ class Dormio_Proxy {
 		$sql = $q->select();
 		$stmt = $this->dormio->execute($sql[0], $sql[1]);
 		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		$this->_hydrate($q->mapArray($data[0]));
+		$this->hydrate($q->mapArray($data[0]));
 
 	}
 
-	function _hydrate($data) {
+	function hydrate($data) {
 		$this->data = $data;
-		foreach($this->entity->getFieldNames() as $field) $this->obj->$field = $this->data[$field];
+		foreach($this->entity->getFields() as $field=>$spec) {
+			if(!isset($this->data[$field])) $partial = true; // TODO: work out what to do here
+			$this->obj->$field = $this->data[$field];
+		}
+		$this->id = $data['pk'];
 	}
 
 	function save() {

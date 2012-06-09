@@ -19,11 +19,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 * @return Iterator
 	 */
 	function find() {
-		$stmt = $this->dormio->executeQuery($this->select());
-		//return array_map(array($this, $this->mapper), $stmt->fetchAll(PDO::FETCH_ASSOC));
-		$mapper = array($this, $this->mapper);
-		$iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
-		return new MappingIterator($iter, $mapper);
+		return new DormioResultSet($this->select(), $this->dormio, $this->entity, $this->reverse, $this->mapper);
 	}
 	
 	/**
@@ -64,46 +60,6 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 */
 	function getIterator() {
 		return $this->find();
-	}
-	
-	function mapObject($row) {
-		if(!isset($this->obj)) {
-			$this->obj = $this->dormio->getObject($this->entity);
-		}
-		$this->obj->proxy->hydrate($this->mapArray($row));
-		return $this->obj;
-	}
-}
-
-class MappingIterator implements Iterator {
-	
-	private $mapper;
-	
-	private $iter;
-	
-	function __construct($iter, $mapper) {
-		$this->mapper = $mapper;
-		$this->iter = $iter;
-	}
-	
-	function rewind() {
-		$this->iter->rewind();
-	}
-	
-	function key() {
-		return $this->iter->key();
-	}
-	
-	function valid() {
-		return $this->iter->valid();
-	}
-	
-	function current() {
-		return call_user_func($this->mapper, $this->iter->current());
-	}
-	
-	function next() {
-		$this->iter->next();
 	}
 }
 
