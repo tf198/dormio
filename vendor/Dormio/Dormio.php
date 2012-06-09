@@ -77,9 +77,14 @@ class Dormio {
 			$stored = $query->insert($params);
 		}
 		*/
-		$query = new Dormio_Query($entity, $this->dialect);
-		$q = $query->insert($params);
-		$this->executeQuery($q);
+		$key = $entity->name . '_insert_' . implode('_', array_keys($params));
+		if(!$stored = $this->get($key)) {
+			$query = new Dormio_Query($entity, $this->dialect);
+			$q = $query->insert($params);
+			$stored = $this->pdo->prepare($q[0]);
+			$this->set($key, $stored);
+		}
+		$stored->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
 	}
 	
@@ -98,7 +103,6 @@ class Dormio {
 			$query->mapper = 'mapArray';
 			$stored = $query->filter('pk', '=', null)->compile(true);
 			$this->set($key, $stored);
-			var_dump('CREATED');
 		}
 		
 		$stmt = $stored[0];
