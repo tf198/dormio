@@ -24,8 +24,16 @@ class Dormio {
 	 */
 	public $dialect;
 	
+	/**
+	 * Generic cache interface implements get($key) and set($key, $value)
+	 * @var Object
+	 */
 	public $cache;
 	
+	/**
+	 * Cache our statements
+	 * @var multitype:PDOStatement
+	 */
 	public $_stored = array();
 	
 	public function __construct($pdo, $config, $cache=null) {
@@ -39,19 +47,19 @@ class Dormio {
 	}
 	
 	function save($obj, $entity_name=null) {
-		if(!isset($obj->entity)) {
-			if(!$entity_name) $entity_name = get_class($obj);
-			$obj->entity = $this->config->getEntity($entity_name);
-		}
 		if(isset($obj->pk)) {
 			throw new Exception("Not yet implemented");
 		} else {
-			$this->insert($obj, $obj->entity);
+			$this->insert($obj, $entity_name);
 		}
 	}
 	
 	function load($obj, $id, $entity_name=null) {
-		$this->getProxy($obj, $entity_name)->load($id);
+		$entity = $this->_strapEntity($entity_name);
+		
+		$stmt = $this->_getSelect($entity);
+		$stmt->execute(array($id));
+		$obj = $stmt->fetchObject($class_name);
 		return $obj;
 	}
 	
@@ -89,12 +97,12 @@ class Dormio {
 		$stmt = $this->_getSelect($entity);
 		$stmt->execute(array($id));
 		$obj = $stmt->fetchObject($class_name);
-		$obj->entity = $entity;
+		$obj->_entity = $entity;
 		return $obj;
 	}
 	
-	function insert($obj, $entity) {
-		if(is_string($entity)) $entity = $this->config->getEntity($entity);
+	function insert($obj, $entity_name) {
+		$entity = $this->_strapEntity($obj, $entity_name);
 		
 		$params = array();
 		foreach($entity->getFields() as $key=>$spec) {
@@ -104,9 +112,17 @@ class Dormio {
 		}
 		if(!$params) throw new Exception("No fields to update on entity [{$entity->name}]");
 		
-		$stmt = $this->_getInsert($entity, array_keys($params));
+		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
 		$stmt->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
+	}
+	
+	function _strapEntity($obj, $entity_name) {
+		if(!isset($obj->_entity)) {
+			if(!$entity_name) $entity_name = get_class($obj);
+			$obj->_entity = $this->config->getEntity($entity_name);
+		}
+		return $obj->_entity;
 	}
 	
 	function _getSelect($entity) {
