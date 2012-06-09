@@ -40,7 +40,7 @@ class Dormio_Proxy {
 	function insert() {
 		$params = array();
 		foreach($this->entity->getFields() as $name=>$spec) {
-			if($spec['is_field'] && isset($this->obj->$name)) {
+			if(isset($spec['is_field']) && $spec['is_field'] && isset($this->obj->$name)) {
 				$params[$name] = $this->obj->$name;
 			}
 		}

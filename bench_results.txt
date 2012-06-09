@@ -1,18 +1,18 @@
      ms     |     KB     |
  Total Step | Total Step |
 ---------------------------------------------------------
-  0.12 0.12 |   343    0 | Bench ready
-  0.70 0.58 |   358   15 | Bootstrapped
-  1.90 1.20 |   479  120 | Dormio_Config include
-  1.96 0.06 |   479    0 | Dormio_Config::instance()
-  2.13 0.17 |   493   13 | addEntities()
-  2.52 0.39 |   509   15 | generateAutoEntities()
-  2.86 0.34 |   521   12 | getEntity()
-  2.89 0.03 |   521    0 | getField() - default type
-  2.91 0.03 |   521    0 | getField() - foreignkey
-  2.96 0.04 |   521    0 | getField() - reverse foreignkey
-  2.99 0.03 |   521    0 | getField() - manytomany
-  4.37 1.38 |   712  190 | Dormio_Query include
-  5.07 0.70 |   783   71 | Dormio_Query::__construct()
-  5.19 0.12 |   783    0 | select() - basic
-  5.57 0.37 |   790    6 | select() - complex filter
+  0.10 0.10 |   343    0 | Bench ready
+  0.72 0.62 |   358   15 | Bootstrapped
+  1.96 1.24 |   479  120 | Dormio_Config include
+  2.01 0.05 |   480    0 | Dormio_Config::instance()
+  2.15 0.14 |   493   13 | addEntities()
+  2.54 0.39 |   509   15 | generateAutoEntities()
+  2.91 0.36 |   521   12 | getEntity()
+  2.93 0.03 |   521    0 | getField() - default type
+  2.96 0.03 |   521    0 | getField() - foreignkey
+  3.00 0.04 |   521    0 | getField() - reverse foreignkey
+  3.02 0.03 |   521    0 | getField() - manytomany
+  4.31 1.29 |   710  188 | Dormio_Query include
+  5.05 0.74 |   782   72 | Dormio_Query::__construct()
+  5.14 0.09 |   782    0 | select() - basic
+  5.50 0.36 |   788    6 | select() - complex filter

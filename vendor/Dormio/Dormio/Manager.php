@@ -14,8 +14,11 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 		parent::__construct($entity, $dormio->dialect);
 	}
 	
-	function compile() {
-		return array($this->select(), $this->entity->name, $this->reverse, $this->mapper);
+	function compile($prepare=false) {
+		$query = $this->select();
+		$args = count($query[1]);
+		$store = ($prepare) ? $this->dormio->pdo->prepare($query[0]) : $query[0];
+		return array($store, $args, $this->entity->name, $this->reverse, $this->mapper);
 	}
 	
 	/**

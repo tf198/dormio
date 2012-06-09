@@ -18,6 +18,8 @@ class Dormio {
 	 */
 	public $dialect;
 	
+	static $_stmt_cache = array();
+	
 	public function __construct($pdo, $config) {
 		$this->pdo = $pdo;
 		$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -45,17 +47,49 @@ class Dormio {
 		return $obj->proxy;
 	}
 	
-	function getStoredResultset($stored) {
-		list($query, $entity, $reverse, $mapper) = $stored;
+	function getStoredResultset($stored, $params) {
+		list($query, $argc, $entity, $reverse, $mapper) = $stored;
 		$entity = $this->config->getEntity($entity);
 		return new DormioResultSet($query, $this, $entity, $reverse, $mapper);
 	}
 	
-	function getObject($entity) {
+	function get($key) {
+		if(isset(self::$_stmt_cache[$key])) return self::$_stmt_cache[$key];
+		return false;
+	}
+	
+	function set($key, $value) {
+		self::$_stmt_cache[$key] = $value;
+	}
+	
+	function getObject($entity, $id=null) {
+		
+		if(is_string($entity)) $entity = $this->config->getEntity($entity);
 		$class_name = (class_exists($entity->name)) ? $entity->name : 'stdClass';
 		$obj = new $class_name;
+		/*
 		$obj->proxy = new Dormio_Proxy($obj, $entity, $this);
 		return $obj;
+		*/
+		
+		$key = $entity->name . '_select';
+		if(!$stored = $this->get($key)) {
+			$query = new Dormio_Manager($entity, $this);
+			$query->mapper = 'mapArray';
+			$stored = $query->filter('pk', '=', null)->compile(true);
+			$this->set($key, $stored);
+			var_dump('CREATED');
+		}
+		
+		//$iter = $this->getStoredResultset($stored, array($id));
+		//return $iter->current();
+		
+		$stmt = $stored[0];
+		$stmt->execute(array($id));
+		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		
+		$obj = new stdClass;
+		return self::mapObject($data[0], $obj, $entity, $stored[3]);
 	}
 	
 	function execute($sql, $params, $row_count=false) {
@@ -63,9 +97,33 @@ class Dormio {
 	}
 	
 	function executeQuery($query, $row_count=false) {
+		//var_dump($query);
 		$stmt = $this->pdo->prepare($query[0]);
 		$stmt->execute($query[1]);
 		return ($row_count) ? $stmt->rowCount() : $stmt;
+	}
+	
+	static function mapArray($row, $reverse) {
+		$result = array();
+		foreach($row as $key=>$value) {
+			$parts = explode('__', $reverse[$key]);
+			$arr = &$result;
+			$p = count($parts)-1;
+			for($i=0; $i<$p; $i++) {
+				$arr = &$arr[$parts[$i]];
+				if(!is_array($arr)) $arr = array('pk' => $arr); // convert id to array
+			}
+			$arr[$parts[$p]] = $value;
+		}
+		return $result;
+	}
+	
+	static function mapObject($row, $obj, $entity, $reverse) {
+		$data = self::mapArray($row, $reverse);
+		foreach($entity->getFields() as $key=>$spec) {
+			$obj->$key = $data[$key];
+		}
+		return $obj;
 	}
 }
 
@@ -84,9 +142,10 @@ class DormioResultSet implements Iterator {
 		$this->dormio = $dormio;
 		$this->reverse = $reverse;
 		$this->entity = $entity;
-		$this->mapper = array($this, $mapper);
+		//$this->mapper = array($this, $mapper);
 		$stmt= $this->dormio->executeQuery($query);
 		$this->iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
+		$stmt->closeCursor();
 	}
 	
 	function rewind() {
@@ -107,29 +166,6 @@ class DormioResultSet implements Iterator {
 	
 	function next() {
 		$this->iter->next();
-	}
-	
-	function mapArray($row) {
-		$result = array();
-		foreach($row as $key=>$value) {
-			$parts = explode('__', $this->reverse[$key]);
-			$arr = &$result;
-			$p = count($parts)-1;
-			for($i=0; $i<$p; $i++) {
-				$arr = &$arr[$parts[$i]];
-				if(!is_array($arr)) $arr = array('pk' => $arr); // convert id to array
-			}
-			$arr[$parts[$p]] = $value;
-		}
-		return $result;
-	}
-	
-	function mapObject($row) {
-		if(!isset($this->obj)) {
-			$this->obj = $this->dormio->getObject($this->entity);
-		}
-		$this->obj->proxy->hydrate($this->mapArray($row));
-		return $this->obj;
 	}
 }
 

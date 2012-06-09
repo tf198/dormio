@@ -13,6 +13,8 @@ $GLOBALS['mem_last'] = memory_get_usage();
 fputs(STDOUT, "     ms     |     KB     |\n Total Step | Total Step |\n---------------------------------------------------------\n");
 bench('Bench ready');
 
+define('LOOP', 600);
+
 require "tests/bootstrap.php";
 bench('Bootstrapped');
 
@@ -22,7 +24,8 @@ bench('Dormio_Config include');
 $config = Dormio_Config::instance();
 bench('Dormio_Config::instance()');
 
-$config->addEntities($GLOBALS['test_entities']);
+//$config->addEntities($GLOBALS['test_entities']);
+$config->addEntities(include 'docs/examples/entities.php');
 bench('addEntities()');
 
 $config->generateAutoEntities();
@@ -34,14 +37,14 @@ bench('getEntity()');
 $blog->getField('title');
 bench('getField() - default type');
 
-$blog->getField('the_user');
+$blog->getField('author');
 bench('getField() - foreignkey');
 
 $blog->getField('comments');
 bench('getField() - reverse foreignkey');
 
-$blog->getField('tags');
-bench('getField() - manytomany');
+for($i=0; $i<LOOP; $i++) $blog = $config->getEntity('Blog');
+bench('getEntity() multiple');
 
 class_exists('Dormio_Query');
 bench('Dormio_Query include');
@@ -53,5 +56,39 @@ bench('Dormio_Query::__construct()');
 $query->select();
 bench('select() - basic');
 
-$query->filter('the_user__profile__age', '>', 12)->select();
+$query->filter('author__profile_set__age', '>', 12)->select();
 bench('select() - complex filter');
+
+$pdo = new PDO('sqlite::memory:');
+foreach(file('docs/examples/setup.sql') as $sql) $pdo->exec($sql);
+bench('Table prepared');
+
+class_exists('Dormio');
+bench('Dormio include');
+
+$dormio = new Dormio($pdo, $config);
+bench('Dormio::__construct()');
+
+$o = $dormio->getObject($blog, 2);
+var_dump($o->title);
+bench('Dormio::getObject()');
+
+for($i=0; $i<LOOP; $i++) {
+	$o = $dormio->getObject('Blog', 2);
+}
+bench('Dormio::getObject() multiple');
+
+exit;
+$o = $dormio->getObject('Blog');
+$o->title = 'Test';
+$o->proxy->save();
+bench('Insert one object');
+
+for($i=0; $i<LOOP; $i++) {
+	$o = new stdClass;
+	//$o = $dormio->getObject('Blog');
+	$o->title = 'Test';
+	//$o->proxy->save();
+	//$dormio->save($o, 'Blog');
+}
+bench('Insert multiple objects');
