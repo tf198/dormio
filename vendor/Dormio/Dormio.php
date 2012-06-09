@@ -1,4 +1,10 @@
 <?php
+/**
+ * Object to store connection and config objects
+ * Contains methods for hydration, execution and low level database ops
+ * @author Tris Forster
+ *
+ */
 class Dormio {
 	/**
 	 * Database object
@@ -14,17 +20,22 @@ class Dormio {
 	
 	/**
 	 * Dialect for the underlying database
-	 * @var Dormio_Dialect
+	 * @var Dormio_Dialect_Generic
 	 */
 	public $dialect;
 	
-	static $_stmt_cache = array();
+	private $cache;
 	
-	public function __construct($pdo, $config) {
+	private $_stored = array();
+	
+	public function __construct($pdo, $config, $cache=null) {
 		$this->pdo = $pdo;
 		$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$this->config = $config;
 		$this->dialect = Dormio_Dialect::factory($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
+		
+		// use ourselves as a cache unless a more efficient one is available
+		$this->cache = $cache ? $cache : $this;
 	}
 	
 	function save($obj, $entity_name=null) {
@@ -54,12 +65,31 @@ class Dormio {
 	}
 	
 	function get($key) {
-		if(isset(self::$_stmt_cache[$key])) return self::$_stmt_cache[$key];
+		if(isset($this->_stored[$key])) return $this->_stored[$key];
 		return false;
 	}
 	
 	function set($key, $value) {
-		self::$_stmt_cache[$key] = $value;
+		$this->_stored[$key] = $value;
+		//echo "CREATED {$key}\n";
+	}
+	
+	function getObject($entity, $id=null) {
+	
+		if(is_string($entity)) $entity = $this->config->getEntity($entity);
+		$class_name = (class_exists($entity->name)) ? $entity->name : 'stdClass';
+	
+		if($id === null) {
+			$obj = new $class_name;
+			$obj->entity = $entity;
+			return $obj;
+		}
+	
+		$stmt = $this->_getSelect($entity);
+		$stmt->execute(array($id));
+		$obj = $stmt->fetchObject($class_name);
+		$obj->entity = $entity;
+		return $obj;
 	}
 	
 	function insert($obj, $entity) {
@@ -67,52 +97,48 @@ class Dormio {
 		
 		$params = array();
 		foreach($entity->getFields() as $key=>$spec) {
-			if(isset($obj->$key)) $params[$key] = $obj->$key;
+			if($spec['is_field'] && isset($obj->$key)) {
+				$params[$spec['db_column']] = $obj->$key;
+			}
 		}
-		if(!$params) throw new Exception("No params");
-		/*
-		$key = $entity->name . "_insert";
-		if(!$stored = $this->get($key)) {
-			$query = new Dormio_Query($entity, $this->dialect);
-			$stored = $query->insert($params);
-		}
-		*/
-		$key = $entity->name . '_insert_' . implode('_', array_keys($params));
-		if(!$stored = $this->get($key)) {
-			$query = new Dormio_Query($entity, $this->dialect);
-			$q = $query->insert($params);
-			$stored = $this->pdo->prepare($q[0]);
-			$this->set($key, $stored);
-		}
-		$stored->execute(array_values($params));
+		if(!$params) throw new Exception("No fields to update on entity [{$entity->name}]");
+		
+		$stmt = $this->_getInsert($entity, array_keys($params));
+		$stmt->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
 	}
 	
-	function getObject($entity, $id=null) {
-		
-		if(is_string($entity)) $entity = $this->config->getEntity($entity);
-		$class_name = (class_exists($entity->name)) ? $entity->name : 'stdClass';
-		$obj = new $class_name;
-		$obj->entity = $entity;
-		
-		if($id===null) return $obj;
-		
-		$key = $entity->name . '_select';
-		if(!$stored = $this->get($key)) {
-			$query = new Dormio_Manager($entity, $this);
-			$stored = $query->filter('pk', '=', null)->compile(true);
-			$this->set($key, $stored);
+	function _getSelect($entity) {
+		$key = "_{$entity->name}_SELECT";
+		if(!$stored = $this->cache->get($key)) {
+			
+			$fields = array();
+			foreach($entity->getFields() as $field=>$spec) {
+				if($spec['is_field']) $fields[] = "{{$spec['db_column']}}";
+			}
+			
+			$query = array(
+				'select' => $fields,
+				'from' => $entity->table,
+				'where' => array($entity->pk['db_column'] . '=?'),
+			);
+			$sql = $this->dialect->select($query);
+			$stored = $this->pdo->prepare($sql);
+			$this->cache->set($key, $stored);
 		}
-		
-		$stmt = $stored[0];
-		$stmt->execute(array($id));
-		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		
-		return self::mapObject($data[0], $obj, $entity, $stored[3]);
+		return $stored;
 	}
 	
-	function execute($sql, $params, $row_count=false) {
-		return $this->executeQuery(array($sql, $params), $row_count);
+	function _getInsert(Dormio_Config_Entity $entity, array $params) {
+		$key = "_{$entity->name}_INSERT_" . implode('_', $params);
+		if(!$stored = $this->cache->get($key)) {
+			$query = array('from' => $entity->table);
+			$q = $this->dialect->insert($query, $params);
+			$stored = $this->pdo->prepare($q);
+			$this->cache->set($key, $stored);
+			
+		}
+		return $stored;
 	}
 	
 	function executeQuery($query, $row_count=false) {

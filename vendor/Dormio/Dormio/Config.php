@@ -305,7 +305,8 @@ class Dormio_Config_Entity {
 			'remote_field' => $spec['local_field'],
 			'entity' => $this->name,
 			'verbose' => self::title($spec['related_name']),
-			'on_delete' => $spec['on_delete']
+			'on_delete' => $spec['on_delete'],
+			'is_field' => false,
 		);
 
 		// add an index on the field
@@ -323,6 +324,7 @@ class Dormio_Config_Entity {
 			'through' => null,
 			'map_local_field' => null,
 			'map_remote_field' => null,
+			'is_field' => false,
 		);
 		$spec = array_merge($defaults, $spec);
 
@@ -352,6 +354,7 @@ class Dormio_Config_Entity {
 			'entity' => $this->name,
 			'map_local_field' => $spec['map_remote_field'],
 			'map_remote_field' => $spec['map_local_field'],
+			'is_field' => false,
 		);
 
 		return $spec;
