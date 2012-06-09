@@ -26,7 +26,9 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 * @return Iterator
 	 */
 	function find() {
-		return new DormioResultSet($this->select(), $this->dormio, $this->entity, $this->reverse, $this->mapper);
+		$stmt = $this->dormio->executeQuery($this->select());
+		$iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
+		return new DormioResultSet($iter, $this->dormio, $this->entity, $this->reverse);
 	}
 	
 	/**

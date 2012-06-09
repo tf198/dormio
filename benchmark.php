@@ -70,7 +70,7 @@ $dormio = new Dormio($pdo, $config);
 bench('Dormio::__construct()');
 
 $o = $dormio->getObject($blog, 2);
-var_dump($o->title);
+assert($o->title == 'Andy Blog 2');
 bench('Dormio::getObject()');
 
 for($i=0; $i<LOOP; $i++) {
@@ -88,6 +88,15 @@ for($i=0; $i<LOOP; $i++) {
 	$o->title = 'Test';
 	$dormio->insert($o, 'Blog');
 }
-assert($o->pk==LOOP + 4);
+assert($o->pk == LOOP + 4);
 //var_dump($o->pk);
 bench('Insert multiple objects');
+
+class_exists('Dormio_Manager');
+bench('Dormio_Manager include');
+
+$blogs = new Dormio_Manager($blog, $dormio);
+bench('Dormio_Manager::__construct()');
+
+foreach($blogs as $blog) {}
+bench('Iterated blogs');

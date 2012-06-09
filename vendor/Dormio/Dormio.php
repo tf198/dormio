@@ -100,7 +100,6 @@ class Dormio {
 		$key = $entity->name . '_select';
 		if(!$stored = $this->get($key)) {
 			$query = new Dormio_Manager($entity, $this);
-			$query->mapper = 'mapArray';
 			$stored = $query->filter('pk', '=', null)->compile(true);
 			$this->set($key, $stored);
 		}
@@ -149,7 +148,7 @@ class Dormio {
 
 class DormioResultSet implements Iterator {
 	
-	private $dormio, $entity, $reverse, $mapper, $iter;
+	private $dormio, $entity, $reverse, $iter;
 	
 	/**
 	 * @todo Implement PDOStatement iterator
@@ -158,14 +157,12 @@ class DormioResultSet implements Iterator {
 	 * @param multitype:string $reverse
 	 * @param string $mapper
 	 */
-	function __construct($query, $dormio, $entity, $reverse, $mapper='mapArray') {
+	function __construct($iter, $dormio, $entity, $reverse) {
 		$this->dormio = $dormio;
 		$this->reverse = $reverse;
 		$this->entity = $entity;
-		//$this->mapper = array($this, $mapper);
-		$stmt= $this->dormio->executeQuery($query);
-		$this->iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
-		$stmt->closeCursor();
+		$this->iter = $iter;
+		$this->obj = new stdClass;
 	}
 	
 	function rewind() {
@@ -181,7 +178,7 @@ class DormioResultSet implements Iterator {
 	}
 	
 	function current() {
-		return call_user_func($this->mapper, $this->iter->current());
+		return Dormio::mapObject($this->iter->current(), $this->obj, $this->entity, $this->reverse);
 	}
 	
 	function next() {
