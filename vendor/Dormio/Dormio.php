@@ -24,9 +24,9 @@ class Dormio {
 	 */
 	public $dialect;
 	
-	private $cache;
+	public $cache;
 	
-	private $_stored = array();
+	public $_stored = array();
 	
 	public function __construct($pdo, $config, $cache=null) {
 		$this->pdo = $pdo;
@@ -39,8 +39,15 @@ class Dormio {
 	}
 	
 	function save($obj, $entity_name=null) {
-		$this->getProxy($obj, $entity_name)->save();
-		return $obj;
+		if(!isset($obj->entity)) {
+			if(!$entity_name) $entity_name = get_class($obj);
+			$obj->entity = $this->config->getEntity($entity_name);
+		}
+		if(isset($obj->pk)) {
+			throw new Exception("Not yet implemented");
+		} else {
+			$this->insert($obj, $obj->entity);
+		}
 	}
 	
 	function load($obj, $id, $entity_name=null) {
@@ -48,14 +55,8 @@ class Dormio {
 		return $obj;
 	}
 	
-	function getProxy($obj, $entity_name=null) {
-		if(!isset($obj->proxy)) {
-			if(!$entity_name) $entity_name = get_class($obj);
-			$entity = $this->config->getEntity($entity_name);
-				
-			$obj->proxy = new Dormio_Proxy($obj, $entity, $this);
-		}
-		return $obj->proxy;
+	function getManager($name) {
+		return new Dormio_Manager($this->config->getEntity($name), $this);
 	}
 	
 	function getStoredResultset($stored, $params) {
