@@ -24,17 +24,17 @@
 /**
  * Class to programatically generate SQL based on entities
  *
- * Most methods accept either a field key (as defined in your $meta) or
+ * Most methods accept either a field key (as defined in your entity) or
  * a descriptor which traces relations across the tables.
- * e.g. 'blog__title' on a Comment queryset refers to the title field on the associated blog model
+ * e.g. `blog__title` on a *Comment* query refers to the `title` field on the associated *Blog* entity
  *
  * Reverse relations can either be accessed by field, for example blog has a reverse field defined for its
  * comments, or by adding _set to the model name so the same can be achieved by calling 'comment_set'.
- * This also works for onetoone relations e.g. 'author__profile_set__fav_colour' on a Blog queryset will traverse
- * the intermediate tables to get to the fav_colour field on the Profile model.
+ * This also works for onetoone relations e.g. `author__profile__fav_colour` on a *Blog* query will traverse
+ * the intermediate tables to get to the fav_colour field on the *Profile* entity. (FIXME: Incorrect)
  *
  * Django users will notice the blatent plagerism here, the main difference being the filter() method, where Django
- * would use qs->filter(age__gt=16) Dormio uses a separate operator $qs->filter('age', '>', 16);
+ * uses kwargs `qs->filter(age__gt=16)` Dormio uses a separate operator `$qs->filter('age', '>', 16)`;
  *
  * @example models.php The models refered to in these examples
  * @example usage.php Example usage
@@ -191,6 +191,13 @@ class Dormio_Query {
 		return $o;
 	}
 
+	/**
+	 * Add a single field to the SELECT
+	 * This should not be used if you are planning to hydrate an object with this query
+	 * @param string $path
+	 * @param string $alias
+	 * @return Dormio_Query
+	 */
 	function field($path, $alias=null) {
 		// this needs to left join
 		$o = clone $this;
@@ -297,6 +304,13 @@ class Dormio_Query {
 		}
 	}
 
+	/**
+	 * Adds a field to the SELECT
+	 * @param string $table_alias
+	 * @param string $db_column
+	 * @param string $as	override default result key
+	 * @return string		key in the result
+	 */
 	function _addField($table_alias, $db_column, $as=null) {
 		if(!$as) $as = "{$table_alias}_{$db_column}";
 		$this->query['select'][] = "{$table_alias}.{{$db_column}} AS {{$as}}";
@@ -322,7 +336,6 @@ class Dormio_Query {
 	}
 	/*
 	 * @ignore
-	 * @todo Check whether anything actually utilises this
 	*/
 	function _resolveStringLocalCallback($matches) {
 	 return $this->_meta->fields[$matches[1]]['db_column'];
@@ -330,6 +343,8 @@ class Dormio_Query {
 
 	/**
 	 * Resolve to an aliased field
+	 * @param string $path
+	 * @param string $type 	force a specific join (INNER, LEFT) [default: null]
 	 * @return string e.g. "t1.{name}"
 	 * @access private
 	 */
@@ -353,6 +368,9 @@ class Dormio_Query {
 
 	/**
 	 * Resolves paths to parent meta and field
+	 * @param string $path
+	 * @param string $type 		force a specific join (INNER, LEFT) [default: null]
+	 * @param boolean $strip_pk dont join unless we have to [default: true]
 	 * @return array array($parent_meta, $field, $alias);
 	 * @access private
 	 */
@@ -370,10 +388,10 @@ class Dormio_Query {
 	}
 
 	/**
-	 * Resolves accessors and returns the top level meta object
-	 * @param  $parts  array   An array of field accessors that can be chained
-	 * @param  $type   string  The type of join to perform [LEFT]
-	 * @return object          The top level meta object
+	 * Resolves accessors and returns the top level entity
+	 * @param  $parts  multitype:string   an array of field accessors that can be chained
+	 * @param  $type   string  			  the type of join to perform [LEFT]
+	 * @return Dormio_Config_Entity       the top level entity
 	 * @access private
 	 */
 	function _resolveArray($parts, $type=null, $full_joins=false) {
@@ -438,10 +456,10 @@ class Dormio_Query {
 	/**
 	 * Takes care of joining tables together by field name.
 	 * Defaults to INNER joins unless specified
-	 * @param  Dormio_Config_Entity $left   The lefthand table
-	 * @param  string  $field  				The field containing the relation
-	 * @param  string  $type         		The type of join to perform
-	 * @return Dormio_Config_Entity 		The righthand table which was joined to
+	 * @param  Dormio_Config_Entity $left   lefthand table
+	 * @param  string  $field  				field containing the relation
+	 * @param  string  $type         		type of join to perform
+	 * @return Dormio_Config_Entity 		righthand table which was joined to
 	 * @access private
 	 */
 	function _addJoin($left, $spec, $type, &$left_alias) {
@@ -468,9 +486,10 @@ class Dormio_Query {
 
 	/**
 	 * Creates an UPDATE statement based on the current query
-	 * @param  array $params   Assoc array of values to set
-	 * @param  array $custom_fields
-	 * @return array           array(sql, params)
+	 * @param multipart:mixed $params		assoc array of values to set
+	 * @param multipart:mixed $custom_fields
+	 * @param multipart:mixed $custom_params
+	 * @return multitype:mixed		array(sql, params)
 	 */
 	function update($params, $custom_fields=array(), $custom_params=array()) {
 		$o = clone $this;
@@ -486,8 +505,8 @@ class Dormio_Query {
 
 	/**
 	 * Creates an INSERT statement
-	 * @param  array $params   Assoc array of values to insert
-	 * @return array           array(sql, params)
+	 * @param  multitype:mixed	$params		assoc array of values to insert
+	 * @return multitype:mixed				array(sql, params)
 	 */
 	function insert($params) {
 		$update_fields = $this->_resolveLocal(array_keys($params));
