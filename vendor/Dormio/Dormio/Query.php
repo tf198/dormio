@@ -93,6 +93,12 @@ class Dormio_Query {
 	 */
 	private $next_alias;
 
+	/**
+	 * Query compiler
+	 * @var Dormio_Dialect
+	 */
+	public $dialect;
+	
 	static $logger;
 
 	/**

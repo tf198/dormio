@@ -7,12 +7,6 @@ class Dormio {
 	public $pdo;
 	
 	/**
-	 * Singleton
-	 * @var Dormio
-	 */
-	private static $instance;
-	
-	/**
 	 * Entity configuration
 	 * @var Dormio_Config
 	 */
@@ -23,11 +17,6 @@ class Dormio {
 	 * @var Dormio_Dialect
 	 */
 	public $dialect;
-	
-	static function init($pdo, $config=null) {
-		if(!$config) $config = Dormio_Config::instance();
-		self::$instance = new Dormio($pdo, $config);
-	}
 	
 	public function __construct($pdo, $config) {
 		$this->pdo = $pdo;
@@ -58,6 +47,12 @@ class Dormio {
 		$stmt = $this->pdo->prepare($sql);
 		$result = $stmt->execute($params);
 		printf("SQL: %s (%s) [%d]\n", $sql, implode(', ', $params), $result);
+		return $stmt;
+	}
+	
+	function executeQuery($query) {
+		$stmt = $this->pdo->prepare($query[0]);
+		$stmt->execute($query[1]);
 		return $stmt;
 	}
 }
