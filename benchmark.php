@@ -2,7 +2,7 @@
 function bench($message) {
 	$now = microtime(true);
 	$mem = memory_get_usage();
-	fputs(STDOUT, sprintf(" %5.2f %0.2f | %5d %4d | %s\n", ($now-BENCH_START)*1000, ($now-$GLOBALS['bench_last'])*1000, $mem/1024, ($mem-$GLOBALS['mem_last'])/1024, $message));
+	fputs(STDOUT, sprintf(" %6.2f %5.1f | %4d %3d | %s\n", ($now-BENCH_START)*1000, ($now-$GLOBALS['bench_last'])*1000, $mem/1024, ($mem-$GLOBALS['mem_last'])/1024, $message));
 	$GLOBALS['bench_last'] = $now;
 	$GLOBALS['mem_last'] = $mem;
 }
@@ -78,17 +78,16 @@ for($i=0; $i<LOOP; $i++) {
 }
 bench('Dormio::getObject() multiple');
 
-exit;
 $o = $dormio->getObject('Blog');
 $o->title = 'Test';
-$o->proxy->save();
+$dormio->insert($o, 'Blog');
 bench('Insert one object');
 
 for($i=0; $i<LOOP; $i++) {
-	$o = new stdClass;
-	//$o = $dormio->getObject('Blog');
+	$o = $dormio->getObject('Blog');
 	$o->title = 'Test';
-	//$o->proxy->save();
-	//$dormio->save($o, 'Blog');
+	$dormio->insert($o, 'Blog');
 }
+assert($o->pk==LOOP + 4);
+//var_dump($o->pk);
 bench('Insert multiple objects');

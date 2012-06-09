@@ -62,15 +62,35 @@ class Dormio {
 		self::$_stmt_cache[$key] = $value;
 	}
 	
+	function insert($obj, $entity) {
+		if(is_string($entity)) $entity = $this->config->getEntity($entity);
+		
+		$params = array();
+		foreach($entity->getFields() as $key=>$spec) {
+			if(isset($obj->$key)) $params[$key] = $obj->$key;
+		}
+		if(!$params) throw new Exception("No params");
+		/*
+		$key = $entity->name . "_insert";
+		if(!$stored = $this->get($key)) {
+			$query = new Dormio_Query($entity, $this->dialect);
+			$stored = $query->insert($params);
+		}
+		*/
+		$query = new Dormio_Query($entity, $this->dialect);
+		$q = $query->insert($params);
+		$this->executeQuery($q);
+		$obj->pk = $this->pdo->lastInsertId();
+	}
+	
 	function getObject($entity, $id=null) {
 		
 		if(is_string($entity)) $entity = $this->config->getEntity($entity);
 		$class_name = (class_exists($entity->name)) ? $entity->name : 'stdClass';
 		$obj = new $class_name;
-		/*
-		$obj->proxy = new Dormio_Proxy($obj, $entity, $this);
-		return $obj;
-		*/
+		$obj->entity = $entity;
+		
+		if($id===null) return $obj;
 		
 		$key = $entity->name . '_select';
 		if(!$stored = $this->get($key)) {
@@ -81,14 +101,10 @@ class Dormio {
 			var_dump('CREATED');
 		}
 		
-		//$iter = $this->getStoredResultset($stored, array($id));
-		//return $iter->current();
-		
 		$stmt = $stored[0];
 		$stmt->execute(array($id));
 		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		
-		$obj = new stdClass;
 		return self::mapObject($data[0], $obj, $entity, $stored[3]);
 	}
 	
