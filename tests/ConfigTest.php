@@ -87,6 +87,7 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 				'verbose' => 'Comments',
 				'entity' => 'Comment',
 				'on_delete' => 'cascade',
+				'is_field' => false,
 			), $blog->getField('comments'));
 	}
 	
