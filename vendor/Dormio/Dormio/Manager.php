@@ -40,8 +40,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 			case self::MAP_ARRAY:
 				return array_map(array($this, 'mapArray'), $stmt->fetchAll(PDO::FETCH_ASSOC));
 			case self::MAP_OBJECT:
+				$obj = new Dormio_Object;
+				$this->dormio->bind($obj, $this->entity->name);
 				$iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
-				return new DormioResultSet($iter, $this->dormio, $this->entity, $this->reverse);
+				return new DormioResultSet($iter, $obj, $this->reverse);
 			default:
 				throw new Dormio_Manager_Exception("Unknown map type [{$this->type}]");
 		}

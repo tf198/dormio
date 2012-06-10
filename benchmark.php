@@ -111,6 +111,6 @@ bench('Dormio_Manager::__construct() - OBJECT');
 $iter = $blogs->find();
 bench('Queryset evaluate');
 
-foreach($iter as $item) {}
+foreach($iter as $item) { }
 unset($iter);
 bench('Object iteration');

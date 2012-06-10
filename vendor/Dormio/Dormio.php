@@ -218,7 +218,7 @@ class Dormio {
 
 class DormioResultSet implements Iterator {
 	
-	private $dormio, $entity, $reverse, $iter;
+	private $obj, $reverse, $iter;
 	
 	/**
 	 * @todo Implement PDOStatement iterator
@@ -227,12 +227,10 @@ class DormioResultSet implements Iterator {
 	 * @param multitype:string $reverse
 	 * @param string $mapper
 	 */
-	function __construct($iter, $dormio, $entity, $reverse) {
-		$this->dormio = $dormio;
+	function __construct($iter, $obj, $reverse) {
 		$this->reverse = $reverse;
-		$this->entity = $entity;
 		$this->iter = $iter;
-		$this->obj = new stdClass;
+		$this->obj = $obj;
 	}
 	
 	function rewind() {
@@ -248,7 +246,14 @@ class DormioResultSet implements Iterator {
 	}
 	
 	function current() {
-		return Dormio::mapObject($this->iter->current(), $this->obj, $this->entity, $this->reverse);
+		$data = $this->iter->current();
+		foreach($data as $key=>$value) {
+			$accessor = $this->reverse[$key];
+			if(strpos($accessor, '__') === false) {
+				$this->obj->$accessor = $value;
+			}
+		}
+		return $this->obj;
 	}
 	
 	function next() {
