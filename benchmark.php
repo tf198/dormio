@@ -69,7 +69,7 @@ bench('Dormio include');
 $dormio = new Dormio($pdo, $config);
 bench('Dormio::__construct()');
 
-$o = $dormio->getObject($blog, 2);
+$o = $dormio->getObject('Blog', 2);
 assert($o->title == 'Andy Blog 2');
 bench('Dormio::getObject()');
 
@@ -85,7 +85,7 @@ bench('Insert one object');
 
 for($i=0; $i<LOOP; $i++) {
 	$o = $dormio->getObject('Blog');
-	$o->title = 'Test';
+	$o->title = 'Test ' . $i;
 	$dormio->save($o);
 }
 assert($o->pk == LOOP + 4);
@@ -101,7 +101,7 @@ bench('Dormio_Manager::__construct() - ARRAY');
 $iter = $blogs->find();
 bench('Queryset evaluate');
 
-foreach($iter as $item) {}
+foreach($iter as $item) { }
 unset($iter);
 bench('Array iteration');
 

@@ -54,14 +54,13 @@ class Dormio {
 		}
 	}
 	
-	function load($obj, $id, $entity_name=null) {
-		throw new Exception("Broken");
-		$entity = $this->_strapEntity($entity_name);
+	function load($obj, $id) {
+		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object not bound to dormio");
 		
-		$stmt = $this->_getSelect($entity);
+		$stmt = $this->_getSelect($obj->_entity);
 		$stmt->execute(array($id));
-		$obj = $stmt->fetchObject($class_name);
-		$obj->_raw = (array) $obj;
+		$obj->_raw = $stmt->fetch(PDO::FETCH_ASSOC);
+		foreach($obj->_raw as $key=>$value) $obj->$key = $value;
 		return $obj;
 	}
 	
@@ -85,36 +84,31 @@ class Dormio {
 		//echo "CREATED {$key}\n";
 	}
 	
-	function getObject($entity, $id=null) {
+	function getObject($entity_name, $id=null) {
 	
-		if(is_string($entity)) $entity = $this->config->getEntity($entity);
-		$class_name = (class_exists($entity->name)) ? $entity->name : 'stdClass';
-	
-		if($id === null) {
-			$obj = new $class_name;
-			$obj->_entity = $entity;
-			return $obj;
+		$entity = $this->config->getEntity($entity_name);
+		$class_name = (class_exists($entity->name)) ? $entity->name : 'Dormio_Object';
+		$obj = new $class_name;
+		$this->bind($obj, $entity_name);
+		
+		if($id !== null) {
+			$this->load($obj, $id);
 		}
-	
-		$stmt = $this->_getSelect($entity);
-		$stmt->execute(array($id));
-		$obj = $stmt->fetchObject($class_name);
-		$obj->_raw = (array) $obj;
-		$obj->_entity = $entity;
+
 		return $obj;
 	}
 	
 	function insert($obj, $entity_name) {
-		$entity = $this->_strapEntity($obj, $entity_name);
+		$this->bind($obj, $entity_name);
 		
 		$params = array();
-		foreach($entity->getFields() as $key=>$spec) {
+		foreach($obj->_entity->getFields() as $key=>$spec) {
 			// TODO: need to handle related fields
 			if($spec['is_field'] && isset($obj->$key)) {
 				$params[$spec['db_column']] = $obj->$key;
 			}
 		}
-		if(!$params) throw new Exception("No fields to update on entity [{$entity->name}]");
+		if(!$params) throw new Exception("No fields to update on entity [{$obj->_entity->name}]");
 		
 		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
 		$stmt->execute(array_values($params));
@@ -122,7 +116,7 @@ class Dormio {
 	}
 	
 	function update($obj) {
-		if(!isset($obj->_entity)) throw new Dormio_Exception("Object hasn't been strapped");
+		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object hasn't been bound to Dormio");
 		
 		$params = array();
 		foreach($obj->_entity->getFields() as $name=>$spec) {
@@ -147,12 +141,15 @@ class Dormio {
 		$this->dormio->execute($sql, $values);
 	}
 	
-	function _strapEntity($obj, $entity_name) {
-		if(!isset($obj->_entity)) {
+	function bind($obj, $entity_name) {
+		if(!isset($obj->_is_bound)) {
 			if(!$entity_name) $entity_name = get_class($obj);
 			$obj->_entity = $this->config->getEntity($entity_name);
+			$obj->dormio = $this;
+			$obj->_raw = array();
+			$obj->_is_bound = true;
 		}
-		return $obj->_entity;
+		return $obj;
 	}
 	
 	function _getSelect($entity) {

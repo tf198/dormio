@@ -302,7 +302,7 @@ class Dormio_Query {
 	 */
 	function _addFields($entity, $alias, $path='') {
 		foreach($entity->getFields() as $key=>$spec) {
-			if(isset($spec['is_field']) && $spec['is_field']) {
+			if($spec['is_field']) {
 				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
 				$as = $this->_addField($alias, $spec['db_column']);
 				$this->reverse[$as] = $path . $key;
@@ -442,7 +442,7 @@ class Dormio_Query {
 			//self::$logger && self::$logger->log("HOP: {$entity->name} -> {$field}");
 
 			// check whether this join is actually needed on final run
-			if($i==$c-1 && isset($spec['is_field'])) {
+			if($i==$c-1 && $spec['is_field']) {
 				if(!$full_joins) break;
 			}
 
@@ -451,7 +451,7 @@ class Dormio_Query {
 		}
 
 		// check whether it is a reverse field
-		if(!isset($spec['is_field'])) {
+		if(!$spec['is_field']) {
 			$field = $spec['local_field'];
 		}
 
@@ -628,6 +628,8 @@ class Dormio_Query {
 	 * @return multitype:mixed
 	 */
 	function mapArray($row) {
+		return Dormio::mapArray($row, $this->reverse);
+		/*
 		$result = array();
 		foreach($row as $key=>$value) {
 			$parts = explode('__', $this->reverse[$key]);
@@ -640,6 +642,7 @@ class Dormio_Query {
 			$arr[$parts[$p]] = $value;
 		}
 		return $result;
+		*/
 	}
 }
 
