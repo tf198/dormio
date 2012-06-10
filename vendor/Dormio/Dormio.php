@@ -48,18 +48,20 @@ class Dormio {
 	
 	function save($obj, $entity_name=null) {
 		if(isset($obj->pk)) {
-			throw new Exception("Not yet implemented");
+			$this->update($obj);
 		} else {
 			$this->insert($obj, $entity_name);
 		}
 	}
 	
 	function load($obj, $id, $entity_name=null) {
+		throw new Exception("Broken");
 		$entity = $this->_strapEntity($entity_name);
 		
 		$stmt = $this->_getSelect($entity);
 		$stmt->execute(array($id));
 		$obj = $stmt->fetchObject($class_name);
+		$obj->_raw = (array) $obj;
 		return $obj;
 	}
 	
@@ -90,13 +92,14 @@ class Dormio {
 	
 		if($id === null) {
 			$obj = new $class_name;
-			$obj->entity = $entity;
+			$obj->_entity = $entity;
 			return $obj;
 		}
 	
 		$stmt = $this->_getSelect($entity);
 		$stmt->execute(array($id));
 		$obj = $stmt->fetchObject($class_name);
+		$obj->_raw = (array) $obj;
 		$obj->_entity = $entity;
 		return $obj;
 	}
@@ -106,6 +109,7 @@ class Dormio {
 		
 		$params = array();
 		foreach($entity->getFields() as $key=>$spec) {
+			// TODO: need to handle related fields
 			if($spec['is_field'] && isset($obj->$key)) {
 				$params[$spec['db_column']] = $obj->$key;
 			}
@@ -115,6 +119,32 @@ class Dormio {
 		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
 		$stmt->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
+	}
+	
+	function update($obj) {
+		if(!isset($obj->_entity)) throw new Dormio_Exception("Object hasn't been strapped");
+		
+		$params = array();
+		foreach($obj->_entity->getFields() as $name=>$spec) {
+			if($spec['is_field'] && isset($this->obj->$name)) {
+				if($name == 'pk') continue;
+				if(isset($obj->_raw[$name]) && $this->_raw[$name]==$obj->$name) continue;
+				$params[$name] = $this->obj->$name;
+				$this->_raw[$name] = $this->obj->$name;
+			}
+		}
+		if(!$params) return;
+		
+		$query = array(
+			'from' => $obj->_entity->table,
+			'where' => array("{$obj->_entity->pk['db_column']} = ?")
+			);
+		
+		$sql = $this->dormio->dialect->update($query, array_keys($params));
+		
+		$values = array_keys($params);
+		array_unshift($values, $this->id);
+		$this->dormio->execute($sql, $values);
 	}
 	
 	function _strapEntity($obj, $entity_name) {

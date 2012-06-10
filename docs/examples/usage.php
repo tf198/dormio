@@ -28,26 +28,25 @@ $blog->title = "New title";
 $dormio->save($blog, 'Blog');
 
 // get a blog
-$blog = new stdClass;
-$dormio->load($blog, 2, 'Blog');
+$blog = $dormio->getObject('Blog', 2);
 echo "  {$blog->body}\n";
 
-$blogs = new Dormio_Manager($config->getEntity('Blog'), $dormio);
-$blogs->mapper = 'mapObject';
+$blogs = $dormio->getManager('Blog');
 
 foreach($blogs->filter('comments__author', '=', 2) as $row) {
 	//var_dump($row);
-	echo "  {$row->title}\n";
+	echo "  {$row['title']}\n";
 }
 
 // can compile query objects for later execution
+/*
 $stored = $blogs->filter('author__profile_set__age', '<', 40)->compile();
 
 echo "\nCached resultset\n";
 foreach($dormio->getStoredResultset($stored) as $row) {
 	echo "  {$row->title}\n";
 }
-
+*/
 return 42;
 
 // get the related comments

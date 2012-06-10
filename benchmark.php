@@ -2,7 +2,7 @@
 function bench($message) {
 	$now = microtime(true);
 	$mem = memory_get_usage();
-	fputs(STDOUT, sprintf(" %6.2f %5.1f | %4d %3d | %s\n", ($now-BENCH_START)*1000, ($now-$GLOBALS['bench_last'])*1000, $mem/1024, ($mem-$GLOBALS['mem_last'])/1024, $message));
+	fputs(STDOUT, sprintf(" %6.2f %5.1f | %4d %4d | %s\n", ($now-BENCH_START)*1000, ($now-$GLOBALS['bench_last'])*1000, $mem/1024, ($mem-$GLOBALS['mem_last'])/1024, $message));
 	$GLOBALS['bench_last'] = $now;
 	$GLOBALS['mem_last'] = $mem;
 }
@@ -86,7 +86,7 @@ bench('Insert one object');
 for($i=0; $i<LOOP; $i++) {
 	$o = $dormio->getObject('Blog');
 	$o->title = 'Test';
-	$dormio->insert($o, 'Blog');
+	$dormio->save($o);
 }
 assert($o->pk == LOOP + 4);
 //var_dump($o->pk);
@@ -96,7 +96,21 @@ class_exists('Dormio_Manager');
 bench('Dormio_Manager include');
 
 $blogs = new Dormio_Manager($blog, $dormio);
-bench('Dormio_Manager::__construct()');
+bench('Dormio_Manager::__construct() - ARRAY');
 
-foreach($blogs as $blog) {}
-bench('Iterated blogs');
+$iter = $blogs->find();
+bench('Queryset evaluate');
+
+foreach($iter as $item) {}
+unset($iter);
+bench('Array iteration');
+
+$blogs = new Dormio_Manager($blog, $dormio, Dormio_Manager::MAP_OBJECT);
+bench('Dormio_Manager::__construct() - OBJECT');
+
+$iter = $blogs->find();
+bench('Queryset evaluate');
+
+foreach($iter as $item) {}
+unset($iter);
+bench('Object iteration');

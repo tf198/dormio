@@ -1,16 +1,25 @@
 <?php
 class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	
+	const MAP_ARRAY = 1;
+	const MAP_OBJECT = 2;
+	
 	/**
 	 * @var Dormio
 	 */
 	public $dormio;
 	
-	public $mapper = 'mapArray';
+	/**
+	 * Map type
+	 * @var int
+	 */
+	public $type;
 	
-	function __construct($entity, $dormio) {
+	function __construct($entity, $dormio, $type=self::MAP_ARRAY) {
 		$this->dormio = $dormio;
 		if(is_string($entity)) $entity = $dormio->config->getEntity($entity);
+		$this->type = $type;
+		
 		parent::__construct($entity, $dormio->dialect);
 	}
 	
@@ -18,7 +27,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 		$query = $this->select();
 		$args = count($query[1]);
 		$store = ($prepare) ? $this->dormio->pdo->prepare($query[0]) : $query[0];
-		return array($store, $args, $this->entity->name, $this->reverse, $this->mapper);
+		return array($store, $args, $this->entity->name, $this->reverse);
 	}
 	
 	/**
@@ -27,8 +36,15 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 */
 	function find() {
 		$stmt = $this->dormio->executeQuery($this->select());
-		$iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
-		return new DormioResultSet($iter, $this->dormio, $this->entity, $this->reverse);
+		switch($this->type) {
+			case self::MAP_ARRAY:
+				return array_map(array($this, 'mapArray'), $stmt->fetchAll(PDO::FETCH_ASSOC));
+			case self::MAP_OBJECT:
+				$iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
+				return new DormioResultSet($iter, $this->dormio, $this->entity, $this->reverse);
+			default:
+				throw new Dormio_Manager_Exception("Unknown map type [{$this->type}]");
+		}
 	}
 	
 	/**
@@ -68,7 +84,13 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 * @return Iterator
 	 */
 	function getIterator() {
-		return $this->find();
+		$f = $this->find();
+		switch($this->type) {
+			case self::MAP_ARRAY:
+				return new ArrayIterator($f);
+			case self::MAP_OBJECT:
+				return $f;
+		}
 	}
 }
 
