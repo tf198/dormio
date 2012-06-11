@@ -2,6 +2,8 @@
 require dirname(__DIR__) . "/vendor/Dormio/Dormio/AutoLoader.php";
 Dormio_AutoLoader::register();
 
+define('TEST_PATH', dirname(__FILE__));
+
 $GLOBALS['test_entities'] = array(
 	'User' => array(
 		'fields' => array(

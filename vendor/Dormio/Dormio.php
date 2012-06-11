@@ -60,12 +60,17 @@ class Dormio {
 		$stmt = $this->_getSelect($obj->_entity);
 		$stmt->execute(array($id));
 		$obj->_raw = $stmt->fetch(PDO::FETCH_ASSOC);
-		foreach($obj->_raw as $key=>$value) $obj->$key = $value;
-		return $obj;
+		//foreach($obj->_raw as $key=>$value) $obj->$key = $value;
+		return self::mapObject($obj->_raw, $obj);
 	}
 	
 	function getManager($name) {
 		return new Dormio_Manager($this->config->getEntity($name), $this);
+	}
+	
+	function getObjectManager($name) {
+		class_exists('Dormio_Manager');
+		return new Dormio_Manager_Object($this->config->getEntity($name), $this);
 	}
 	
 	function getStoredResultset($stored, $params) {
@@ -87,7 +92,7 @@ class Dormio {
 	function getObject($entity_name, $id=null) {
 	
 		$entity = $this->config->getEntity($entity_name);
-		$class_name = (class_exists($entity->name)) ? $entity->name : 'Dormio_Object';
+		$class_name = $entity->model_class;
 		$obj = new $class_name;
 		$this->bind($obj, $entity_name);
 		
@@ -158,7 +163,7 @@ class Dormio {
 			
 			$fields = array();
 			foreach($entity->getFields() as $field=>$spec) {
-				if($spec['is_field']) $fields[] = "{{$spec['db_column']}}";
+				if($spec['is_field']) $fields[] = "{{$spec['db_column']}} AS {{$field}}";
 			}
 			
 			$query = array(
@@ -195,7 +200,7 @@ class Dormio {
 	static function mapArray($row, $reverse) {
 		$result = array();
 		foreach($row as $key=>$value) {
-			$parts = explode('__', $reverse[$key]);
+			$parts = isset($reverse[$key]) ? explode('__', $reverse[$key]) : array($key);
 			$arr = &$result;
 			$p = count($parts)-1;
 			for($i=0; $i<$p; $i++) {
@@ -207,10 +212,10 @@ class Dormio {
 		return $result;
 	}
 	
-	static function mapObject($row, $obj, $entity, $reverse) {
-		$data = self::mapArray($row, $reverse);
-		foreach($entity->getFields() as $key=>$spec) {
-			$obj->$key = $data[$key];
+	static function mapObject($row, $obj) {
+		foreach($obj->_entity->getFields() as $key=>$spec) {
+			// TODO: check entity type and generate reverse objects
+			$obj->$key = $row[$key];
 		}
 		return $obj;
 	}
@@ -218,7 +223,7 @@ class Dormio {
 
 class DormioResultSet implements Iterator {
 	
-	private $obj, $reverse, $iter;
+	private $obj, $iter;
 	
 	/**
 	 * @todo Implement PDOStatement iterator
@@ -227,8 +232,7 @@ class DormioResultSet implements Iterator {
 	 * @param multitype:string $reverse
 	 * @param string $mapper
 	 */
-	function __construct($iter, $obj, $reverse) {
-		$this->reverse = $reverse;
+	function __construct($iter, $obj) {
 		$this->iter = $iter;
 		$this->obj = $obj;
 	}
@@ -247,13 +251,7 @@ class DormioResultSet implements Iterator {
 	
 	function current() {
 		$data = $this->iter->current();
-		foreach($data as $key=>$value) {
-			$accessor = $this->reverse[$key];
-			if(strpos($accessor, '__') === false) {
-				$this->obj->$accessor = $value;
-			}
-		}
-		return $this->obj;
+		return Dormio::mapObject($data, $this->obj);
 	}
 	
 	function next() {

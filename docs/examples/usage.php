@@ -31,11 +31,11 @@ $dormio->save($blog, 'Blog');
 $blog = $dormio->getObject('Blog', 2);
 echo "  {$blog->body}\n";
 
-$blogs = $dormio->getManager('Blog');
+$blogs = $dormio->getObjectManager('Blog');
 
 foreach($blogs->filter('comments__author', '=', 2) as $row) {
 	//var_dump($row);
-	echo "  {$row['title']}\n";
+	echo "  {$row->title}\n";
 }
 
 // can compile query objects for later execution

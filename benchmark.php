@@ -98,19 +98,26 @@ bench('Dormio_Manager include');
 $blogs = new Dormio_Manager($blog, $dormio);
 bench('Dormio_Manager::__construct() - ARRAY');
 
-$iter = $blogs->find();
+$iter = $blogs->getIterator();
 bench('Queryset evaluate');
 
-foreach($iter as $item) { }
+foreach($iter as $item) { $item['title']; }
 unset($iter);
 bench('Array iteration');
 
-$blogs = new Dormio_Manager($blog, $dormio, Dormio_Manager::MAP_OBJECT);
+$blogs = new Dormio_Manager_Object($blog, $dormio);
 bench('Dormio_Manager::__construct() - OBJECT');
 
 $iter = $blogs->find();
 bench('Queryset evaluate');
 
-foreach($iter as $item) { }
+foreach($iter as $item) { $item->title; }
 unset($iter);
 bench('Object iteration');
+
+$result = $blogs->filter('author__profile_set__age', '<', 40)->getAggregator()->count()->run();
+assert($result['pk.count'] == 2);
+bench('Dormio_Aggregator');
+
+assert($blogs->count() == 604);
+bench('Dormio_Manager::count()');

@@ -1,26 +1,25 @@
 <?php
 class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	
-	const MAP_ARRAY = 1;
-	const MAP_OBJECT = 2;
-	
 	/**
 	 * @var Dormio
 	 */
 	public $dormio;
 	
 	/**
-	 * Map type
 	 * @var int
 	 */
-	public $type;
+	private $_count;
 	
-	function __construct($entity, $dormio, $type=self::MAP_ARRAY) {
+	function __construct($entity, $dormio) {
 		$this->dormio = $dormio;
 		if(is_string($entity)) $entity = $dormio->config->getEntity($entity);
-		$this->type = $type;
 		
 		parent::__construct($entity, $dormio->dialect);
+	}
+	
+	function __clone() {
+		$this->_count = null;
 	}
 	
 	function compile($prepare=false) {
@@ -32,21 +31,16 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	
 	/**
 	 * Execute the query
-	 * @return Iterator
+	 * @return multitype:multitype:string
 	 */
-	function find() {
+	function findArray() {
 		$stmt = $this->dormio->executeQuery($this->select());
-		switch($this->type) {
-			case self::MAP_ARRAY:
-				return array_map(array($this, 'mapArray'), $stmt->fetchAll(PDO::FETCH_ASSOC));
-			case self::MAP_OBJECT:
-				$obj = new Dormio_Object;
-				$this->dormio->bind($obj, $this->entity->name);
-				$iter = new ArrayIterator($stmt->fetchAll(PDO::FETCH_ASSOC));
-				return new DormioResultSet($iter, $obj, $this->reverse);
-			default:
-				throw new Dormio_Manager_Exception("Unknown map type [{$this->type}]");
-		}
+		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		return array_map(array($this, 'mapArray'), $data);
+	}
+	
+	function find() {
+		return $this->findArray();
 	}
 	
 	/**
@@ -62,6 +56,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 		if(!$data) throw new Dormio_Manager_NoResultException("Query returned no records");
 		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
 		return $data[0];
+	}
+	
+	function getAggregator() {
+		return new Dormio_Aggregator($this);
 	}
 	
 	function delete() {
@@ -86,13 +84,48 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 * @return Iterator
 	 */
 	function getIterator() {
-		$f = $this->find();
-		switch($this->type) {
-			case self::MAP_ARRAY:
-				return new ArrayIterator($f);
-			case self::MAP_OBJECT:
-				return $f;
+		return new ArrayIterator($this->find());
+	}
+	
+	function filterBind($key, $op, &$value, $clone=true) {
+		if($op == 'IN' && $value instanceof Dormio_Manager) {
+			$o = clone $value;
+			$o->selectIdent();
+			$stmt = $this->dormio->executeQuery($o->select());
+			$value = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 		}
+		return parent::filterBind($key, $op, $value, $clone);
+	}
+	
+	function count() {
+		if(!isset($this->_count)) {
+			$o = clone $this;
+			$o->query['select'] = array('COUNT(*) AS count');
+			$result = $o->findArray();
+			$this->_count = (int)$result[0]['count'];
+		}
+		return $this->_count;
+	}
+}
+
+class Dormio_Manager_Object extends Dormio_Manager {
+	function __construct($entity, $dormio) {
+		parent::__construct($entity, $dormio);
+		$this->obj = $this->dormio->getObject($entity->name);
+	}
+	
+	function find() {
+		$iter = new ArrayIterator(parent::find());
+		return new DormioResultSet($iter, $this->obj);
+	}
+	
+	function findOne() {
+		$data = parent::findOne();
+		return Dormio::mapObject($data, $this->obj);
+	}
+	
+	function getIterator() {
+		return $this->find();
 	}
 }
 

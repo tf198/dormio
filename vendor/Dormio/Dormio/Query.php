@@ -166,12 +166,7 @@ class Dormio_Query {
 		$f = $o->_resolveField($key);
 		$v = '?';
 		if($op == 'IN') {
-			if($value instanceof Dormio_Manager) {
-				$set = $value->values(PDO::FETCH_NUM);
-				$value = array();
-				foreach($set as $a) $value[] = $a[0];
-			}
-			if(!is_array($value)) throw new Dormio_Queryset_Exception('Need array for IN operator');
+			if(!is_array($value)) throw new Dormio_Query_Exception('Need array for IN operator');
 			$v = '(' . implode(', ', array_fill(0, count($value), '?')) . ')';
 		}
 		$o->query['where'][] = "{$f} {$op} {$v}";
@@ -208,7 +203,7 @@ class Dormio_Query {
 		// this needs to left join
 		$o = clone $this;
 		$p = $o->_resolvePath($path, 'LEFT');
-		if($alias) $alias = $this->_alias . "_" . $alias;
+		if($alias) $alias = $this->alias . "_" . $alias;
 		$as = $o->_addField($p[2], $p[1], $alias);
 		$o->reverse[$as] = $path;
 		return $o;

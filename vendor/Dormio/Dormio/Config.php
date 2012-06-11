@@ -189,7 +189,7 @@ class Dormio_Config_Entity {
 		$this->table = (isset($entity['table'])) ? $entity['table'] : strtolower($name);
 		$this->verbose = (isset($entity['verbose'])) ? $entity['verbose'] : self::title($name);
 		$this->indexes = (isset($entity['indexes'])) ? $entity['indexes'] : array();
-		$this->model_class = (isset($entity['model_class'])) ? $entity['model_class'] : 'stdClass';
+		$this->model_class = (isset($entity['model_class'])) ? $entity['model_class'] : 'Dormio_Object';
 		
 		// set a primary key field (can be overridden)
 		$this->fields['pk'] = array('type' => 'ident', 'db_column' => strtolower($name) . "_id", 'is_field' => true, 'verbose' => 'ID', 'validated' => true);
