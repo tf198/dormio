@@ -64,10 +64,15 @@ class Dormio {
 	}
 
 	function getObjectManager($name) {
-		class_exists('Dormio_Manager');
-		$obj = $this->getObject($name);
-		//$this->bindRelated($obj);
-		return new Dormio_Manager_Object($obj);
+		$key = "_{$name}_MANAGER";
+		if(!$stored = $this->cache->get($key)) {
+			class_exists('Dormio_Manager');
+			$obj = $this->getObject($name);
+			//$this->bindRelated($obj);
+			$stored = new Dormio_Manager_Object($obj);
+			$this->cache->set($key, $stored);
+		}
+		return $stored;
 	}
 
 	function getObject($entity_name, $id=null) {
