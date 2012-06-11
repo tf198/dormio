@@ -5,6 +5,7 @@ return array(
 			'title' => array('type' => 'string', 'max_length' => 30),
 			'body' => array('type' => 'text'),
 			'author' => array('type' => 'foreignkey', 'entity' => 'User'),
+			'tags' => array('type' => 'manytomany', 'entity' => 'Tag'),
 		),
 	),
 	'Comment' => array(
@@ -18,6 +19,7 @@ return array(
 		'fields' => array(
 			'username' => array('type' => 'string', 'max_length' => 50),
 			'password' => array('type' => 'password'),
+			'display_name' => array('type' => 'string'),
 		),
 	),
 	'Profile' => array(
@@ -27,4 +29,9 @@ return array(
 			'age' => array('type' => 'integer'),
 		),
 	),
+	'Tag' => array(
+		'fields' => array(
+			'tag' => array('type' => 'string'),
+		),
+	)
 );

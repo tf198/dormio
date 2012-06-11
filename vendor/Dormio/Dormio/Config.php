@@ -244,6 +244,12 @@ class Dormio_Config_Entity {
 		return $this->fields;
 	}
 	
+	function getAllFields() {
+		$fields = $this->fields;
+		foreach($this->getRelatedFields() as $field) $fields[$field] = $this->getField($field);
+		return $fields;
+	}
+	
 	function getFieldNames() {
 		return array_keys($this->fields);
 	}

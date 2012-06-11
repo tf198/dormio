@@ -32,34 +32,33 @@ $blog = $dormio->getObject('Blog', 2);
 echo "  {$blog->body}\n";
 
 $blogs = $dormio->getObjectManager('Blog');
-
 foreach($blogs->filter('comments__author', '=', 2) as $row) {
-	//var_dump($row);
 	echo "  {$row->title}\n";
 }
 
-// can compile query objects for later execution
-/*
-$stored = $blogs->filter('author__profile_set__age', '<', 40)->compile();
-
-echo "\nCached resultset\n";
-foreach($dormio->getStoredResultset($stored) as $row) {
-	echo "  {$row->title}\n";
-}
-*/
-return 42;
+//$comments = $dormio->getObjectManager('Comment');
+//foreach($comments->with('blog') as $comment) var_dump($comment->blog->title);
 
 // get the related comments
 echo "\nComments for '{$blog->title}'\n";
+$dormio->bindRelated($blog, 'comments');
 foreach($blog->comments as $comment) {
   echo "  {$comment->body}\n";
 }
 
+echo "\nTags for '{$blog->title}'\n";
+$dormio->bindRelated($blog, 'tags');
+foreach($blog->tags as $tag) {
+	echo "  {$tag->tag}\n";
+}
+
 // get only the comments by Bob (alternate related syntax)
 echo "\nComments for '{$blog->title}' by 'bob'\n";
-foreach($blog->comment_set->filter('author__username', '=', 'bob') as $comment) {
+foreach($blog->comments->filter('author__username', '=', 'bob') as $comment) {
   echo "  {$comment->body}\n";
 }
+
+/*
 
 // create a new comment about the blog
 $comment = $dormio->get('Comment');
@@ -68,15 +67,15 @@ $comment->body = "Andy likes commenting on his own posts";
 $blog->comments->add($comment);
 // we forgot to save it but add does that for us
 echo "\nNew comment has primary key {$comment->ident()}\n\n";
-
+*/
 // managers are reusable
-$comments = $dormio->manager('Comment');
+$comments = $dormio->getObjectManager('Comment');
 
 // list the last 3 comments and their authors efficiently - requires single query
+echo "\nLast 3 comments with their author\n";
 $set = $comments->with('author')->orderBy('-pk')->limit(3);
-printf("  %-50s %-10s\n", 'Comment', 'Author');
 foreach($set as $comment) {
-  printf("  %-50s %-10s\n", $comment->body, $comment->author->username);
+  printf("  %-50s %-10s\n", $comment->body, $comment->author->display_name);
 }
 
 // complicated WHERE clause spanning multiple tables
@@ -88,9 +87,9 @@ foreach($set as $comment) {
 }
 
 // aggregate functions
-$stats = $blog->comments->aggregate()->count()->run();
+$stats = $blog->comments->getAggregator()->count()->run();
 echo "\nBlog has {$stats['pk.count']} comments\n";
-$stats = $dormio->manager('Profile')->aggregate()->max('age')->run();
+$stats = $dormio->getManager('Profile')->getAggregator()->max('age')->run();
 echo "\nOldest contributer is {$stats['age.max']}\n";
 
 return 42; // for our auto testing

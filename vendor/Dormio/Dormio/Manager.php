@@ -109,9 +109,9 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 }
 
 class Dormio_Manager_Object extends Dormio_Manager {
-	function __construct($entity, $dormio) {
-		parent::__construct($entity, $dormio);
-		$this->obj = $this->dormio->getObject($entity->name);
+	function __construct($obj) {
+		parent::__construct($obj->_entity, $obj->dormio);
+		$this->obj = $obj;
 	}
 	
 	function find() {

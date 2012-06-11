@@ -105,7 +105,7 @@ foreach($iter as $item) { $item['title']; }
 unset($iter);
 bench('Array iteration');
 
-$blogs = new Dormio_Manager_Object($blog, $dormio);
+$blogs = $dormio->getObjectManager('Blog');
 bench('Dormio_Manager::__construct() - OBJECT');
 
 $iter = $blogs->find();
