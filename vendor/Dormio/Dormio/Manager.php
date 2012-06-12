@@ -51,8 +51,8 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 */
 	function findOne($id=null) {
 		$query = $this->limit(2);
-		if($id !== null) $query = $query->filter('pk', '=', $id);
-		$data = $query->find();
+		if($id !== null) $query->filter('pk', '=', $id, false);
+		$data = $query->findArray();
 		if(!$data) throw new Dormio_Manager_NoResultException("Query returned no records");
 		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
 		return $data[0];
@@ -115,12 +115,11 @@ class Dormio_Manager_Object extends Dormio_Manager {
 	}
 	
 	function find() {
-		$iter = new ArrayIterator(parent::find());
-		return new DormioResultSet($iter, $this->obj);
+		return new Dormio_ObjectSet(parent::find(), $this->obj);
 	}
 	
-	function findOne() {
-		$data = parent::findOne();
+	function findOne($id=null) {
+		$data = parent::findOne($id);
 		return Dormio::mapObject($data, $this->obj);
 	}
 	

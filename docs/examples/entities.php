@@ -25,7 +25,7 @@ return array(
 	'Profile' => array(
 		'fields' => array(
 			'user' => array('type' => 'onetoone', 'entity' => 'User'),
-			'fav_colour' => array('type' => 'string', 'max_length' => 10),
+			'fav_cheese' => array('type' => 'string', 'max_length' => 10),
 			'age' => array('type' => 'integer'),
 		),
 	),

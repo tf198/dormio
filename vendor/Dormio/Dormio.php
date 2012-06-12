@@ -29,6 +29,12 @@ class Dormio {
 	 * @var Object
 	 */
 	public $cache;
+	
+	/**
+	 * Pluggable logger
+	 * @var Object
+	 */
+	public static $logger;
 
 	public function __construct($pdo, $config, $cache=null) {
 		$this->pdo = $pdo;
@@ -55,7 +61,6 @@ class Dormio {
 		$stmt = $this->_getSelect($obj->_entity);
 		$stmt->execute(array($id));
 		$obj->_raw = $stmt->fetch(PDO::FETCH_ASSOC);
-		//foreach($obj->_raw as $key=>$value) $obj->$key = $value;
 		return self::mapObject($obj->_raw, $obj);
 	}
 
@@ -65,13 +70,13 @@ class Dormio {
 
 	function getObjectManager($name) {
 		$key = "_{$name}_MANAGER";
-		if(!$stored = $this->cache->get($key)) {
+		//if(!$stored = $this->cache->get($key)) {
 			class_exists('Dormio_Manager');
 			$obj = $this->getObject($name);
 			//$this->bindRelated($obj);
 			$stored = new Dormio_Manager_Object($obj);
-			$this->cache->set($key, $stored);
-		}
+			//$this->cache->set($key, $stored);
+		//}
 		return $stored;
 	}
 
@@ -141,65 +146,36 @@ class Dormio {
 		}
 		return $obj;
 	}
-	/*
-	 function bindRelated($obj) {
-	if(!$obj->_is_bound) throw new Dormio_Exception("Object not bound to Dormio");
-	if(isset($obj->is_bound_related)) return $obj;
-
-	$fields = $obj->_entity->getRelatedFields();
-	foreach($obj->_entity->getFields() as $field=>$spec) {
-	if($spec['type'] == 'manytomany') $fields[] = $field;
-	}
-
-	foreach($fields as $field) {
-	$spec = $obj->_entity->getField($field);
-	echo "BIND {$spec['type']} {$obj->_entity->name}->{$field}\n";
-	$manager = $this->getObjectManager($spec['entity']);
-	switch($spec['type']) {
-	case 'onetomany':
-	$local = $spec['local_field'];
-	if(!isset($obj->$local)) $obj->$local = null;
-	$manager->filterBind($spec['remote_field'], '=', $obj->$local, false);
-	break;
-	case 'manytomany':
-	var_dump($spec);
-	var_dump($manager->obj->_entity->name);
-	var_dump($manager->obj->_entity->getFields());
-	//$manager->filterBind('through_right__' . $spec['map_local_field'], '=', $obj->pk, false);
-	break;
-	}
-	$obj->$field = $manager;
-	}
-	$obj->_is_bound_related = true;
-	return $obj;
-	}
-	*/
+	
 	function bindRelated($obj, $field) {
 		if(!$obj->_is_bound) throw new Dormio_Exception("Object not bound to Dormio");
 		if(isset($obj->is_bound_related)) return $obj;
 
 		$spec = $obj->_entity->getField($field);
-		echo "BIND {$spec['type']} {$obj->_entity->name}->{$field}\n";
+		self::$logger && self::$logger->log("BIND {$spec['type']} {$obj->_entity->name}->{$field}");
 		$manager = $this->getObjectManager($spec['entity']);
 		switch($spec['type']) {
 			case 'onetomany':
+			case 'onetoone': // reverse end
 				$local = $spec['local_field'];
 				if(!isset($obj->$local)) $obj->$local = null;
 				$manager->filterBind($spec['remote_field'], '=', $obj->$local, false);
 				break;
 			case 'manytomany':
-				//var_dump($spec);
-				//var_dump($manager->obj->_entity->name);
-				//var_dump($manager->obj->_entity->getFields());
-				$this->bindRelated($manager->obj, 'through_right');
-				$manager->filterBind('through_right__' . $spec['map_local_field'], '=', $obj->pk, false);
-				//var_dump($manager->select());
+				// need to find the field that links back
+				$accessor = $this->config->getThroughAccessor($spec);
+				$this->bindRelated($manager->obj, $accessor);
+				$manager->filterBind("{$accessor}__{$spec['map_local_field']}", '=', $obj->pk, false);
+				var_dump($manager->select());
 				break;
+			default:
+				var_dump($spec);
+				throw new Dormio_Exception("Field [{$field}] is not a reverse related");
 		}
 		$obj->$field = $manager;
 			
 		$obj->_is_bound_related = true;
-		return $obj;
+		return $obj->$field;
 	}
 
 	function _getSelect($entity) {
@@ -236,7 +212,7 @@ class Dormio {
 	}
 
 	function executeQuery($query, $row_count=false) {
-		//var_dump($query);
+		self::$logger && self::$logger->log($query[0] . "; (" . implode(', ', $query[1]) . ")");
 		$stmt = $this->pdo->prepare($query[0]);
 		$stmt->execute($query[1]);
 		return ($row_count) ? $stmt->rowCount() : $stmt;
@@ -258,9 +234,10 @@ class Dormio {
 	}
 
 	static function mapObject($row, $obj) {
-		//echo "MAP {$obj->_entity->name}\n";
+		self::$logger && self::$logger->log("MAP {$obj->_entity->name} {$row['pk']}");
 		//var_dump($row);
 		foreach($obj->_entity->getFields() as $key=>$spec) {
+			
 			// map related with local field
 			if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
 				if(!isset($obj->$key)) {
@@ -280,7 +257,8 @@ class Dormio {
 				
 			// set or clear fields
 			if($spec['is_field']) {
-				$obj->$key = (isset($row[$key])) ? $row[$key] : null;
+				//$obj->$key = (isset($row[$key])) ? $row[$key] : null;
+				$obj->$key = $row[$key];
 				//echo "SET {$key} {$obj->$key}\n";
 			}
 				
@@ -291,7 +269,7 @@ class Dormio {
 
 	static function clearObject($obj) {
 		if(!$obj->_is_bound) throw new Dormio_Exception("Object not bound to Dormio");
-		foreach($obj->_entity->getFields() as $field=>$spec) $obj->$field = null;
+		foreach($obj->_entity->getFields() as $field=>$spec) unset($obj->$field);
 	}
 }
 
@@ -317,42 +295,74 @@ class Dormio_Cache {
 	}
 }
 
-class DormioResultSet implements Iterator {
-
-	private $obj, $iter;
-
+class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
+	
+	private $data, $obj;
+	
+	private $p, $c;
+	
 	/**
-	 * @todo Implement PDOStatement iterator
-	 * @param multitype:mixed $query
-	 * @param Dormio $dormio
-	 * @param multitype:string $reverse
-	 * @param string $mapper
+	 * 
+	 * @param multitype:mixed $data
+	 * @param Dormio_Object $obj
 	 */
-	function __construct($iter, $obj) {
-		$this->iter = $iter;
+	function __construct($data, $obj) {
+		$this->data = $data;
 		$this->obj = $obj;
+		$this->c = count($data);
 	}
-
+	
+	function offsetExists($offset) {
+		//echo "offsetExists({$offset})\n";
+		return isset($this->data[$offset]);
+	}
+	
+	function offsetGet($offset) {
+		//echo "offsetGet({$offset})\n";
+		return Dormio::mapObject($this->data[$offset], $this->obj);
+	}
+	
+	function offsetSet($offset, $value) {
+		//echo "offsetSet({$offset}, {$value})\n";
+		throw new Dormio_Exeption('Cannot update ObjectSet items');
+	}
+	
+	function offsetUnset($offset) {
+		//echo "offsetUnset({$offset})\n";
+		throw new Dormio_Exception('Cannot unset ObjectSet items');
+	}
+	
+	function count() {
+		//echo "count()\n";
+		return count($this->data);
+	}
+	
 	function rewind() {
-		$this->iter->rewind();
+		//echo "rewind()\n";
+		$this->p = -1;
+		$this->next();
 	}
-
-	function key() {
-		return $this->iter->key();
-	}
-
-	function valid() {
-		return $this->iter->valid();
-	}
-
+	
 	function current() {
-		$data = $this->iter->current();
-		$obj = Dormio::mapObject($data, $this->obj);
-		return $obj;
+		//echo "current()\n";
+		return $this->obj;
 	}
-
+	
+	function key() {
+		//echo "key()\n";
+		return $this->p;
+	}
+	
 	function next() {
-		$this->iter->next();
+		//echo "next()\n";
+		$this->p++;
+		// need to map here as current() gets called multiple times for each row
+		if(isset($this->data[$this->p])) Dormio::mapObject($this->data[$this->p], $this->obj);
+	}
+	
+	function valid() {
+		//echo "valid()\n";
+		return ($this->p < $this->c); 
 	}
 }
 

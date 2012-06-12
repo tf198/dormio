@@ -96,6 +96,14 @@ class Dormio_Config {
 		if(!isset($this->_relations[$entity])) return array();
 		return $this->_relations[$entity]; 
 	}
+	
+	function getThroughAccessor($spec) {
+		$reverse = $this->getReverseFields($spec['entity']);
+		foreach($reverse as $accessor=>$pair) {
+			if($pair[0] == $spec['through'] && $pair[1] == $spec['map_remote_field']) return $accessor;
+		}
+		throw new Dormio_Config_Exception("Entity [{$entity}] has no accessor for [{$target}->{$field}]");
+	}
 
 	/**
 	 * Get a list of all entities
@@ -400,6 +408,10 @@ class Dormio_Config_Entity {
 		return $spec;
 	}
 
+	function __toString() {
+		return "Entity {$this->name}: " . implode(', ', $this->getFieldNames());
+	}
+	
 	static function title($str) {
 		return ucwords(str_replace('_', ' ', $str));
 	}

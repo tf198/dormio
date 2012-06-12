@@ -11,14 +11,21 @@
 * This just registers the autoloader and creates an example database in memory
 * @example setup.php
 */ 
+
+class Logger {
+	function log($message, $level=LOG_INFO) { fputs(STDOUT, $message . "\n"); }
+}
+
 $pdo = include('setup.php');
 
 $entities = include('entities.php');
 $config = Dormio_Config::instance();
 $config->addEntities($entities);
 
+//Dormio::$logger = new Logger;
 $dormio = new Dormio($pdo, $config);
 
+// Can map onto any object you want
 $blog = new stdClass();
 $blog->title = "Hello, World";
 
@@ -29,28 +36,35 @@ $dormio->save($blog, 'Blog');
 
 // get a blog
 $blog = $dormio->getObject('Blog', 2);
+echo "\nBlog 2\n";
 echo "  {$blog->body}\n";
 
 $blogs = $dormio->getObjectManager('Blog');
-foreach($blogs->filter('comments__author', '=', 2) as $row) {
+echo "\nAll Blogs\n";
+foreach($blogs as $row) {
 	echo "  {$row->title}\n";
 }
 
-//$comments = $dormio->getObjectManager('Comment');
-//foreach($comments->with('blog') as $comment) var_dump($comment->blog->title);
-
 // get the related comments
 echo "\nComments for '{$blog->title}'\n";
-$dormio->bindRelated($blog, 'comments');
 foreach($blog->comments as $comment) {
   echo "  {$comment->body}\n";
 }
 
 echo "\nTags for '{$blog->title}'\n";
-$dormio->bindRelated($blog, 'tags');
 foreach($blog->tags as $tag) {
 	echo "  {$tag->tag}\n";
 }
+
+echo "\nBlogs tagged as Red\n";
+$tags = $dormio->getObjectManager('Tag');
+$tag = $tags->filter('tag', '=', 'Red')->findOne();
+var_dump($tag->tag);
+
+foreach($tag->blog_set as $blog) {
+	echo "  {$blog->title}\n";
+}
+
 
 // get only the comments by Bob (alternate related syntax)
 echo "\nComments for '{$blog->title}' by 'bob'\n";
@@ -80,8 +94,8 @@ foreach($set as $comment) {
 
 // complicated WHERE clause spanning multiple tables
 // we should get all the comments for Andy's blogs as he likes red.
-echo "\nComments on people who like red\n";
-$set = $comments->filter('blog__author__profile_set__fav_colour', 'IN', array('red', 'green'));
+echo "\nComments on people who like stilton or brie\n";
+$set = $comments->filter('blog__author__profile_set__fav_cheese', 'IN', array('Stilton', 'Brie'));
 foreach($set as $comment) {
   echo "  {$comment->body}\n";
 }
