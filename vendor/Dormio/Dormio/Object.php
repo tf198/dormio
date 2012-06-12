@@ -32,7 +32,7 @@ class Dormio_Object {
 				return $this->$field;
 			}
 		}
-		// assume it is a related field
+		// assume it is a related field and allow exceptions to get thrown
 		return $this->dormio->bindRelated($this, $field);
 	}
 }

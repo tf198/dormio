@@ -22,15 +22,21 @@ Blogs tagged as Orange
   Andy Blog 1
   Bob Blog 1
 
-Last 3 comments with their author
-  Andy Comment 2 on Bob Blog 1                       Andy Andrews
-  Bob Comment 1 on Andy Blog 2                       Bobby Brown
-  Andy Comment 1 on Andy Blog 2                      Andy Andrews
-
-Comments on people who like stilton or brie
+New comment has primary key 7
   Andy Comment 1 on Bob Blog 1
   Andy Comment 2 on Bob Blog 1
+  Andy likes commenting on his own posts
 
-Blog has 2 comments
+Last 3 comments with their author
+  Andy likes commenting on his own posts             Andy Andrews
+  Andy Comment 2 on Bob Blog 1                       Andy Andrews
+  Bob Comment 1 on Andy Blog 2                       Bobby Brown
+
+Comments about people who like stilton or brie
+  Andy Comment 1 on Bob Blog 1
+  Andy Comment 2 on Bob Blog 1
+  Andy likes commenting on his own posts
+
+Blog has 3 comments
 
 Oldest contributer is 46

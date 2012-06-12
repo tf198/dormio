@@ -1,4 +1,10 @@
 <?php
+/**
+ * Manager for entities
+ * A Query that can execute against a database
+ * @author Tris Forster
+ * @package Dormio
+ */
 class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	
 	/**
@@ -30,7 +36,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	}
 	
 	/**
-	 * Execute the query
+	 * Execute the query and return a multi-dimentional array
 	 * @return multitype:multitype:string
 	 */
 	function findArray() {
@@ -39,6 +45,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 		return array_map(array($this, 'mapArray'), $data);
 	}
 	
+	/**
+	 * Execute the query
+	 * @return multitype:multitype:string
+	 */
 	function find() {
 		return $this->findArray();
 	}
@@ -58,25 +68,32 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 		return $data[0];
 	}
 	
+	/**
+	 * Get an aggregator for SQL methods e.g. COUNT() MAX() AVG() etc...
+	 * @return Dormio_Aggregator
+	 */
 	function getAggregator() {
 		return new Dormio_Aggregator($this);
 	}
 	
+	/**
+	 * Deletes the records specified by this query
+	 * Also deletes related records where on_delete is set to 'cascade'
+	 * @return int number of records deleted
+	 */
 	function delete() {
 		$query = parent::delete();
 		return $this->dormio->executeQuery($query, true);
 	}
 	
+	/**
+	 * Does a batch update
+	 * @param multitype:string $params key/values to set
+	 * @see Dormio_Query::update()
+	 */
 	function update($params) {
 		$query = parent::update($params);
 		return $this->dormio->excuteQuery($query, true);
-	}
-	
-	/**
-	 * @TODO: fix this
-	 */
-	function insert() {
-		throw new Exception("Not yet implemented");
 	}
 	
 	/**
@@ -88,6 +105,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	}
 	
 	function filterBind($key, $op, &$value, $clone=true) {
+		// add the ability for IN to accept Dormio_Manager as well as arrays
 		if($op == 'IN' && $value instanceof Dormio_Manager) {
 			$o = clone $value;
 			$o->selectIdent();
@@ -97,6 +115,11 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 		return parent::filterBind($key, $op, $value, $clone);
 	}
 	
+	/**
+	 * Return number of results this query has
+	 * Will perform a COUNT operation on the database
+	 * @return int
+	 */
 	function count() {
 		if(!isset($this->_count)) {
 			$o = clone $this;
@@ -108,6 +131,11 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	}
 }
 
+/**
+ * Extends Manager to add object mapping to results
+ * @author Tris Forster
+ * @package Dormio
+ */
 class Dormio_Manager_Object extends Dormio_Manager {
 	function __construct($obj) {
 		parent::__construct($obj->_entity, $obj->dormio);
@@ -126,10 +154,42 @@ class Dormio_Manager_Object extends Dormio_Manager {
 	function getIterator() {
 		return $this->find();
 	}
+	
+	/**
+	 * Add an object to the current queryset
+	 * @param unknown_type $obj
+	 */
+	function add($obj) {
+		if(!isset($obj->_is_bound)) throw new Dormio_Manager_Exception("Object not bound to Dormio");
+		if($obj->_entity->name != $this->entity->name) throw new Dormio_Manager_Exception("Can only add entities of type [{$this->entity->name}]");
+		
+		// traverse the where list and set the properties
+		for($i=0, $c=count($this->query['where']); $i<$c; $i++) {
+			// mash a where clause into its associated AS field
+			$field = strtr($this->query['where'][$i], array( '<@' => '', '.@>' => '_', '{' => '', '}' => '', ' = ?' => ''));
+			$orig = $this->reverse[$field];
+			// bail if it is a span field
+			if(strpos('__', $orig) !== false) throw new Dormio_Manager_Exception("Can only add objects to simple filter queries");
+			$obj->{$orig} = $this->params[$i];
+		}
+		return $this->dormio->_insert($obj);
+	}
 }
 
+/**
+ * @package Dormio/Exception
+ *
+ */
 class Dormio_Manager_Exception extends Exception{};
 
+/**
+ * @package Dormio/Exception
+ *
+ */
 class Dormio_Manager_NoResultException extends Dormio_Manager_Exception {}
 
+/**
+ * @package Dormio/Exception
+ *
+ */
 class Dormio_Manager_MultipleResultsException extends Dormio_Manager_Exception {}

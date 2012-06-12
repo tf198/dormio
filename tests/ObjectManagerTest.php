@@ -20,7 +20,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 
 		// lazy load
 		$this->assertEquals('Andy', $blog->the_user->name);
-		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id"=?', 1);
+		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id" = ?', 1);
 
 		// eager load
 		$blog = $blogs->with('the_user')->findOne(1);

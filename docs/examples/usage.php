@@ -64,16 +64,19 @@ foreach($tag->blog_set as $blog) {
 	echo "  {$blog->title}\n";
 }
 
-/*
+
 
 // create a new comment about the blog
-$comment = $dormio->get('Comment');
+$comment = $dormio->getObject('Comment');
 $comment->author = 1;
 $comment->body = "Andy likes commenting on his own posts";
 $blog->comments->add($comment);
 // we forgot to save it but add does that for us
-echo "\nNew comment has primary key {$comment->ident()}\n\n";
-*/
+echo "\nNew comment has primary key {$comment->pk}\n";
+foreach($blog->comments as $comment) {
+	echo "  {$comment->body}\n";
+}
+
 // managers are reusable
 $comments = $dormio->getObjectManager('Comment');
 
@@ -86,7 +89,7 @@ foreach($set as $comment) {
 
 // complicated WHERE clause spanning multiple tables
 // we should get all the comments for Andy's blogs as he likes red.
-echo "\nComments on people who like stilton or brie\n";
+echo "\nComments about people who like stilton or brie\n";
 $set = $comments->filter('blog__author__profile_set__fav_cheese', 'IN', array('Stilton', 'Brie'));
 foreach($set as $comment) {
   echo "  {$comment->body}\n";
@@ -97,6 +100,8 @@ $stats = $blog->comments->getAggregator()->count()->run();
 echo "\nBlog has {$stats['pk.count']} comments\n";
 $stats = $dormio->getManager('Profile')->getAggregator()->max('age')->run();
 echo "\nOldest contributer is {$stats['age.max']}\n";
+
+//var_dump(get_included_files());
 
 return 42; // for our auto testing
 ?>

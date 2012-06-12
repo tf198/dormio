@@ -109,7 +109,10 @@ class Dormio {
 
 	function insert($obj, $entity_name) {
 		$this->bind($obj, $entity_name);
-
+		return $this->_insert($obj);
+	}
+	
+	function _insert($obj) {
 		$params = array();
 		foreach($obj->_entity->getFields() as $key=>$spec) {
 			// TODO: need to handle related fields
@@ -166,7 +169,11 @@ class Dormio {
 		if(!$obj->_is_bound) throw new Dormio_Exception("Object not bound to Dormio");
 		if(isset($obj->is_bound_related)) return $obj;
 
-		$spec = $obj->_entity->getField($field);
+		try {
+			$spec = $obj->_entity->getField($field);
+		} catch(Dormio_Config_Exception $e) {
+			throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no field [{$field}]");
+		}
 		if(!isset($spec['entity'])) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no related field [{$field}]");
 		self::$logger && self::$logger->log("BIND {$spec['type']} {$obj->_entity->name}->{$field}");
 		$manager = $this->getObjectManager($spec['entity']);
@@ -210,7 +217,7 @@ class Dormio {
 			$query = array(
 				'select' => $fields,
 				'from' => "{{$entity->table}}",
-				'where' => array("{{$entity->pk['db_column']}}=?"),
+				'where' => array("{{$entity->pk['db_column']}} = ?"),
 			);
 			$sql = $this->dialect->select($query);
 			$stored = $this->pdo->prepare($sql);

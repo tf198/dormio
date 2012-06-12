@@ -95,7 +95,7 @@ class Dormio_Query {
 
 	/**
 	 * Query compiler
-	 * @var Dormio_Dialect
+	 * @var Dormio_Dialect_Generic
 	 */
 	public $dialect;
 	
