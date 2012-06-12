@@ -51,25 +51,22 @@ foreach($blog->comments as $comment) {
   echo "  {$comment->body}\n";
 }
 
+// get only the comments by Bob
+echo "\nComments for '{$blog->title}' by 'bob'\n";
+foreach($blog->comments->filter('author__username', '=', 'bob') as $comment) {
+	echo "  {$comment->body}\n";
+}
+
 echo "\nTags for '{$blog->title}'\n";
 foreach($blog->tags as $tag) {
 	echo "  {$tag->tag}\n";
 }
 
-echo "\nBlogs tagged as Red\n";
+echo "\nBlogs tagged as Orange\n";
 $tags = $dormio->getObjectManager('Tag');
-$tag = $tags->filter('tag', '=', 'Red')->findOne();
-var_dump($tag->tag);
-
+$tag = $tags->filter('tag', '=', 'Orange')->findOne();
 foreach($tag->blog_set as $blog) {
 	echo "  {$blog->title}\n";
-}
-
-
-// get only the comments by Bob (alternate related syntax)
-echo "\nComments for '{$blog->title}' by 'bob'\n";
-foreach($blog->comments->filter('author__username', '=', 'bob') as $comment) {
-  echo "  {$comment->body}\n";
 }
 
 /*

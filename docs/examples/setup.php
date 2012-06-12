@@ -13,7 +13,9 @@ Dormio_AutoLoader::register();
 // our basic connection object is just a stock PDO instance
 $pdo = new PDO('sqlite::memory:');
 // quickly set up the schemas and load some data
-foreach(file($example_path . '/setup.sql') as $sql) $pdo->exec($sql);
+$i=0;
+foreach(file($example_path . '/setup.sql') as $sql) $i += $pdo->exec($sql);
+assert($i == 21); // error mode not set on pdo so double check everything loaded 
 
 // Use this connection in the other examples
 return $pdo;
