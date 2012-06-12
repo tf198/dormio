@@ -9,14 +9,18 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($blogs, 'findOne'));
 		$this->pdo->digest();
 
+		// bad pk load
+		$this->assertThrows('Dormio_Manager_NoResultException:', array($blogs, 'findOne'), 23);
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 23);
+		
 		// basic pk load
 		$blog = $blogs->findOne(2);
 		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 2);
 		$this->assertEquals('Andy Blog 2', $blog->title);
 
-		// bad pk load
-		$this->assertThrows('Dormio_Manager_NoResultException:', array($blogs, 'findOne'), 23);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 23);
+		// lazy load
+		$this->assertEquals('Andy', $blog->the_user->name);
+		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id"=?', 1);
 
 		// eager load
 		$blog = $blogs->with('the_user')->findOne(1);

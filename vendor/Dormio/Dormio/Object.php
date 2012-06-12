@@ -6,8 +6,13 @@ class Dormio_Object {
 	 */
 	public $dormio;
 	
+	/**
+	 * @var Dormio_Config_Entity
+	 */
+	public $_entity;
+	
 	function load($id) {
-		$this->dormio->load($id);
+		$this->dormio->load($this, $id);
 	}
 
 	function save() {
@@ -19,7 +24,15 @@ class Dormio_Object {
 	 * @param string $field
 	 */
 	function __get($field) {
-		//echo "MAGIC: {$this->_entity->name}->{$field}\n";
+		if($this->_entity->isField($field)) {
+			$spec = $this->_entity->getField($field);
+			// lazy loading
+			if($spec['is_field']) {
+				$this->load($this->pk);
+				return $this->$field;
+			}
+		}
+		// assume it is a related field
 		return $this->dormio->bindRelated($this, $field);
 	}
 }

@@ -35,6 +35,8 @@ class Dormio {
 	 * @var Object
 	 */
 	public static $logger;
+	
+	public static $profiler;
 
 	public function __construct($pdo, $config, $cache=null) {
 		$this->pdo = $pdo;
@@ -186,13 +188,17 @@ class Dormio {
 				
 			$fields = array();
 			foreach($entity->getFields() as $field=>$spec) {
-				if($spec['is_field']) $fields[] = "{{$spec['db_column']}} AS {{$field}}";
+				if($spec['is_field']) {
+					$s = "{{$spec['db_column']}}";
+					if($spec['db_column'] != $field) $s .= " AS {{$field}}";
+					$fields[] = $s;
+				}
 			}
 				
 			$query = array(
 				'select' => $fields,
-				'from' => $entity->table,
-				'where' => array($entity->pk['db_column'] . '=?'),
+				'from' => "{{$entity->table}}",
+				'where' => array("{{$entity->pk['db_column']}}=?"),
 			);
 			$sql = $this->dialect->select($query);
 			$stored = $this->pdo->prepare($sql);
@@ -315,55 +321,45 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	}
 	
 	function offsetExists($offset) {
-		//echo "offsetExists({$offset})\n";
 		return isset($this->data[$offset]);
 	}
 	
 	function offsetGet($offset) {
-		//echo "offsetGet({$offset})\n";
 		return Dormio::mapObject($this->data[$offset], $this->obj);
 	}
 	
 	function offsetSet($offset, $value) {
-		//echo "offsetSet({$offset}, {$value})\n";
 		throw new Dormio_Exeption('Cannot update ObjectSet items');
 	}
 	
 	function offsetUnset($offset) {
-		//echo "offsetUnset({$offset})\n";
 		throw new Dormio_Exception('Cannot unset ObjectSet items');
 	}
 	
 	function count() {
-		//echo "count()\n";
 		return count($this->data);
 	}
 	
 	function rewind() {
-		//echo "rewind()\n";
 		$this->p = -1;
 		$this->next();
 	}
 	
 	function current() {
-		//echo "current()\n";
 		return $this->obj;
 	}
 	
 	function key() {
-		//echo "key()\n";
 		return $this->p;
 	}
 	
 	function next() {
-		//echo "next()\n";
 		$this->p++;
 		// need to map here as current() gets called multiple times for each row
 		if(isset($this->data[$this->p])) Dormio::mapObject($this->data[$this->p], $this->obj);
 	}
 	
 	function valid() {
-		//echo "valid()\n";
 		return ($this->p < $this->c); 
 	}
 }
