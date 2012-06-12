@@ -141,6 +141,7 @@ class Dormio {
 			if(!$entity_name) $entity_name = get_class($obj);
 			$obj->_entity = $this->config->getEntity($entity_name);
 			$obj->dormio = $this;
+			$obj->pk = null;
 			$obj->_raw = array();
 			$obj->_is_bound = true;
 		}
@@ -152,6 +153,7 @@ class Dormio {
 		if(isset($obj->is_bound_related)) return $obj;
 
 		$spec = $obj->_entity->getField($field);
+		if(!isset($spec['entity'])) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no related field [{$field}]");
 		self::$logger && self::$logger->log("BIND {$spec['type']} {$obj->_entity->name}->{$field}");
 		$manager = $this->getObjectManager($spec['entity']);
 		switch($spec['type']) {
@@ -166,7 +168,7 @@ class Dormio {
 				$accessor = $this->config->getThroughAccessor($spec);
 				$this->bindRelated($manager->obj, $accessor);
 				$manager->filterBind("{$accessor}__{$spec['map_local_field']}", '=', $obj->pk, false);
-				var_dump($manager->select());
+				//var_dump($manager->select());
 				break;
 			default:
 				var_dump($spec);

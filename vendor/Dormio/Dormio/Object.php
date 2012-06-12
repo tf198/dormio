@@ -19,7 +19,7 @@ class Dormio_Object {
 	 * @param string $field
 	 */
 	function __get($field) {
-		echo "MAGIC: {$this->_entity->name}->{$field}\n";
+		//echo "MAGIC: {$this->_entity->name}->{$field}\n";
 		return $this->dormio->bindRelated($this, $field);
 	}
 }

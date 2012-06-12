@@ -40,6 +40,22 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 
 		$this->assertDigestedAll();
 	}
+	
+	function testRelated() {
+		$this->load("sql/test_schema.sql");
+		$this->load('sql/test_data.sql');
+		
+		$blog = $this->dormio->getObject('Blog', 1);
+		
+		$this->assertQueryset($blog->comments, 'title', array('Andy Comment 1 on Andy Blog 1', 'Bob Comment 1 on Andy Blog 1'));
+		
+		// forward many to many
+		$this->assertQueryset($blog->tags, 'tag', array('Yellow', 'Indigo'));
+		
+		// reverse many to many
+		$tag = $this->dormio->getObjectManager('Tag')->filter('tag', '=', 'Green')->findOne();
+		$this->assertQueryset($tag->blog_set, 'title', array('Andy Blog 2'));
+	}
 /*
 	function testCreate() {
 		$this->load("sql/test_schema.sql");
