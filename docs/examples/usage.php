@@ -12,17 +12,12 @@
 * @example setup.php
 */ 
 
-class Logger {
-	function log($message, $level=LOG_INFO) { fputs(STDOUT, $message . "\n"); }
-}
-
 $pdo = include('setup.php');
 
 $entities = include('entities.php');
 $config = Dormio_Config::instance();
 $config->addEntities($entities);
 
-//Dormio::$logger = new Logger;
 $dormio = new Dormio($pdo, $config);
 
 // Can map onto any object you want

@@ -3,7 +3,7 @@
  * Object to store connection and config objects
  * Contains methods for hydration, execution and low level database ops
  * @author Tris Forster
- *
+ * @package Dormio
  */
 class Dormio {
 	/**
@@ -32,15 +32,27 @@ class Dormio {
 	
 	/**
 	 * Pluggable logger
-	 * @var Object
+	 * @var Dormio_Logger
 	 */
 	public static $logger;
 	
+	/**
+	 * Pluggable profiler
+	 * implements `start($name)` and `stop($name)` methods
+	 * @var Dormio_Profiler
+	 */
 	public static $profiler;
 
+	/**
+	 * 
+	 * @param unknown_type $pdo
+	 * @param unknown_type $config
+	 * @param unknown_type $cache
+	 */
 	public function __construct($pdo, $config, $cache=null) {
 		$this->pdo = $pdo;
 		$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		if(get_class($pdo) == 'Dormio_Logging_PDO') Dormio_Logging_PDO::$logger = &self::$logger;
 		$this->config = $config;
 		$this->dialect = Dormio_Dialect::factory($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
 
@@ -220,7 +232,6 @@ class Dormio {
 	}
 
 	function executeQuery($query, $row_count=false) {
-		self::$logger && self::$logger->log($query[0] . "; (" . implode(', ', $query[1]) . ")");
 		$stmt = $this->pdo->prepare($query[0]);
 		$stmt->execute($query[1]);
 		return ($row_count) ? $stmt->rowCount() : $stmt;
@@ -281,6 +292,11 @@ class Dormio {
 	}
 }
 
+/**
+ * Simple cache implementation
+ * @author Tris Forster
+ * @package Dormio
+ */
 class Dormio_Cache {
 	/**
 	 * Cache our statements
@@ -288,21 +304,40 @@ class Dormio_Cache {
 	 */
 	public $_stored = array();
 
+	/**
+	 * Get a value from the cache
+	 * Returns false if not in cache
+	 * @param string $key
+	 * @return mixed
+	 */
 	function get($key) {
 		if(isset($this->_stored[$key])) return $this->_stored[$key];
 		return false;
 	}
 
+	/**
+	 * Set a value
+	 * @param string $key
+	 * @param mixed $value
+	 */
 	function set($key, $value) {
 		$this->_stored[$key] = $value;
 		//echo "CREATED {$key}\n";
 	}
 
+	/**
+	 * Remove all items from cache
+	 */
 	function clear() {
 		$this->_stored = array();
 	}
 }
 
+/**
+ * Array-type object for iterating results as Objects
+ * @author Tris Forster
+ * @package Dormio
+ */
 class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	
 	private $data, $obj;
@@ -364,4 +399,8 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	}
 }
 
+/**
+ * @package Dormio
+ *
+ */
 class Dormio_Exception extends Exception {}
