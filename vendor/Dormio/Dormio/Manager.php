@@ -17,6 +17,12 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 */
 	private $_count;
 	
+	/**
+	 * Track the filters for related managers
+	 * @var unknown_type
+	 */
+	public $filters = array();
+	
 	function __construct($entity, $dormio) {
 		$this->dormio = $dormio;
 		if(is_string($entity)) $entity = $dormio->config->getEntity($entity);
@@ -112,6 +118,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 			$stmt = $this->dormio->executeQuery($o->select());
 			$value = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 		}
+		$this->filters[$key] = $value;
 		return parent::filterBind($key, $op, $value, $clone);
 	}
 	
@@ -137,6 +144,9 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
  * @package Dormio
  */
 class Dormio_Manager_Object extends Dormio_Manager {
+	
+	public $related = null;
+	
 	function __construct($obj) {
 		parent::__construct($obj->_entity, $obj->dormio);
 		$this->obj = $obj;
@@ -161,18 +171,37 @@ class Dormio_Manager_Object extends Dormio_Manager {
 	 */
 	function add($obj) {
 		if(!isset($obj->_is_bound)) throw new Dormio_Manager_Exception("Object not bound to Dormio");
-		if($obj->_entity->name != $this->entity->name) throw new Dormio_Manager_Exception("Can only add entities of type [{$this->entity->name}]");
 		
-		// traverse the where list and set the properties
-		for($i=0, $c=count($this->query['where']); $i<$c; $i++) {
-			// mash a where clause into its associated AS field
-			$field = strtr($this->query['where'][$i], array( '<@' => '', '.@>' => '_', '{' => '', '}' => '', ' = ?' => ''));
-			$orig = $this->reverse[$field];
-			// bail if it is a span field
-			if(strpos('__', $orig) !== false) throw new Dormio_Manager_Exception("Can only add objects to simple filter queries");
-			$obj->{$orig} = $this->params[$i];
+		// sanity tests
+		if($obj->_entity->name != $this->entity->name) {
+			throw new Dormio_Manager_Exception("Can only add entities of type [{$this->entity->name}]");
 		}
+		if(count($this->params) != count($this->filters)) {
+			throw new Dormio_Manager_Exception("Can only add objects to simple filter queries");
+		}
+		
+		// update the passed objects with the filter fields
+		foreach($this->filters as $field=>$value) {
+			if(strpos($field, '__') !== false) throw new Dormio_Manager_Exception("Cannot add objects to joined queries");
+			$obj->{$field} = $value;
+		}
+		
 		return $this->dormio->_insert($obj);
+	}
+}
+
+class Dormio_Manager_ManyToMany extends Dormio_Manager_Object {
+	
+	public $source_spec;
+	
+	public $accessor;
+	
+	function __construct($obj, $source_spec) {
+		parent::__construct($obj);
+		$this->accessor = $this->config->getThroughAccessor($source_spec);
+		$this->bindRelated($obj, $this->accessor);
+		$this->filterBind("{$this->accessor}__{$source_spec['map_local_field']}", '=', $obj->pk, false);
+		$this->source_spec = $source_spec;
 	}
 }
 
