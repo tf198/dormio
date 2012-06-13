@@ -18,8 +18,8 @@
  <refsect2 id="{@id setup}">
   <title>Setup</title>
   <para>
-    In order to use Dormio you need an autoloader.  You may be able to adapt one from an existing
-    framework but if not Dormio provides one.  After that you just need some {@tutorial example.pkg#models models} and a 
+    In order to use Dormio you need an autoloader.  You can use any PSR-0 compatible loader from the framework
+    of your choice but if not Dormio provides one.  After that you just need some {@tutorial example.pkg#entities models} and a 
     PDO connection.
   </para>
   <para>
@@ -28,29 +28,27 @@
   </para>
   {@example setup.php}
  </refsect2>
- <refsect2 id="{@id models}">
-  <title>Models</title>
+ <refsect2 id="{@id entities}">
+  <title>Entities</title>
   <para>
-    This is the skeleton for a really basic blogging system (as with every ORM tutorial!).  In a real world application
-    you might split the models into separate files for easier maintainance.  Models can have whatever extra
-    methods you want on them, in fact this is the best place to put any business logic relating to the data.
+    This is the skeleton for a really basic blogging system (as with every ORM tutorial!).  TODO: Explain entities and models
   </para>
-  {@example models.php}
+  {@example entities.php}
  </refsect2>
  <refsect2 id="{@id basic}">
-  <title>Basic Model Usage</title>
+  <title>Basic Usage</title>
   <para>
-    Adding and querying models.
+    Adding and querying rows from tables.
     <programlisting>php docs/examples/usage.php</programlisting>
   </para>
   {@example usage.php}
  </refsect2>
- <refsect2 id="{@id forms}">
+ <!--refsect2 id="{@id forms}">
   <title>Form Generation</title>
   <para>
     Turn your model into a form. Most of this example is just setup and formatting: short form would be
     <programlisting role="php"><![CDATA[
-$blog = $dormio->get('Blog', 3);
+$blog = $dormio->getObject('Blog', 3);
 $form = new Dormio_Form($blog);
 if($form->isValid()) {
   $form->save();
@@ -60,7 +58,7 @@ if($form->isValid()) {
     ]]></programlisting>
   </para>
   {@example forms.php}
- </refsect2>
+ </refsect2-->
  <refsect2 id="{@id schema}">
   <title>Schema Generation</title>
   <para>
