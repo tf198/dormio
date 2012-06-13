@@ -3,8 +3,6 @@ PHPUNIT=  phpunit
 PHP = php
 VERSION = 0.8.1
 
-TESTS = tests/all_tests.php tests/example_tests.php
-
 DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn Dormio
 
 all: build
@@ -27,12 +25,12 @@ docs/dev: classes/Dormio check
   
 docs/api: vendor/Dormio check
 	${PHPDOC} ${DOC_OPTIONS} -d docs,$< -t $@
-
-remote-docs: docs/api
-	rsync -r $< tris@tfconsulting.com.au:~/public_html/dormio/
   
-check:
+check: tests/data/entities.sql docs/examples/entities.sql
 	${PHPUNIT}
+
+%/entities.sql: %/entities.php
+	${PHP} tools/generate_sql.php $< > $@
   
 clean:
 	rm -rf docs/api docs/dev

@@ -4,8 +4,8 @@ require_once(TEST_PATH . '/DBTest.php');
 class Dormio_ObjectTest extends Dormio_DBTest{
 	
 	function testGetObject() {
-		$this->load("sql/test_schema.sql");
-		$this->load('sql/test_data.sql');
+		$this->load("data/entities.sql");
+		$this->load('data/test_data.sql');
 		
 		$blog = $this->dormio->getObject('Blog');
 		$this->assertEquals(0, $this->pdo->count());
@@ -21,7 +21,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 	
 	function testInsertUpdateDelete() {
-		$this->load("sql/test_schema.sql");
+		$this->load("data/entities.sql");
 		// insert new
 		$u1 = $this->dormio->getObject('User');
 		$u1->name = 'Andy';
@@ -56,8 +56,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 	
 	function testUpdate() {
-		$this->load("sql/test_schema.sql");
-		$this->load('sql/test_data.sql');
+		$this->load("data/entities.sql");
+		$this->load('data/test_data.sql');
 		
 		$blog = $this->dormio->getObject('Blog', 3);
 		$this->pdo->digest();
@@ -74,8 +74,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	 * 
 	 */
 	function testToString() {
-		$this->load("sql/test_schema.sql");
-		$this->load('sql/test_data.sql');
+		$this->load("data/entities.sql");
+		$this->load('data/test_data.sql');
 
 		$blog = $this->dormio->getObject('Blog');
 		$this->assertEquals((string)$blog, '[New Blog]');
@@ -92,7 +92,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 
 	function testNotFound() {
-		$this->load("sql/test_schema.sql");
+		$this->load("data/entities.sql");
 		$blog = $this->dormio->getObject('Blog');
 		
 		$this->assertThrows( 'Dormio_Exception: Entity [Blog] has no record with primary key 1',
@@ -100,8 +100,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 
 	function testDelete() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blog = $this->dormio->getObject('Blog');
 
@@ -121,8 +121,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 
 	function testForeignKey() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$b1 = $this->dormio->getObject('Blog', '1');
 
@@ -157,8 +157,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 	function testRepeatRelations() {
 		// this test is needed as we use a reference to the parent id
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$users = $this->dormio->getManager("User");
 		$expected_users = array('Andy', 'Bob', 'Charles');
@@ -188,8 +188,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 
 	function testOneToOne() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		// Forward Lazy
 		$p = $this->dormio->getObject('Profile', 2);
@@ -236,8 +236,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 
 	function testManyToMany() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		// Forward
 		$b1 = $this->dormio->getObject('Blog', 1, true); // lazy load
@@ -271,8 +271,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	}
 
 	function testManyToManyReverse() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$tag = $this->dormio->getObject('Tag', 4);
 		$this->pdo->digest();

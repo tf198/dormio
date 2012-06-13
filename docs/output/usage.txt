@@ -6,7 +6,7 @@ All Blogs
   Andy Blog 1
   Andy Blog 2
   Bob Blog 1
-  New title
+  Hello, World
 
 Comments for 'Andy Blog 2'
   Andy Comment 1 on Andy Blog 2

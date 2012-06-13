@@ -21,10 +21,12 @@ $dormio = new Dormio($pdo, $config);
 // Can map onto any object you want
 $blog = new stdClass();
 $blog->title = "Hello, World";
+$blog->body = "Welcome one and all";
+$blog->author = 1;
 
 $dormio->save($blog, 'Blog');
 
-$blog->title = "New title";
+$blog->body = "My first blog";
 $dormio->save($blog, 'Blog');
 
 // get a blog

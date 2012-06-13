@@ -1,0 +1,12 @@
+CREATE TABLE "blog" ("blog_id" INTEGER PRIMARY KEY AUTOINCREMENT, "title" TEXT NOT NULL, "body" TEXT NOT NULL, "author_id" INTEGER NOT NULL);
+CREATE INDEX "blog_author_0" ON "blog" ("author_id" ASC);
+CREATE TABLE "comment" ("comment_id" INTEGER PRIMARY KEY AUTOINCREMENT, "blog_id" INTEGER NOT NULL, "body" TEXT NOT NULL, "author_id" INTEGER NOT NULL);
+CREATE INDEX "comment_blog_0" ON "comment" ("blog_id" ASC);
+CREATE INDEX "comment_author_0" ON "comment" ("author_id" ASC);
+CREATE TABLE "user" ("user_id" INTEGER PRIMARY KEY AUTOINCREMENT, "username" TEXT NOT NULL, "password" TEXT NOT NULL, "display_name" TEXT NOT NULL);
+CREATE TABLE "profile" ("profile_id" INTEGER PRIMARY KEY AUTOINCREMENT, "user_id" INTEGER NOT NULL, "fav_cheese" TEXT NOT NULL, "age" INTEGER NOT NULL);
+CREATE INDEX "profile_user_0" ON "profile" ("user_id" ASC);
+CREATE TABLE "tag" ("tag_id" INTEGER PRIMARY KEY AUTOINCREMENT, "tag" TEXT NOT NULL);
+CREATE TABLE "blog_x_tag" ("blog_x_tag_id" INTEGER PRIMARY KEY AUTOINCREMENT, "l_blog_id" INTEGER NOT NULL, "r_tag_id" INTEGER NOT NULL);
+CREATE INDEX "blog_x_tag_lhs_0" ON "blog_x_tag" ("l_blog_id" ASC);
+CREATE INDEX "blog_x_tag_rhs_0" ON "blog_x_tag" ("r_tag_id" ASC);

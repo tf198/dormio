@@ -31,14 +31,19 @@ INSERT INTO comment_x_tag VALUES (3, 3, 4);
 INSERT INTO comment_x_tag VALUES (4, 2, 7);
 INSERT INTO comment_x_tag VALUES (5, 1, 5);
 
-INSERT INTO module VALUES (1, 'Core');
-INSERT INTO module VALUES (2, 'Blog');
-INSERT INTO module VALUES (3, 'Comment');
-INSERT INTO module VALUES (4, 'Tags');
+INSERT INTO multidep VALUES (1, 'Core');
+INSERT INTO multidep VALUES (2, 'Blog');
+INSERT INTO multidep VALUES (3, 'Comment');
+INSERT INTO multidep VALUES (4, 'Tags');
 
-INSERT INTO module_x_module VALUES (1, 2, 1);
-INSERT INTO module_x_module VALUES (2, 3, 2);
-INSERT INTO module_x_module VALUES (3, 4, 2);
+INSERT INTO multidep_x_multidep VALUES (1, 2, 1);
+INSERT INTO multidep_x_multidep VALUES (2, 3, 2);
+INSERT INTO multidep_x_multidep VALUES (3, 4, 2);
 
-INSERT INTO aro VALUES (1, 1, 4, '/');
-INSERT INTO aro VALUES (2, 2, 3, 'admin');
+INSERT INTO Tree VALUES (1, "Parent", 0);
+INSERT INTO Tree VALUES (2, "Animals", 1);
+INSERT INTO Tree VALUES (3, "Cat", 2);
+INSERT INTO Tree VALUES (4, "Dog", 2);
+INSERT INTO Tree VALUES (5, "Vehicles", 1);
+INSERT INTO Tree VALUES (6, "Car", 5);
+INSERT INTO Tree VALUES (7, "Bike", 5);

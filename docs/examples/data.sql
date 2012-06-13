@@ -1,9 +1,3 @@
-CREATE TABLE blog (blog_id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR(30), body TEXT, author_id INTEGER);
-CREATE TABLE comment (comment_id INTEGER PRIMARY KEY AUTOINCREMENT, blog_id INTEGER, body TEXT, author_id INTEGER);
-CREATE TABLE user (user_id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(30), password VARCHAR(30), display_name VARCHAR(60));
-CREATE TABLE profile (profile_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, fav_cheese VARCHAR(30), age INTEGER);
-CREATE TABLE tag (tag_id INTEGER PRIMARY KEY AUTOINCREMENT, tag VARCHAR(30));
-CREATE TABLE blog_x_tag (blog_x_tag_id INTEGER PRIMARY KEY AUTOINCREMENT, l_blog_id INTEGER, r_tag_id INTEGER);
 INSERT INTO user VALUES (1, 'andy', 'secret', 'Andy Andrews');
 INSERT INTO user VALUES (2, 'bob', 'asb123', 'Bobby Brown');
 INSERT INTO user VALUES (3, 'charles', 'himom', 'Charlie Chalk');

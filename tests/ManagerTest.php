@@ -4,8 +4,8 @@ require_once 'DBTest.php';
 class Dormio_ManagerTest extends Dormio_DBTest{
 	
 	function testFindOneArray() {
-		$this->load("sql/test_schema.sql");
-		$this->load('sql/test_data.sql');
+		$this->load("data/entities.sql");
+		$this->load('data/test_data.sql');
 	
 		$blogs = $this->dormio->getManager('Blog');
 	
@@ -44,8 +44,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 	
 	function testFindOne() {
-		$this->load("sql/test_schema.sql");
-		$this->load('sql/test_data.sql');
+		$this->load("data/entities.sql");
+		$this->load('data/test_data.sql');
 
 		$blogs = $this->dormio->getManager('Blog');
 
@@ -89,8 +89,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 	
 	function testRelated() {
-		$this->load("sql/test_schema.sql");
-		$this->load('sql/test_data.sql');
+		$this->load("data/entities.sql");
+		$this->load('data/test_data.sql');
 		
 		$blog = $this->dormio->getObject('Blog', 1);
 		
@@ -105,7 +105,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 /*
 	function testCreate() {
-		$this->load("sql/test_schema.sql");
+		$this->load("data/entities.sql");
 		$blogs = new Dormio_Manager('Blog', $this->pdo);
 
 		$b1 = $blogs->create();
@@ -124,8 +124,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testGetOrCreate() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blogs = new Dormio_Manager('Blog', $this->pdo);
 
@@ -145,8 +145,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 */
 	function testAggregationMethods() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$tags = $this->dormio->getManager('Tag');
 
@@ -163,15 +163,15 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testInsert() {
-		$this->load("sql/test_schema.sql");
+		$this->load("data/entities.sql");
 		$blogs = $this->dormio->getManager('Blog');
 		$stmt = $blogs->insert(array('title', 'the_user'));
 		$this->assertEquals($stmt->_stmt->queryString, 'INSERT INTO "blog" ("title", "the_blog_user") VALUES (?, ?)');
 	}
 
 	function testUpdate() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 		
 		$comments = $this->dormio->getManager('Comment');
 		$set = $comments->filter('blog', '=', 1)->filter('tags__tag', '=', 'Green');
@@ -181,8 +181,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testDelete() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blogs = $this->dormio->getManager('Blog');
 		$set = $blogs->filter('title', '=', 'Andy Blog 1');
@@ -192,26 +192,26 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testForeignKeyCreate() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 		
 		$blog = $this->dormio->getObject('Blog', 2);
 		$this->assertEquals($blog->title, 'Andy Blog 2');
 
-		$comment = $blog->comments->create(array('title' => 'New Comment'));
-		$comment->user = 1;
+		$comment = $blog->comments->create(array('title' => 'New Comment', 'user' => 1));
+		$comment->title = "Updated comment";
 		$comment->save();
 		$this->pdo->digest();
 		$this->assertEquals($this->pdo->digest(),
-				array('INSERT INTO "comment" ("title", "blog_id") VALUES (?, ?)', array(array('New Comment', 2))));
+				array('INSERT INTO "comment" ("title", "the_comment_user", "blog_id") VALUES (?, ?, ?)', array(array('New Comment', 1, 2))));
 		$this->assertEquals($this->pdo->digest(),
-		  array('UPDATE "comment" SET "the_comment_user"=? WHERE "comment_id" = ?', array(array(1, 4))));
+				array('UPDATE "comment" SET "title"=? WHERE "comment_id" = ?', array(array("Updated comment", 4))));
 		$this->assertDigestedAll();
 	}
 
 	function testForeignKeyAdd() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 		
 		$blog = $this->dormio->getObject('Blog', 2);
 		$this->assertEquals($blog->title, 'Andy Blog 2');
@@ -226,8 +226,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testManyToManyAdd() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blog = $this->dormio->getObject('Blog', 1, true);
 
@@ -253,8 +253,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testClear() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blog = $this->dormio->getObject('Blog', 1, true);
 		$this->assertEquals($blog->tags->clear(), 2);
@@ -264,8 +264,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testRemove() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blog = $this->dormio->getObject('Blog', 1, true);
 
@@ -287,8 +287,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 	
 	function testCount() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blogs = $this->dormio->getManager('Blog');
 
@@ -304,8 +304,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testFilterIn() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blogs = $this->dormio->getManager('Blog');
 		$comments = $this->dormio->getManager('Comment');
@@ -321,8 +321,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 /*
 	function testHasResults() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blogs = $this->dormio->getManager('Blog');
 
@@ -343,8 +343,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 */
 	function testfindArray() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 			
 		$blogs = $this->dormio->getManager('Blog');
 			
@@ -360,8 +360,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	}
 
 	function testJoinSanity() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
 
 		$blogs = $this->dormio->getManager('Blog');
 		$comments = $this->dormio->getManager('Comment');

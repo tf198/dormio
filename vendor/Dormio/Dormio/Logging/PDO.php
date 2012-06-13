@@ -59,8 +59,10 @@ class Dormio_Logging_PDO extends PDO {
   }
   
   function exec($sql) {
+  	$id = count($this->stack);
+  	$sql = trim($sql);
     array_push($this->stack, array($sql, array()));
-    self::$logger && self::$logger->log($sql, LOG_DEBUG);
+    self::$logger && self::$logger->log("<EXEC:{$id}>: {$sql}", LOG_DEBUG);
     return parent::exec($sql);
   }
   

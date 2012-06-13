@@ -47,6 +47,12 @@ class Dormio_Object {
 		return $this->dormio->delete($this);
 	}
 	
+	function setValues($arr) {
+		foreach($arr as $key=>$value) {
+			$this->$key = $value;
+		}
+	}
+	
 	/**
 	 * Bit of *magic* to bind related types as required
 	 * @param string $field

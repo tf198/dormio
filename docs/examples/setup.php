@@ -16,24 +16,12 @@ Dormio_AutoLoader::register();
 // our basic connection object is just a stock PDO instance
 $pdo = new PDO('sqlite::memory:');
 
-// this is just for my testing - turn it on if you want to see whats happening
-if(false) {
-	/**
-	 * Simple logger implementation
-	 * @package Dormio/Examples
-	 *
-	 */
-	class Logger implements Dormio_Logger{
-		function log($message, $level=LOG_INFO) {
-			fputs(STDOUT, $message . "\n");
-		}
-	}
-	$pdo = new Dormio_Logging_PDO('sqlite::memory:');
-	Dormio::$logger = new Logger;
-}
+// uncomment this to see what is going on
+#include 'debug.php';
 
 // quickly set up the schemas and load some data
-foreach(file($example_path . '/setup.sql') as $sql) $pdo->exec($sql);
+foreach(file($example_path . '/entities.sql') as $sql) $pdo->exec($sql);
+foreach(file($example_path . '/data.sql') as $sql) $pdo->exec($sql);
 
 // Use this connection in the other examples
 return $pdo;

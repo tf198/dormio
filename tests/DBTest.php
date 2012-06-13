@@ -30,6 +30,7 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 		$lines = file(TEST_PATH . '/' . $name);
 		if(!$lines) throw new Exception('Failed to load file: ' . $name);
 		foreach($lines as $sql) {
+			$sql = trim($sql);
 			try {
 				if($sql) $this->pdo->exec($sql);
 			} catch(PDOException $e) {

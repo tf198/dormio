@@ -60,7 +60,8 @@ $query->filter('author__profile_set__age', '>', 12)->select();
 bench('select() - complex filter');
 
 $pdo = new PDO('sqlite::memory:');
-foreach(file('docs/examples/setup.sql') as $sql) $pdo->exec($sql);
+foreach(file('docs/examples/entities.sql') as $sql) $pdo->exec($sql);
+foreach(file('docs/examples/data.sql') as $sql) $pdo->exec($sql);
 bench('Table prepared');
 
 class_exists('Dormio');
@@ -79,13 +80,13 @@ for($i=0; $i<LOOP; $i++) {
 bench('Dormio::getObject() multiple');
 
 $o = $dormio->getObject('Blog');
-$o->title = 'Test';
+$o->setValues(array('title'=>'Test', 'body'=>'Testing', 'author'=>1));
 $dormio->insert($o, 'Blog');
 bench('Insert one object');
 
 for($i=0; $i<LOOP; $i++) {
 	$o = $dormio->getObject('Blog');
-	$o->title = 'Test ' . $i;
+	$o->setValues(array('title'=>'Test ' . $i, 'body'=>'Testing', 'author'=>1));
 	$dormio->save($o);
 }
 assert($o->pk == LOOP + 4);
@@ -113,7 +114,7 @@ unset($iter);
 bench('Object iteration');
 
 $result = $blogs->filter('author__profile_set__age', '<', 40)->getAggregator()->count()->run();
-assert($result['pk.count'] == 2);
+assert($result['pk.count'] == LOOP + 3);
 bench('Dormio_Aggregator');
 
 assert($blogs->count() == 604);
