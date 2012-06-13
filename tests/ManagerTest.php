@@ -161,10 +161,10 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->assertEquals($data['pk.sum'], 28);
 		$this->assertEquals($data['pk.avg'], 4);
 	}
-/*
+
 	function testInsert() {
 		$this->load("sql/test_schema.sql");
-		$blogs = new Dormio_Manager('Blog', $this->pdo);
+		$blogs = $this->dormio->getManager('Blog');
 		$stmt = $blogs->insert(array('title', 'the_user'));
 		$this->assertEquals($stmt->_stmt->queryString, 'INSERT INTO "blog" ("title", "the_blog_user") VALUES (?, ?)');
 	}
@@ -172,10 +172,11 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	function testUpdate() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
-		$comments = new Dormio_Manager('Comment', $this->pdo);
+		
+		$comments = $this->dormio->getManager('Comment');
 		$set = $comments->filter('blog', '=', 1)->filter('tags__tag', '=', 'Green');
 		$this->assertEquals($set->update(array('title' => 'New Title')), 1);
-		$comment = $comments->get(1);
+		$comment = $comments->findOne(1);
 		$this->assertEquals($comment->title, 'New Title');
 	}
 
@@ -183,18 +184,18 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blogs = new Dormio_Manager('Blog', $this->pdo);
+		$blogs = $this->dormio->getManager('Blog');
 		$set = $blogs->filter('title', '=', 'Andy Blog 1');
 		// 1 blog with 2 tags and 2 comments with 4 comment tags between them
 		$this->assertEquals($set->delete(), 9);
 		//var_dump($this->pdo->stack);
 	}
-
+/*
 	function testForeignKeyCreate() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
-		$blog = new Blog($this->pdo);
-		$blog->load(2);
+		
+		$blog = $this->dormio->getObject('Blog', 2);
 		$this->assertEquals($blog->title, 'Andy Blog 2');
 
 		$comment = $blog->comments->create(array('title' => 'New Comment'));
@@ -202,12 +203,12 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$comment->save();
 		$this->pdo->digest();
 		$this->assertEquals($this->pdo->digest(),
-				array('INSERT INTO "comment" ("blog_id", "title") VALUES (?, ?)', array(array(2, 'New Comment'))));
+				array('INSERT INTO "comment" ("title", "blog_id") VALUES (?, ?)', array(array('New Comment', 2))));
 		$this->assertEquals($this->pdo->digest(),
 		  array('UPDATE "comment" SET "the_comment_user"=? WHERE "comment_id" = ?', array(array(1, 4))));
 		$this->assertDigestedAll();
 	}
-
+/*
 	function testForeignKeyAdd() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");

@@ -58,6 +58,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		return array($store, $args, $this->entity->name, $this->reverse);
 	}
 	
+	function object() {
+		return $this->dormio->getObject($this->entity->name);
+	}
+	
 	/**
 	 * Execute the query and return a multi-dimentional array
 	 * @return multitype:multitype:string
@@ -87,8 +91,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return Dormio_Object
 	 */
 	function find() {
-		$obj = $this->dormio->getObject($this->entity->name);
-		return new Dormio_ObjectSet($this->findArray(), $obj);
+		return new Dormio_ObjectSet($this->findArray(), $this->object());
 	}
 	
 	/**
@@ -114,8 +117,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 */
 	function findOne($id=null) {
 		$data = $this->findOneArray($id);
-		$obj = $this->dormio->getObject($this->entity->name);
-		return Dormio::mapObject($data, $obj);
+		return Dormio::mapObject($data, $this->object());
 	}
 	
 	/**
@@ -132,8 +134,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return int number of records deleted
 	 */
 	function delete() {
-		$query = parent::delete();
-		return $this->dormio->executeQuery($query, true);
+		$sql = parent::delete();
+		$i = 0;
+		foreach($sql as $query) $i += $this->dormio->executeQuery($query, true);
+		return $i;
 	}
 	
 	/**
@@ -143,7 +147,17 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 */
 	function update($params) {
 		$query = parent::update($params);
-		return $this->dormio->excuteQuery($query, true);
+		return $this->dormio->executeQuery($query, true);
+	}
+	
+	/**
+	 * Gets a prepared statement for high performance inserts
+	 * @param multitype:string $fields field names
+	 * @return PDOStatement
+	 */
+	function insert($fields) {
+		$query = parent::insert(array_flip($fields));
+		return $this->dormio->pdo->prepare($query[0]);
 	}
 	
 	/**
@@ -203,6 +217,13 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		}
 	
 		return $this->dormio->_insert($obj);
+	}
+	
+	function create($arr) {
+		$obj = $this->object();
+		Dormio::mapObject($arr, $obj);
+		$this->add($obj);
+		return $obj;
 	}
 }
 
