@@ -112,36 +112,46 @@ class Dormio {
 		return $this->_insert($obj);
 	}
 	
-	function _insert($obj) {
+	function _params($obj) {
+		if(!isset($obj->_raw)) throw new Dormio_Exception("No raw data to compare to");
+		
 		$params = array();
-		foreach($obj->_entity->getFields() as $key=>$spec) {
-			// TODO: need to handle related fields
-			if($spec['is_field'] && isset($obj->$key)) {
-				$params[$spec['db_column']] = $obj->$key;
+		foreach($obj->_entity->getFields() as $name=>$spec) {
+			if($spec['is_field'] && isset($obj->$name)) {
+				// check they are not trying to change the pk
+				if($name == 'pk') continue;
+				$column=  $spec['db_column'];
+				
+				// ignore unchanged items
+				if(isset($obj->_raw[$column]) && $obj->_raw[$column] == $obj->$name) continue;
+				
+				$value = $obj->$name;
+				if(is_object($value)) $value = $value->pk;
+				
+				$params[$column] = $value;
+				$obj->_raw[$column] = $value;
 			}
 		}
+		return $params;
+	}
+	
+	function _insert($obj) {
+		$obj->_raw = array();
+		$params = $this->_params($obj);
 		if(!$params) throw new Exception("No fields to update on entity [{$obj->_entity->name}]");
 
 		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
 		$stmt->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
-		$obj->_raw = $params;
+		//$obj->_raw = $params;
 		return true;
 	}
 
 	function update($obj) {
 		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object hasn't been bound to Dormio");
 		if(!isset($obj->_raw)) throw new Dormio_Exception("Object has no previous data");
-
-		$params = array();
-		foreach($obj->_entity->getFields() as $name=>$spec) {
-			if($spec['is_field'] && isset($obj->$name)) {
-				if($name == 'pk') continue;
-				if(isset($obj->_raw[$name]) && $obj->_raw[$name]==$obj->$name) continue;
-				$params[$name] = $obj->$name;
-				$obj->_raw[$name] = $obj->$name;
-			}
-		}
+		
+		$params = $this->_params($obj);
 		if(!$params) {
 			echo "Nothing to save\n";
 			return false;
@@ -176,7 +186,6 @@ class Dormio {
 			$obj->_entity = $this->config->getEntity($entity_name);
 			$obj->dormio = $this;
 			$obj->pk = null;
-			$obj->_raw = array();
 			$obj->_is_bound = true;
 		}
 		return $obj;
@@ -196,6 +205,7 @@ class Dormio {
 		
 		$entity = $this->config->getEntity($spec['entity']);
 		$class_name = "Dormio_Manager_{$spec['type']}";
+		class_exists('Dormio_Manager');
 		if(!class_exists($class_name)) throw new Dormio_Exception("Field [{$field}] has an unexpected related type [{$spec['type']}]");
 		$obj->$field = new $class_name($entity, $this, $obj, $spec);
 		

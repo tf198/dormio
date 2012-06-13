@@ -190,7 +190,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->assertEquals($set->delete(), 9);
 		//var_dump($this->pdo->stack);
 	}
-/*
+
 	function testForeignKeyCreate() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
