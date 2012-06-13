@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<refentry id="{@id}">
+   
+
+  <refnamediv>
+    <refname>Django Comparison</refname>
+  </refnamediv>
+
+   {@toc} 
+
+  <refsect1 id="{@id intro}">
+    <title>Introduction</title>
+
+    <para>Dormio is (very) heavily based on Django ORM, mainly because the API
+    is so mature and intuative. Obviously PHP isn't Python so there are
+    significant differences in implementation and while the methods are
+    largely the same, the arguments are often different</para>
+  </refsect1>
+
+
+  <refsect2 id="{@id fields}">
+    <title>Fields</title>
+
+    <para>TODO</para>
+
+    <table align="center" border="1">
+      <title>Field Options</title>
+      <tgroup cols="2">
+        <thead  style="font-weight: bold; text-align: center;">
+          <row>
+            <entry>Django</entry>
+            <entry>Dormio</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>null=True</entry>
+            <entry>'null_ok' => true</entry>
+          </row>
+          <row>
+            <entry>blank=True</entry>
+            <entry>Not yet implemented</entry>
+          </row>
+          <row>
+            <entry>choices=&lt;dict&gt;</entry>
+            <entry>'choices' => array(1 => 'One', ...)</entry>
+          </row>
+          <row>
+            <entry>db_column='foo'</entry>
+            <entry>'db_column' => 'foo'</entry>
+          </row>
+          <row>
+            <entry>db_index='foo'</entry>
+            <entry>Not implemented. Use a separate indexes => array('foo') on meta.</entry>
+          </row>
+          <row>
+            <entry>default=&lt;value&gt;</entry>
+            <entry>'default' => &lt;value&gt;</entry>
+          </row>
+          <row>
+            <entry>unique=True</entry>
+            <entry>'unique' => true</entry>
+          </row>
+          <row>
+            <entry>verbose_name='My Foo Field'</entry>
+            <entry>'verbose' => 'My Foo Field'</entry>
+          </row>
+          <row>
+            <entry>
+              <simplelist>
+                <member>db_tablespace</member>
+                <member>editable</member>
+                <member>error_messages</member>
+                <member>help_text</member>
+                <member>unique_for_date</member>
+                <member>unique_for_month</member>
+                <member>unique_for_year</member>
+                <member>validators</member>
+              </simplelist>
+            </entry>
+            <entry>
+              Not implemented within the base meta specification but they may have meaning for other components.
+              See also Dormio_Form and Dormio_Schema
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+
+    <table align="center" border="1">
+      <title>Field Comparison</title>
+      <tgroup cols="2" colsep="1" rowsep="1">
+        <thead style="font-weight: bold; text-align: center;">
+          <row>
+            <entry>Django</entry>
+            <entry>Dormio</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>AutoField([**options])</entry>
+            <entry>Not implemented</entry>
+          </row>
+          <row>
+            <entry>BigIntegerField([**options])</entry>
+            <entry>array('type' =&gt; 'integer', 'size' =&gt; 64)</entry>
+          </row>
+          <row>
+            <entry>BooleanField([**options])</entry>
+            <entry>array('type' =&gt; 'boolean')</entry>
+          </row>
+          <row>
+            <entry>CharField(max_length=None[, **options])</entry>
+            <entry>array('type' =&gt; 'string'[, 'max_length' =&gt; 255])</entry>
+          </row>
+          <row>
+            <entry>CommaSeparatedIntegerField(max_length=None[, **options])</entry>
+            <entry>Not implemented</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+  </refsect2>
+</refentry>
