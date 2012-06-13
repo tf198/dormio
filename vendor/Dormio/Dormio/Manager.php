@@ -5,7 +5,7 @@
  * @author Tris Forster
  * @package Dormio
  */
-class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
+class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countable{
 	
 	/**
 	 * @var Dormio
@@ -35,9 +35,8 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 */
 	private $_params;
 	
-	function __construct($entity, Dormio $dormio) {
+	function __construct(Dormio_Config_Entity $entity, Dormio $dormio) {
 		$this->dormio = $dormio;
-		if(is_string($entity)) $entity = $dormio->config->getEntity($entity);
 		
 		parent::__construct($entity, $dormio->dialect);
 	}
@@ -75,11 +74,21 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	}
 	
 	/**
-	 * Execute the query
-	 * @return multitype:multitype:string
+	 * Execute the query and return an array of type $obj
+	 * @param Object $obj
+	 * @return multitype:Object
+	 */
+	function findObjects($obj) {
+		return new Dormio_ObjectSet($this->findArray(), $obj);
+	}
+	
+	/**
+	 * Execute the query and return the associated Object 
+	 * @return Dormio_Object
 	 */
 	function find() {
-		return $this->findArray();
+		$obj = $this->dormio->getObject($this->entity->name);
+		return new Dormio_ObjectSet($this->findArray(), $obj);
 	}
 	
 	/**
@@ -88,13 +97,25 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 * @throws Dormio_Manager_MultipleResultsException
 	 * @return multitype:string
 	 */
-	function findOne($id=null) {
+	function findOneArray($id=null) {
 		$query = $this->limit(2);
 		if($id !== null) $query->filter('pk', '=', $id, false);
 		$data = $query->findArray();
 		if(!$data) throw new Dormio_Manager_NoResultException("Query returned no records");
 		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
 		return $data[0];
+	}
+	
+	/**
+	 * Execute the query and return a single row
+	 * @throws Dormio_Manager_NoResultException
+	 * @throws Dormio_Manager_MultipleResultsException
+	 * @return multitype:Dormio_Object
+	 */
+	function findOne($id=null) {
+		$data = $this->findOneArray($id);
+		$obj = $this->dormio->getObject($this->entity->name);
+		return Dormio::mapObject($data, $obj);
 	}
 	
 	/**
@@ -130,7 +151,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 * @return Iterator
 	 */
 	function getIterator() {
-		return new ArrayIterator($this->find());
+		return $this->find();
 	}
 	
 	function filterBind($key, $op, &$value, $clone=true) {
@@ -159,34 +180,6 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 		}
 		return $this->_count;
 	}
-}
-
-/**
- * Extends Manager to add object mapping to results
- * @author Tris Forster
- * @package Dormio
- */
-class Dormio_Manager_Object extends Dormio_Manager {
-	
-	public $related = null;
-	
-	function __construct($obj) {
-		parent::__construct($obj->_entity, $obj->dormio);
-		$this->obj = $obj;
-	}
-	
-	function find() {
-		return new Dormio_ObjectSet(parent::find(), $this->obj);
-	}
-	
-	function findOne($id=null) {
-		$data = parent::findOne($id);
-		return Dormio::mapObject($data, $this->obj);
-	}
-	
-	function getIterator() {
-		return $this->find();
-	}
 	
 	/**
 	 * Add an object to the current queryset
@@ -194,7 +187,7 @@ class Dormio_Manager_Object extends Dormio_Manager {
 	 */
 	function add($obj) {
 		if(!isset($obj->_is_bound)) throw new Dormio_Manager_Exception("Object not bound to Dormio");
-		
+	
 		// sanity tests
 		if($obj->_entity->name != $this->entity->name) {
 			throw new Dormio_Manager_Exception("Can only add entities of type [{$this->entity->name}]");
@@ -202,29 +195,60 @@ class Dormio_Manager_Object extends Dormio_Manager {
 		if(count($this->params) != count($this->filters)) {
 			throw new Dormio_Manager_Exception("Can only add objects to simple filter queries");
 		}
-		
+	
 		// update the passed objects with the filter fields
 		foreach($this->filters as $field=>$value) {
 			if(strpos($field, '__') !== false) throw new Dormio_Manager_Exception("Cannot add objects to joined queries");
 			$obj->{$field} = $value;
 		}
-		
+	
 		return $this->dormio->_insert($obj);
 	}
 }
 
-class Dormio_Manager_ManyToMany extends Dormio_Manager_Object {
+class Dormio_Manager_OneToMany extends Dormio_Manager {
+	
+	public $source_spec;
+	
+	public $source_obj;
+	
+	function __construct(Dormio_Config_Entity $entity, Dormio $dormio, $obj, $spec) {
+		parent::__construct($entity, $dormio);
+		$local = $spec['local_field'];
+		if(!isset($obj->$local)) $obj->$local = null;
+		$this->filterBind($spec['remote_field'], '=', $obj->$local, false);
+		$this->source_spec = $spec;
+		$this->source_obj = $obj;
+	}
+}
+
+class Dormio_Manager_ManyToMany extends Dormio_Manager {
 	
 	public $source_spec;
 	
 	public $accessor;
 	
-	function __construct($obj, $source_spec) {
-		parent::__construct($obj);
-		$this->accessor = $this->config->getThroughAccessor($source_spec);
-		$this->bindRelated($obj, $this->accessor);
-		$this->filterBind("{$this->accessor}__{$source_spec['map_local_field']}", '=', $obj->pk, false);
-		$this->source_spec = $source_spec;
+	function __construct(Dormio_Config_Entity $entity, Dormio $dormio, $obj, $spec) {
+		parent::__construct($entity, $dormio);
+		$this->accessor = $this->dormio->config->getThroughAccessor($spec);
+		$this->filterBind("{$this->accessor}__{$spec['map_local_field']}", '=', $obj->pk, false);
+		$this->source_spec = $spec;
+	}
+}
+
+class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
+	
+	private $obj;
+	
+	/**
+	 * Need to *magic* this so we can act as an object but still get updated
+	 * @param string $field
+	 */
+	function __get($field) {
+		if(!$this->obj || $this->obj->pk != $this->source_obj->pk) {
+			$this->obj = $this->findOne();
+		}
+		return $this->obj->$field;
 	}
 }
 

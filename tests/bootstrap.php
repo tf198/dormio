@@ -50,6 +50,7 @@ $GLOBALS['test_entities'] = array(
 		'fields' => array(
 			'user' => array('type' => 'onetoone', 'entity' => 'User', 'related_name' => 'profile'),
 			'age' => array('type' => 'integer'),
+			'fav_cheese' => array('type' => 'string'),
 		),
 	),
 	'MultiDep' => array(

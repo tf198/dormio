@@ -34,7 +34,7 @@ $blog = $dormio->getObject('Blog', 2);
 echo "\nBlog 2\n";
 echo "  {$blog->body}\n";
 
-$blogs = $dormio->getObjectManager('Blog');
+$blogs = $dormio->getManager('Blog');
 echo "\nAll Blogs\n";
 foreach($blogs as $row) {
 	echo "  {$row->title}\n";
@@ -58,7 +58,7 @@ foreach($blog->tags as $tag) {
 }
 
 echo "\nBlogs tagged as Orange\n";
-$tags = $dormio->getObjectManager('Tag');
+$tags = $dormio->getManager('Tag');
 $tag = $tags->filter('tag', '=', 'Orange')->findOne();
 foreach($tag->blog_set as $blog) {
 	echo "  {$blog->title}\n";
@@ -77,11 +77,11 @@ foreach($blog->comments as $comment) {
 	echo "  {$comment->body}\n";
 }
 
-$tag = $dormio->getObjectManager('Tag')->filter('tag', '=', 'Green')->findOne();
+$tag = $dormio->getManager('Tag')->filter('tag', '=', 'Green')->findOne();
 //$blog->tags->add($tag);
 
 // managers are reusable
-$comments = $dormio->getObjectManager('Comment');
+$comments = $dormio->getManager('Comment');
 
 // list the last 3 comments and their authors efficiently - requires single query
 echo "\nLast 3 comments with their author\n";

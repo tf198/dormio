@@ -83,18 +83,6 @@ class Dormio {
 		return new Dormio_Manager($this->config->getEntity($name), $this);
 	}
 
-	function getObjectManager($name) {
-		$key = "_{$name}_MANAGER";
-		//if(!$stored = $this->cache->get($key)) {
-			class_exists('Dormio_Manager');
-			$obj = $this->getObject($name);
-			//$this->bindRelated($obj);
-			$stored = new Dormio_Manager_Object($obj);
-			//$this->cache->set($key, $stored);
-		//}
-		return $stored;
-	}
-
 	function getObject($entity_name, $id=null, $lazy=false) {
 		$entity = $this->config->getEntity($entity_name);
 		$class_name = $entity->model_class;
@@ -112,7 +100,14 @@ class Dormio {
 		return $obj;
 	}
 
-	function insert($obj, $entity_name) {
+	/**
+	 * Do an INSERT for an object
+	 * Object can be bound or unbound
+	 * @param Object $obj
+	 * @param string $entity_name
+	 * @return boolean
+	 */
+	function insert($obj, $entity_name=null) {
 		$this->bind($obj, $entity_name);
 		return $this->_insert($obj);
 	}
@@ -198,26 +193,26 @@ class Dormio {
 		}
 		if(!isset($spec['entity'])) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no related field [{$field}]");
 		self::$logger && self::$logger->log("BIND {$spec['type']} {$obj->_entity->name}->{$field}");
-		$manager = $this->getObjectManager($spec['entity']);
+		
+		$entity = $this->config->getEntity($spec['entity']);
+		$class_name = "Dormio_Manager_{$spec['type']}";
+		if(!class_exists($class_name)) throw new Dormio_Exception("Field [{$field}] has an unexpected related type [{$spec['type']}]");
+		$obj->$field = new $class_name($entity, $this, $obj, $spec);
+		/*
 		switch($spec['type']) {
-			case 'onetomany':
 			case 'onetoone': // reverse end
-				$local = $spec['local_field'];
-				if(!isset($obj->$local)) $obj->$local = null;
-				$manager->filterBind($spec['remote_field'], '=', $obj->$local, false);
+				$obj->$field = new Dormio_Manager_OneToOne($entity, $this, $obj, $spec);
+				break;
+			case 'onetomany': // reverse of foreignkey
+				$obj->$field = new Dormio_Manager_OneToMany($entity, $this, $obj, $spec);
 				break;
 			case 'manytomany':
-				// need to find the field that links back
-				$accessor = $this->config->getThroughAccessor($spec);
-				$this->bindRelated($manager->obj, $accessor);
-				$manager->filterBind("{$accessor}__{$spec['map_local_field']}", '=', $obj->pk, false);
+				$obj->$field = new Dormio_Manager_ManyToMany($entity, $this, $obj, $spec);
 				break;
 			default:
-				var_dump($spec);
-				throw new Dormio_Exception("Field [{$field}] is not a reverse related");
+				throw new Dormio_Exception("Field [{$field}] has an unexpected related type [{$spec['type']}]");
 		}
-		$obj->$field = $manager;
-			
+		*/
 		return $obj->$field;
 	}
 
