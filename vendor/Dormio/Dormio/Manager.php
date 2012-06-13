@@ -42,10 +42,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	}
 	
 	function __clone() {
-		$this->clear();
+		$this->_reset();
 	}
 	
-	function clear() {
+	function _reset() {
 		$this->_count = null;
 		$this->_stmt = null;
 		$this->_params = null;
@@ -249,12 +249,10 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
 	
 	public $source_obj;
 	
-	public $accessor;
-	
 	function __construct(Dormio_Config_Entity $entity, Dormio $dormio, $obj, $spec) {
 		parent::__construct($entity, $dormio);
-		$this->accessor = $this->dormio->config->getThroughAccessor($spec);
-		$this->filterBind("{$this->accessor}__{$spec['map_local_field']}", '=', $obj->pk, false);
+		$accessor = $this->dormio->config->getThroughAccessor($spec);
+		$this->filterBind("{$accessor}__{$spec['map_local_field']}", '=', $obj->pk, false);
 		$this->source_spec = $spec;
 		$this->source_obj = $obj;
 	}
@@ -267,6 +265,17 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
 		$o->{$this->source_spec['map_local_field']} = $this->source_obj->pk;
 		$o->{$this->source_spec['map_remote_field']} = $obj->pk;
 		$this->dormio->_insert($o);
+	}
+	
+	function clear() {
+		$q = $this->dormio->getManager($this->source_spec['through']);
+		return $q->filter($this->source_spec['map_local_field'], '=', $this->source_obj->pk)->delete();
+	}
+	
+	function remove($obj) {
+		$pk = is_object($obj) ? $obj->pk : $obj;
+		$q = $this->dormio->getManager($this->source_spec['through']);
+		return $q->filter($this->source_spec['map_remote_field'], '=', $pk)->filter($this->source_spec['map_local_field'], '=', $this->source_obj->pk)->delete();
 	}
 }
 

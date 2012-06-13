@@ -251,12 +251,12 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->assertQueryset($blog->tags, 'tag', array('Yellow', 'Indigo', 'Black', 'White', 'Brown'));
 		
 	}
-/*
+
 	function testClear() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blog = $this->pom->get('Blog', 1);
+		$blog = $this->dormio->getObject('Blog', 1, true);
 		$this->assertEquals($blog->tags->clear(), 2);
 		$this->assertSQL('DELETE FROM "blog_tag" WHERE "the_blog_id" = ?', 1);
 
@@ -267,7 +267,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blog = $this->pom->get('Blog', 1);
+		$blog = $this->dormio->getObject('Blog', 1, true);
 
 		// Yellow(3) is on blog 1
 		$this->assertEquals($blog->tags->remove(3), 1);
@@ -278,15 +278,14 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->assertSQL('DELETE FROM "blog_tag" WHERE "the_tag_id" = ? AND "the_blog_id" = ?', 1, 1);
 
 		// reverse with a model instead of pk
-		$tag = $this->pom->get('Tag', 4); // Green
-		$blog = $this->pom->get('Blog', 2);
-		$this->assertEquals($tag->blogs->remove($blog), 1);
+		$tag = $this->dormio->getObject('Tag', 4, true); // Green
+		$blog = $this->dormio->getObject('Blog', 2, true);
+		$this->assertEquals($tag->blog_set->remove($blog), 1);
 		$this->assertSQL('DELETE FROM "blog_tag" WHERE "the_blog_id" = ? AND "the_tag_id" = ?', 2, 4);
 
 		$this->assertDigestedAll();
 	}
-
-*/
+	
 	function testCount() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");

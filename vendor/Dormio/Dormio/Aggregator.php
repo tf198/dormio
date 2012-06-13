@@ -32,7 +32,7 @@ class Dormio_Aggregator {
     $this->manager = $manager;
     $this->manager->query['select'] = array();
     $this->manager->reverse = array();
-    $this->manager->clear();
+    $this->manager->_reset();
   }
   
   /**

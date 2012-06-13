@@ -21,7 +21,7 @@ bench('Bootstrapped');
 class_exists('Dormio_Config');
 bench('Dormio_Config include');
 
-$config = Dormio_Config::instance();
+$config = new Dormio_Config;
 bench('Dormio_Config::instance()');
 
 //$config->addEntities($GLOBALS['test_entities']);
@@ -98,18 +98,15 @@ bench('Dormio_Manager include');
 $blogs = new Dormio_Manager($blog, $dormio);
 bench('Dormio_Manager::__construct() - ARRAY');
 
-$iter = $blogs->getIterator();
-bench('Queryset evaluate');
+$data = $blogs->findArray();
+bench('findArray()');
 
-foreach($iter as $item) { $item['title']; }
-unset($iter);
+foreach($data as $item) { $item['title']; }
+unset($data);
 bench('Array iteration');
 
-$blogs = $dormio->getObjectManager('Blog');
-bench('Dormio_Manager::__construct() - OBJECT');
-
 $iter = $blogs->find();
-bench('Queryset evaluate');
+bench('find()');
 
 foreach($iter as $item) { $item->title; }
 unset($iter);
