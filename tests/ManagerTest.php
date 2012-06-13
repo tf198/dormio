@@ -403,13 +403,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$expected = array("23", "46", null);
 		$i=0;
 		foreach($set as $user) {
-			try {
-				$this->assertEquals($user->profile->findOne()->age, $expected[$i]);
-				$this->assertTrue($i != 2);
-			} catch (Dormio_Manager_NoResultException $e) {
-				$this->assertEquals(2, $i);
-			}
-			$i++;
+			$this->assertEquals($user->profile->age, $expected[$i++]);
 		}
 		$this->assertEquals($i, 3);
 

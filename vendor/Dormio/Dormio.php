@@ -198,21 +198,7 @@ class Dormio {
 		$class_name = "Dormio_Manager_{$spec['type']}";
 		if(!class_exists($class_name)) throw new Dormio_Exception("Field [{$field}] has an unexpected related type [{$spec['type']}]");
 		$obj->$field = new $class_name($entity, $this, $obj, $spec);
-		/*
-		switch($spec['type']) {
-			case 'onetoone': // reverse end
-				$obj->$field = new Dormio_Manager_OneToOne($entity, $this, $obj, $spec);
-				break;
-			case 'onetomany': // reverse of foreignkey
-				$obj->$field = new Dormio_Manager_OneToMany($entity, $this, $obj, $spec);
-				break;
-			case 'manytomany':
-				$obj->$field = new Dormio_Manager_ManyToMany($entity, $this, $obj, $spec);
-				break;
-			default:
-				throw new Dormio_Exception("Field [{$field}] has an unexpected related type [{$spec['type']}]");
-		}
-		*/
+		
 		return $obj->$field;
 	}
 
@@ -276,36 +262,33 @@ class Dormio {
 
 	static function mapObject($row, $obj) {
 		self::$logger && self::$logger->log("MAP {$obj->_entity->name} {$row['pk']}");
-		//var_dump($row);
-		foreach($obj->_entity->getFields() as $key=>$spec) {
+		
+		foreach($row as $key=>$value) {
+			$spec = $obj->_entity->getField($key);
 			
-			// map related with local field
 			if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
 				if(!isset($obj->$key)) {
 					$obj->$key = $obj->dormio->getObject($spec['entity']);
 				}
-				if(is_array($row[$key])) {
+				if(is_array($value)) {
 					// eager load
-					self::mapObject($row[$key], $obj->$key);
+					self::mapObject($value, $obj->$key);
 				} else {
 					// lazy
 					self::clearObject($obj->$key);
-					$obj->$key->pk = $row[$spec['local_field']];
+					$obj->$key->pk = $value;
 					//echo "SET {$key} {$obj->$key->pk}\n";
 				}
 				continue;
 			}
-				
+			
 			// set or clear fields
 			if($spec['is_field']) {
-				//$obj->$key = (isset($row[$key])) ? $row[$key] : null;
-				$obj->$key = $row[$key];
+				$obj->$key = $value;
 				//echo "SET {$key} {$obj->$key}\n";
 			}
-				
 		}
 		$obj->_raw = $row;
-		//var_dump(array_keys(get_object_vars($obj)));
 		return $obj;
 	}
 

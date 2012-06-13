@@ -246,9 +246,14 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 	 */
 	function __get($field) {
 		if(!$this->obj || $this->obj->pk != $this->source_obj->pk) {
-			$this->obj = $this->findOne();
+			try {
+				$this->obj = $this->findOne();
+			} catch(Dormio_Manager_NoResultException $e) {
+				$this->obj = new stdClass();
+				$this->obj->pk = $this->source_obj->pk;
+			}
 		}
-		return $this->obj->$field;
+		return isset($this->obj->$field) ? $this->obj->$field : null;
 	}
 }
 
