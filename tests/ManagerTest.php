@@ -302,19 +302,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		// check cloning
 		$this->assertEquals(0, $blogs->filter('title', '=', 'Rubbish')->count());
 	}
-/*
-	function testTypeValues() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
 
-		$blogs = $this->dormio->getManager('Blog');
-
-		$all = $blogs->values();
-		$this->assertTrue(is_array($all));
-		$this->assertEquals(count($all), 3);
-		$this->assertEquals($all[1]['t1_title'], 'Andy Blog 2');
-	}
-*/
 	function testFilterIn() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
@@ -353,14 +341,14 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		foreach($query as $result) $result->title;
 		$this->assertDigestedAll();
 	}
-
-	function testAsArray() {
+*/
+	function testfindArray() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 			
 		$blogs = $this->dormio->getManager('Blog');
 			
-		$data = $blogs->with('the_user')->asArray();
+		$data = $blogs->with('the_user')->findArray();
 		$this->assertEquals($data[1], array(
 			'pk' => '2',
 			'title' => 'Andy Blog 2',
@@ -371,16 +359,6 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		));
 	}
 
-	function testHydrate() {
-		$this->load("sql/test_schema.sql");
-		$this->load("sql/test_data.sql");
-
-		$blogs = $this->dormio->getManager('Blog');
-			
-		$obj = new StdClass;
-			
-	}
-*/
 	function testJoinSanity() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
