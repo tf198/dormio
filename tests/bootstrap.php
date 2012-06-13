@@ -4,6 +4,12 @@ Dormio_AutoLoader::register();
 
 define('TEST_PATH', dirname(__FILE__));
 
+class Comment extends Dormio_Object {
+	function __toString() {
+		return $this->title;
+	}
+}
+
 $GLOBALS['test_entities'] = array(
 	'User' => array(
 		'fields' => array(
@@ -27,6 +33,7 @@ $GLOBALS['test_entities'] = array(
 		),
 	),
 	'Comment' => array(
+		'model_class' => 'Comment',
 		'fields' => array(
 			'title' => array('type' => 'string', 'max_length' => 30),
 			'user' => array('type' => 'foreignkey', 'entity' => 'User', 'db_column' => 'the_comment_user'),

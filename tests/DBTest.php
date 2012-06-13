@@ -3,7 +3,7 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 
 	/**
 	 *
-	 * @var PDO
+	 * @var Dormio_Logging_PDO
 	 */
 	public $pdo;
 

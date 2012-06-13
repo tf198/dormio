@@ -19,6 +19,10 @@ class Dormio_Object {
 		return $this->dormio->save($this);
 	}
 	
+	function delete() {
+		return $this->dormio->delete($this);
+	}
+	
 	/**
 	 * Bit of *magic* to bind related types as required
 	 * @param string $field
@@ -34,5 +38,10 @@ class Dormio_Object {
 		}
 		// assume it is a related field and allow exceptions to get thrown
 		return $this->dormio->bindRelated($this, $field);
+	}
+	
+	function __toString() {
+		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
+		return ($this->pk) ? "[{$this->_entity->name} {$this->pk}]" : "[New {$this->_entity->name}]";
 	}
 }

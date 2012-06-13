@@ -15,23 +15,10 @@ class Dormio_Config {
 	private static $instance;
 	
 	/**
-	 * Singleton
-	 * @return Dormio_Config
-	 */
-	static function instance() {
-		if(!self::$instance) self::$instance = new Dormio_Config;
-		return self::$instance;
-	}
-	
-	static function reset() {
-		self::$instance = null;
-	}
-	
-	/**
 	 * Register entities with the config manager
 	 * @param multitype:multitype:multitype:string $entities
 	 */
-	function addEntities($entities) {
+	function addEntities(array $entities) {
 		$this->_config = array_merge($this->_config, $entities);
 		$this->findRelations(array_keys($entities));
 	}

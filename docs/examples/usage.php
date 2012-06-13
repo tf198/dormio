@@ -15,7 +15,7 @@
 $pdo = include('setup.php');
 
 $entities = include('entities.php');
-$config = Dormio_Config::instance();
+$config = new Dormio_Config;
 $config->addEntities($entities);
 
 $dormio = new Dormio($pdo, $config);
@@ -76,6 +76,9 @@ echo "\nNew comment has primary key {$comment->pk}\n";
 foreach($blog->comments as $comment) {
 	echo "  {$comment->body}\n";
 }
+
+$tag = $dormio->getObjectManager('Tag')->filter('tag', '=', 'Green')->findOne();
+//$blog->tags->add($tag);
 
 // managers are reusable
 $comments = $dormio->getObjectManager('Comment');

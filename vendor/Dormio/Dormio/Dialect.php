@@ -102,7 +102,7 @@ class Dormio_Dialect_Generic {
 	 */
 	function update($spec, $fields, $custom_fields=array()) {
 		$set = array();
-		foreach($fields as $field) $set[] = "{$field}=?";
+		foreach($fields as $field) $set[] = "{{$field}}=?";
 		$set = array_merge($set, $custom_fields);
 		$set = implode(', ', $set);
 		$base = "UPDATE {$spec['from']} SET {$set} ";
@@ -122,6 +122,7 @@ class Dormio_Dialect_Generic {
 	 */
 	function insert($spec, $fields) {
 		$values = implode(', ', array_fill(0, count($fields), '?'));
+		foreach($fields as &$field) $field = "{{$field}}";
 		$fields = implode(', ', $fields);
 		$sql = "INSERT INTO {$spec['from']} ({$fields}) VALUES ({$values})";
 		return $this->quoteIdentifiers($this->aliasFields($sql, false));

@@ -23,7 +23,19 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 */
 	public $filters = array();
 	
-	function __construct($entity, $dormio) {
+	/**
+	 * Cache the pdo statement
+	 * @var PDOStatement
+	 */
+	private $_stmt;
+	
+	/**
+	 * Cache of params
+	 * @var multitype:mixed
+	 */
+	private $_params;
+	
+	function __construct($entity, Dormio $dormio) {
 		$this->dormio = $dormio;
 		if(is_string($entity)) $entity = $dormio->config->getEntity($entity);
 		
@@ -31,7 +43,13 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	}
 	
 	function __clone() {
+		$this->clear();
+	}
+	
+	function clear() {
 		$this->_count = null;
+		$this->_stmt = null;
+		$this->_params = null;
 	}
 	
 	function compile($prepare=false) {
@@ -46,8 +64,13 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate{
 	 * @return multitype:multitype:string
 	 */
 	function findArray() {
-		$stmt = $this->dormio->executeQuery($this->select());
-		$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if(!$this->_stmt) {
+			$query = $this->select();
+			$this->_stmt = $this->dormio->pdo->prepare($query[0]);
+			$this->_params = $query[1];
+		}
+		$this->_stmt->execute($this->_params);
+		$data = $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
 		return array_map(array($this, 'mapArray'), $data);
 	}
 	

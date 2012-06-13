@@ -11,14 +11,6 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 		$this->config->addEntities($GLOBALS['test_entities']);
 	}
 	
-	function testStaticMethods() {
-		$instance = Dormio_Config::instance();
-		$instance->addEntities($GLOBALS['test_entities']);
-		$this->assertEquals(8, count(Dormio_Config::instance()->getEntities()));
-		Dormio_Config::reset();
-		$this->assertEquals(0, count(Dormio_Config::instance()->getEntities()));
-	}
-	
 	function testAddEntities() {
 		// check the auto relations have been flagged correctly
 		$this->assertEquals(array('Comment', 'MultiDep'), $this->config->_relations['auto']);

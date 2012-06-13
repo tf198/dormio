@@ -361,13 +361,14 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$i=0;
 		foreach($set as $user) {
 			try {
-				$profile = $user->profile->findOne();
-				$this->assertEquals($profile->age, $expected[$i]);
-				$i++;
+				$this->assertEquals($user->profile->findOne()->age, $expected[$i]);
+				$this->assertTrue($i != 2);
 			} catch (Dormio_Manager_NoResultException $e) {
+				$this->assertEquals(2, $i);
 			}
+			$i++;
 		}
-		$this->assertEquals($i, 2);
+		$this->assertEquals($i, 3);
 
 		// it makes no sense to use with on manytomany fields
 		// it should generate a warning
