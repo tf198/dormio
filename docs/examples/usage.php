@@ -2,8 +2,7 @@
 /**
 * This is a runable example
 *   > php docs/examples/usage.php
-* @package dormio
-* @subpackage example
+* @package Dormio/Examples
 * @filesource
 */
 
@@ -11,7 +10,6 @@
 * This just registers the autoloader and creates an example database in memory
 * @example setup.php
 */ 
-
 $pdo = include('setup.php');
 
 $entities = include('entities.php');

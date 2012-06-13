@@ -1,4 +1,9 @@
 <?php
+/**
+ * @package Dormio/Examples 
+ * @filesource
+ */
+
 return array(
 	'Blog' => array(
 		'fields' => array(

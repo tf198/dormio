@@ -1,10 +1,12 @@
 <?php
 /**
- * This is a runable example
- *   > php docs/examples/schema.php
- * @package dormio
- * @subpackage example
+ * @package Dormio/Examples
  * @filesource
+ */
+
+/**
+ *  * This is a runable example
+ *   > php docs/examples/schema.php
  */
 $example_path = dirname(__FILE__);
 

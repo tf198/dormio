@@ -1,3 +1,6 @@
 .buildpath
 .project
 .settings
+docs/api
+report
+tests/output

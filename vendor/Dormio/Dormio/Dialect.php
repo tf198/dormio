@@ -1,7 +1,5 @@
 <?php
 /**
- * SQL Dialect factory
- *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -16,16 +14,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Tris Forster <tris.701437@tfconsulting.com.au>
- * @version 0.3
  * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
- * @package Dormio/Dialect
+ * @package Dormio
+ * @subpackage Dialect
  */
 
 /**
  * Factory for language specific query generation.
  * As lightweight as possible  - just takes care of the special cases
  * Cached as likely to be many instances
- * @package Dormio/Dialect
+ * @package Dormio
+ * @subpackage Dialect
  */
 class Dormio_Dialect {
 	static $_cache = array();
@@ -51,12 +50,14 @@ class Dormio_Dialect {
 }
 
 /**
- * @package Dormio/Exception
+ * @package Dormio
+ * @subpackage Exception
  */
 class Dormio_Dialect_Exception extends Exception {}
 
 /**
- * @package Dormio/Dialect
+ * @package Dormio
+ * @subpackage Dialect
  */
 class Dormio_Dialect_Generic {
 
@@ -185,7 +186,8 @@ class Dormio_Dialect_Generic {
 }
 
 /**
- * @package Dormio/Dialect
+ * @package Dormio
+ * @subpackage Dialect
  */
 class Dormio_Dialect_MySQL extends Dormio_Dialect_Generic {
 	function quoteIdentifiers($sql) {
@@ -198,7 +200,8 @@ class Dormio_Dialect_MySQL extends Dormio_Dialect_Generic {
 }
 
 /**
- * @package Dormio/Dialect
+ * @package Dormio
+ * @subpackage Dialect
  */
 class Dormio_Dialect_MSSQL extends Dormio_Dialect_Generic {
 	function select($spec) {

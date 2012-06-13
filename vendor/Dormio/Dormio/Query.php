@@ -1,7 +1,5 @@
 <?php
 /**
- * Dormio Query
- *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -16,7 +14,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author Tris Forster <tris.701437@tfconsulting.com.au>
- * @version 0.8
  * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
  * @package Dormio
  */
@@ -36,7 +33,7 @@
  * Django users will notice the blatent plagerism here, the main difference being the filter() method, where Django
  * uses kwargs `qs->filter(age__gt=16)` Dormio uses a separate operator `$qs->filter('age', '>', 16)`;
  *
- * @example models.php The models refered to in these examples
+ * @example entities.php The entities described in these examples
  * @example usage.php Example usage
  * @package Dormio
  */
@@ -646,6 +643,7 @@ class Dormio_Query {
 }
 
 /**
- * @package Dormio/Exception
+ * @package Dormio
+ * @subpackage Exception
  */
 class Dormio_Query_Exception extends Exception {}

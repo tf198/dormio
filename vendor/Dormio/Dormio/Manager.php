@@ -1,9 +1,30 @@
 <?php
 /**
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Tris Forster <tris.701437@tfconsulting.com.au>
+ * @license http://www.gnu.org/licenses/lgpl.txt GNU Lesser General Public License v3
+ * @package Dormio
+ * @subpackage Manager
+ */
+
+/**
  * Manager for entities
  * A Query that can execute against a database
  * @author Tris Forster
  * @package Dormio
+ * @subpackage Manager
  */
 class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countable{
 	
@@ -227,6 +248,11 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	}
 }
 
+/**
+ * Manager for OneToMany related entities
+ * @package Dormio
+ * @subpackage Manager
+ */
 class Dormio_Manager_OneToMany extends Dormio_Manager {
 	
 	public $source_spec;
@@ -243,6 +269,11 @@ class Dormio_Manager_OneToMany extends Dormio_Manager {
 	}
 }
 
+/**
+ * Manager for ManyToMany related entities
+ * @package Dormio
+ * @subpackage Manager
+ */
 class Dormio_Manager_ManyToMany extends Dormio_Manager {
 	
 	public $source_spec;
@@ -279,6 +310,11 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
 	}
 }
 
+/**
+ * Manager for OneToOne related entities
+ * @package Dormio
+ * @subpackage Manager
+ */
 class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 	
 	private $obj;
@@ -301,19 +337,22 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 }
 
 /**
- * @package Dormio/Exception
+ * @package Dormio
+ * @subpackage Exception
  *
  */
 class Dormio_Manager_Exception extends Exception{};
 
 /**
- * @package Dormio/Exception
+ * @package Dormio
+ * @subpackage Exception
  *
  */
 class Dormio_Manager_NoResultException extends Dormio_Manager_Exception {}
 
 /**
- * @package Dormio/Exception
+ * @package Dormio
+ * @subpackage Exception
  *
  */
 class Dormio_Manager_MultipleResultsException extends Dormio_Manager_Exception {}
