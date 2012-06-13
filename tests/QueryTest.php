@@ -8,25 +8,28 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	public $config;
 
 	function setUp() {
-		Dormio_Config::reset();
-		$this->config = Dormio_Config::instance();
+		$this->config = new Dormio_Config;
 		$this->config->addEntities($GLOBALS['test_entities']);
 	}
 
+	function getQuery($name) {
+		return new Dormio_Query($this->config->getEntity($name));
+	}
+	
 	function testConstruct() {
-		$qs = new Dormio_Query('Blog');
+		$qs = $this->getQuery('Blog');
 		$this->assertEquals($this->all_blogs, $qs->select());
 
 		try {
-			$qs = new Dormio_Query('Rubbish');
+			$qs = $this->getQuery('Rubbish');
 			$this->fail('Should have thrown exception');
 		} catch(Dormio_Config_Exception $e) {
 		}
 	}
-
+	
 	function testResolve() {
 		//Dormio_Query::$logger = new Debugger();
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 
 		// DIRECT
 		$this->assertEquals($blogs->_resolveField('title'), '<@t1.@>{title}'); // standard field
@@ -48,20 +51,20 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($blogs->setAlias()->_resolveField('tags__pk'), '<@t2.@>{the_tag_id}'); // want tag ids but only with half join
 
 		// MANYTOMANY (reverse with reverse field and defined intermediate)
-		$tags = new Dormio_Query('Tag');
+		$tags = $this->getQuery('Tag');
 		//$this->assertEquals($tags->setAlias()->_resolveField('blogs__title'), '<@t3.@>{title}'); // standard field
 		//$this->assertEquals($tags->setAlias()->_resolveField('blogs'), '<@t2.@>{the_blog_id}'); // standard field
 		//$this->assertEquals($tags->setAlias()->_resolveField('blogs__pk'), '<@t2.@>{the_blog_id}'); // standard field
 
 		// MANYTOMANY (reverse no reverse field)
-		$tags = new Dormio_Query('Tag');
+		$tags = $this->getQuery('Tag');
 		$this->assertEquals($tags->setAlias()->_resolveField('comment_set__title'), '<@t3.@>{title}'); // standard field
 		$this->assertEquals($tags->setAlias()->_resolveField('comment_set'), '<@t2.@>{l_comment_id}'); // standard field
 		$this->assertEquals($tags->setAlias()->_resolveField('comment_set__pk'), '<@t2.@>{l_comment_id}'); // standard field
 
 		// OTHER RANDOM USAGE TESTS
 
-		$comments = new Dormio_Query('Comment');
+		$comments = $this->getQuery('Comment');
 		$this->assertEquals($comments->setAlias()->_resolveField('pk'), '<@t1.@>{comment_id}');
 		$this->assertEquals($comments->setAlias()->_resolveField('blog'), '<@t1.@>{blog_id}'); // foreign pk
 		$this->assertEquals($comments->setAlias()->_resolveField('blog__title'), '<@t2.@>{title}'); // foreignkey
@@ -69,10 +72,10 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($comments->setAlias()->_resolveField('tags__tag'), '<@t3.@>{tag}'); // manytomany
 		$this->assertEquals($comments->setAlias()->_resolveField('blog__the_user__profile'), '<@t4.@>{profile_id}'); // multistage with pk
 
-		$users = new Dormio_Query('User');
+		$users = $this->getQuery('User');
 		$this->assertEquals($users->setAlias()->_resolveField('profile__age'), '<@t2.@>{age}'); // onetoone_rev
 
-		$profile = new Dormio_Query('Profile');
+		$profile = $this->getQuery('Profile');
 		$this->assertEquals($profile->setAlias()->_resolveField('user__name'), '<@t2.@>{name}'); // onetoone
 
 		$this->assertEquals($tags->_resolveString("SELECT * FROM {table}"), "SELECT * FROM {tag}");
@@ -81,7 +84,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 	function testJoin() {
 		//Dormio_Query::$logger = new Debugger;
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 		$this->assertEquals($blogs->with('the_user')->query['join'], //foreignkey
 				array('LEFT JOIN {user} AS t2 ON t1.{the_blog_user}=t2.{user_id}'));
 		$this->assertEquals($blogs->filter('comments__title', '=', 'Test')->query['join'], // foreignkey_rev
@@ -89,7 +92,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($blogs->filter('tags__tag', '=', 'Red')->query['join'], //manytomany
 				array("LEFT JOIN {blog_tag} AS t2 ON t1.{blog_id}=t2.{the_blog_id}", "INNER JOIN {tag} AS t3 ON t2.{the_tag_id}=t3.{tag_id}"));
 
-		$comments = new Dormio_Query('Comment');
+		$comments = $this->getQuery('Comment');
 		$this->assertEquals($comments->with('user')->query['join'], // foreignkey
 				array('LEFT JOIN {user} AS t2 ON t1.{the_comment_user}=t2.{user_id}'));
 		$this->assertEquals($comments->with('blog')->query['join'], // foreignkey
@@ -97,28 +100,28 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($comments->filter('tags__tag', '=', 'Red')->query['join'], // manytomany
 				array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{comment_id}=t2.{l_comment_id}', 'INNER JOIN {tag} AS t3 ON t2.{r_tag_id}=t3.{tag_id}'));
 
-		$profiles = new Dormio_Query('Profile');
+		$profiles = $this->getQuery('Profile');
 		$this->assertEquals($profiles->with('user')->query['join'], // onetoone
 				array('LEFT JOIN {user} AS t2 ON t1.{user_id}=t2.{user_id}'));
 
-		$users = new Dormio_Query('User');
+		$users = $this->getQuery('User');
 		$this->assertEquals($users->with('profile')->query['join'], // foreignkey
 				array('LEFT JOIN {profile} AS t2 ON t1.{user_id}=t2.{user_id}'));
 
-		$tags = new Dormio_Query('Tag');
+		$tags = $this->getQuery('Tag');
 		$this->assertEquals($tags->filter('blog_set__title', '=', 'Test')->query['join'], // manytomany_rev
 				array('LEFT JOIN {blog_tag} AS t2 ON t1.{tag_id}=t2.{the_tag_id}', 'INNER JOIN {blog} AS t3 ON t2.{the_blog_id}=t3.{blog_id}'));
 		$this->assertEquals($tags->filter('comment_set__title', '=', 'Test')->query['join'], // manytomany_rev
 				array('LEFT JOIN {comment_x_tag} AS t2 ON t1.{tag_id}=t2.{r_tag_id}', 'INNER JOIN {comment} AS t3 ON t2.{l_comment_id}=t3.{comment_id}'));
 
-		$nodes = new Dormio_Query('Tree');
+		$nodes = $this->getQuery('Tree');
 		$this->assertEquals($nodes->filter('parent__name', '=', 'Bob')->query['join'],
 				array('INNER JOIN {tree} AS t2 ON t1.{parent_id}=t2.{tree_id}'));
 
 		$this->assertEquals($nodes->filter('tree_set__name', '=', 'Andy')->query['join'],
 				array('INNER JOIN {tree} AS t2 ON t1.{tree_id}=t2.{parent_id}'));
 
-		$modules = new Dormio_Query('MultiDep');
+		$modules = $this->getQuery('MultiDep');
 		$this->assertEquals($modules->filter('depends_on__name', '=', 'core')->query['join'], // manytomany self
 				array('LEFT JOIN {multidep_x_multidep} AS t2 ON t1.{multidep_id}=t2.{l_multidep_id}', 'INNER JOIN {multidep} AS t3 ON t2.{r_multidep_id}=t3.{multidep_id}'));
 		$this->assertEquals($modules->filter('required_by__name', '=', 'core')->query['join'], // manytomany self
@@ -126,14 +129,14 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testField() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 		$this->assertEquals($blogs->field('comments__title')->select(),
 				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user", t2."title" AS "t2_title" FROM "blog" AS t1 LEFT JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id"', array()));
 	}
 
 	function testFilter() {
-		$blogs = new Dormio_Query('Blog');
-		$comments = new Dormio_Query('Comment');
+		$blogs = $this->getQuery('Blog');
+		$comments = $this->getQuery('Comment');
 
 		// normal field
 		$this->assertEquals($blogs->filter('title', '=', 'hello')->select(),
@@ -184,26 +187,26 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	function testFilterSpecial() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 		$this->assertEquals($blogs->filterSpecial('title', 'IS NOT NULL')->select(),
 				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" IS NOT NULL', array()));
 	}
 	
 	function testDistinct() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 		$this->assertEquals($blogs->distinct()->select(),
 				array('SELECT DISTINCT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1', array()));
 	}
 
 	function testWhere() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 
 		$this->assertEquals($blogs->where('{the_user} = ?', array(1))->select(),
 				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(1)));
 	}
 
 	function testLimit() {
-		$users = new Dormio_Query('User');
+		$users = $this->getQuery('User');
 
 		$this->assertEquals($users->limit(3)->select(),
 				array('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1 LIMIT 3', array()));
@@ -213,8 +216,8 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testOrder() {
-		$users = new Dormio_Query('User');
-		$blogs = new Dormio_Query('Blog');
+		$users = $this->getQuery('User');
+		$blogs = $this->getQuery('Blog');
 
 		// single
 		$this->assertEquals($users->orderBy('name')->select(),
@@ -234,7 +237,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testWith() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 
 		// single
 		$this->assertEquals($blogs->with('the_user')->select(),
@@ -244,7 +247,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testManyToMany() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 
 		//var_dump($blogs->filter('tags__tag', '=', 'testing')->select());
 		$this->assertEquals($blogs->filter('tags__tag', '=', 'testing')->select(),
@@ -252,8 +255,8 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testReverse() {
-		$blogs = new Dormio_Query('Blog');
-		$tags = new Dormio_Query('Tag');
+		$blogs = $this->getQuery('Blog');
+		$tags = $this->getQuery('Tag');
 
 		// reverse foreign key
 		$this->assertEquals($blogs->filter('comments__title', '=', 'Test')->select(),
@@ -266,7 +269,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testAliases() {
-		$comments = new Dormio_Query('Comment');
+		$comments = $this->getQuery('Comment');
 
 		$set = $comments->with('blog')->filter('tags__tag', '=', 'Yo');
 		$this->assertEquals($set->aliases, array(
@@ -279,7 +282,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testUpdate() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 		$set = $blogs->filter('title', '=', 'Blog 1');
 
 		$this->assertEquals($set->update(array('the_user' => 1)),
@@ -294,7 +297,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testInsert() {
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 
 		$this->assertEquals($blogs->insert(array('the_user'=>1, 'title'=>'A blog')),
 				array('INSERT INTO "blog" ("the_blog_user", "title") VALUES (?, ?)', array(1, 'A blog')));
@@ -303,7 +306,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 	function testDeleteById() {
 		//Dormio_Query::$logger = new Query_Debugger;
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 		$sql = $blogs->deleteById(3);
 		$this->assertEquals($sql, array(
 			array('DELETE FROM "blog_tag" WHERE "the_blog_id" = ?', array(3)),
@@ -312,7 +315,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 			array('DELETE FROM "blog" WHERE "blog_id" = ?', array(3)),
 		));
 
-		$users = new Dormio_Query('User');
+		$users = $this->getQuery('User');
 		$this->assertEquals($users->deleteById(1), array(
 			array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t1."blog_tag_id" FROM "blog_tag" AS t1 INNER JOIN "blog" AS t2 ON t1."the_blog_id"=t2."blog_id" WHERE t2."the_blog_user" = ?)', array(1)),
 			array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t1."comment_x_tag_id" FROM "comment_x_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" INNER JOIN "blog" AS t3 ON t2."blog_id"=t3."blog_id" WHERE t3."the_blog_user" = ?)', array(1)),
@@ -328,7 +331,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 	function testDelete() {
 		//Dormio_Query::$logger = new Query_Debugger;
-		$blogs = new Dormio_Query('Blog');
+		$blogs = $this->getQuery('Blog');
 
 		// simple(ish) delete
 		$set = $blogs->filter('title', '=', 'My First Blog');
@@ -354,7 +357,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function testNonMutation() {
-		$qs = new Dormio_Query('Blog');
+		$qs = $this->getQuery('Blog');
 		$qs->filter('title', '=', 'hello');
 		$this->assertEquals($qs->select(), $this->all_blogs);
 		$qs->with('the_user');
@@ -366,7 +369,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	function testToString() {
-		$qs = new Dormio_Query('Blog');
+		$qs = $this->getQuery('Blog');
 		$this->assertEquals($this->all_blogs[0] . '; ()', (string)$qs);
 	}
 

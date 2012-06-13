@@ -107,8 +107,9 @@ class Dormio_Query {
 	 * @param  string|Dormio_Dialect $dialect  A dialect object or the name of one e.g. sqlite
 	 * @param  int $alias  The table alias to start at [default: 1]
 	 */
-	function __construct($entity, $dialect='generic', $alias=1) {
-		$this->entity = is_object($entity) ? $entity : Dormio_Config::instance()->getEntity($entity);
+	function __construct(Dormio_Config_Entity $entity, $dialect='generic', $alias=1) {
+		//$this->entity = is_object($entity) ? $entity : Dormio_Config::instance()->getEntity($entity);
+		$this->entity = $entity;
 
 		$this->dialect = is_object($dialect) ? $dialect : Dormio_Dialect::factory($dialect);
 		$this->params = array();
@@ -362,7 +363,8 @@ class Dormio_Query {
 	function _resolveLocal($fields, $type=null) {
 	 $result = array();
 	 foreach($fields as $field) {
-	 	$result[] = "{" . $this->entity->getDBColumn($field) . "}";
+	 	//$result[] = "{" . $this->entity->getDBColumn($field) . "}";
+	 	$result[] = $this->entity->getDBColumn($field);
 	 }
 	 return $result;
 	}
@@ -521,7 +523,8 @@ class Dormio_Query {
 		
 		foreach($this->entity->getRelatedFields() as $name) {
 			$spec = $this->entity->getField($name);
-			$child = new Dormio_Query($spec['entity'], $this->dialect, $this->next_alias);
+			$child_entity = $this->entity->config->getEntity($spec['entity']);
+			$child = new Dormio_Query($child_entity, $this->dialect, $this->next_alias);
 
 			$child->query['where'] = $this->query['where'];
 			$child->params = $this->params;
@@ -568,7 +571,8 @@ class Dormio_Query {
 		
 		foreach($this->entity->getRelatedFields() as $name) {
 			$spec = $this->entity->getField($name);
-			$child = new Dormio_Query($spec['entity'], $this->dialect);
+			$child_entity = $this->entity->config->getEntity($spec['entity']);
+			$child = new Dormio_Query($child_entity, $this->dialect);
 			$child->selectIdent();
 
 			$r = $resolved;
