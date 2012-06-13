@@ -1,10 +1,53 @@
 <?php
-class Dormio_ObjectManagerTest extends Dormio_DBTest{
+require_once 'DBTest.php';
+
+class Dormio_ManagerTest extends Dormio_DBTest{
+	
+	function testFindOneArray() {
+		$this->load("sql/test_schema.sql");
+		$this->load('sql/test_data.sql');
+	
+		$blogs = $this->dormio->getManager('Blog');
+	
+		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($blogs, 'findOne'));
+		$this->pdo->digest();
+	
+		// basic pk load
+		$blog = $blogs->findOneArray(2);
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 2);
+	
+		// bad pk load
+		$this->assertThrows('Dormio_Manager_NoResultException:', array($blogs, 'findOneArray'), 23);
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 23);
+	
+		// eager load
+		$blog = $blogs->with('the_user')->findOneArray(1);
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user", t2."user_id" AS "t2_user_id", t2."name" AS "t2_name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."blog_id" = ? LIMIT 2', 1);
+		$this->assertEquals('Andy', $blog['the_user']['name']);
+	
+		// complex query and pk
+		$blog = $blogs->filter('the_user__name', '=', 'Andy')->findOneArray(2);
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" = ? AND t1."blog_id" = ? LIMIT 2', 'Andy', 2);
+		$this->assertEquals('Andy Blog 2', $blog['title']);
+	
+		// other query
+		$blog = $blogs->filter('title', '=', 'Andy Blog 2')->findOneArray();
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" = ? LIMIT 2', 'Andy Blog 2');
+		$this->assertEquals($blog['pk'], 2);
+	
+		// non specific query
+		$q = $blogs->filter('the_user', '=', 1);
+		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($q, 'findOneArray'));
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ? LIMIT 2', 1);
+	
+		$this->assertDigestedAll();
+	}
+	
 	function testFindOne() {
 		$this->load("sql/test_schema.sql");
 		$this->load('sql/test_data.sql');
 
-		$blogs = $this->dormio->getObjectManager('Blog');
+		$blogs = $this->dormio->getManager('Blog');
 
 		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($blogs, 'findOne'));
 		$this->pdo->digest();
@@ -57,7 +100,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->assertQueryset($blog->tags, 'tag', array('Yellow', 'Indigo'));
 		
 		// reverse many to many
-		$tag = $this->dormio->getObjectManager('Tag')->filter('tag', '=', 'Green')->findOne();
+		$tag = $this->dormio->getManager('Tag')->filter('tag', '=', 'Green')->findOne();
 		$this->assertQueryset($tag->blog_set, 'title', array('Andy Blog 2'));
 	}
 /*
@@ -105,7 +148,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$tags = $this->dormio->getObjectManager('Tag');
+		$tags = $this->dormio->getManager('Tag');
 
 		$data = $tags->filter('tag', '<', 'H')->getAggregator()->count('pk', true)->max('tag')->run();
 
@@ -245,7 +288,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blogs = $this->dormio->getObjectManager('Blog');
+		$blogs = $this->dormio->getManager('Blog');
 
 		$this->assertEquals(3, $blogs->count());
 		$this->assertSQL('SELECT COUNT(*) AS count FROM "blog" AS t1');
@@ -262,7 +305,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blogs = $this->dormio->getObjectManager('Blog');
+		$blogs = $this->dormio->getManager('Blog');
 
 		$all = $blogs->values();
 		$this->assertTrue(is_array($all));
@@ -274,8 +317,8 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blogs = $this->dormio->getObjectManager('Blog');
-		$comments = $this->dormio->getObjectManager('Comment');
+		$blogs = $this->dormio->getManager('Blog');
+		$comments = $this->dormio->getManager('Comment');
 
 		$blog_set = $blogs->filter('the_user', '=', 1);
 
@@ -291,7 +334,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blogs = $this->dormio->getObjectManager('Blog');
+		$blogs = $this->dormio->getManager('Blog');
 
 		$this->assertEquals($blogs->hasResults(), true);
 		$this->assertEquals($blogs->filter('title', '=', 'Fictional title')->hasResults(), false);
@@ -313,7 +356,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 			
-		$blogs = $this->dormio->getObjectManager('Blog');
+		$blogs = $this->dormio->getManager('Blog');
 			
 		$data = $blogs->with('the_user')->asArray();
 		$this->assertEquals($data[1], array(
@@ -330,7 +373,7 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blogs = $this->dormio->getObjectManager('Blog');
+		$blogs = $this->dormio->getManager('Blog');
 			
 		$obj = new StdClass;
 			
@@ -340,9 +383,9 @@ class Dormio_ObjectManagerTest extends Dormio_DBTest{
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blogs = $this->dormio->getObjectManager('Blog');
-		$comments = $this->dormio->getObjectManager('Comment');
-		$users = $this->dormio->getObjectManager('User');
+		$blogs = $this->dormio->getManager('Blog');
+		$comments = $this->dormio->getManager('Comment');
+		$users = $this->dormio->getManager('User');
 
 		// want to get all comments with tagged as Green
 		$set = $comments->filter('tags__tag', '=', 'Green');
