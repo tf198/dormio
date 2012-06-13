@@ -224,29 +224,32 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->assertEquals($this->pdo->digest(),
 				array('INSERT INTO "comment" ("title", "the_comment_user", "blog_id") VALUES (?, ?, ?)', array(array('Another new comment', 1, 2))));
 	}
-/*
+
 	function testManyToManyAdd() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blog = $this->dormio->getObject('Blog', 1);
+		$blog = $this->dormio->getObject('Blog', 1, true);
 
-		$tag = $blog->tags->create(array('tag' => 'Black'));
-
-		$blog->tags->add($tag);
-		// tag is automatically saved before attaching
-		$this->assertSQL('INSERT INTO "tag" ("tag") VALUES (?)', 'Black');
-		$this->assertSQL('INSERT INTO "blog_tag" ("the_blog_id", "the_tag_id") VALUES (?, ?)', 1, 8);
+		$tags = $this->dormio->getManager('Tag');
+		
+		$black = $tags->create(array('tag' => 'Black'));
+		$blog->tags->add($black);
 
 		// try the other way round
-		$tag = $blog->tags->create(array('tag' => 'White'));
-		$tag->save();
-		$this->assertSQL('INSERT INTO "tag" ("tag") VALUES (?)', 'White');
-		$tag->blogs->add($blog);
-		$this->assertSQL('INSERT INTO "blog_tag" ("the_tag_id", "the_blog_id") VALUES (?, ?)', 9, 1);
-
+		$white = $tags->create(array('tag' => 'White'));
+		$white->blog_set->add($blog);
+		
+		// can do it all in one step
+		$blog->tags->create(array('tag' => 'Brown'));
+		
+		$this->assertEquals($this->pdo->digest(), array('INSERT INTO "tag" ("tag") VALUES (?)', array(array('Black'), array('White'), array('Brown'))));
+		$this->assertEquals($this->pdo->digest(), array('INSERT INTO "blog_tag" ("the_blog_id", "the_tag_id") VALUES (?, ?)', array(array(1, 8), array(1, 9), array(1,10))));
 
 		$this->assertDigestedAll();
+		
+		$this->assertQueryset($blog->tags, 'tag', array('Yellow', 'Indigo', 'Black', 'White', 'Brown'));
+		
 	}
 /*
 	function testClear() {

@@ -62,6 +62,7 @@ class Dormio {
 	}
 
 	function save($obj, $entity_name=null) {
+		//echo "SAVE {$obj}\n";
 		if(isset($obj->pk)) {
 			$this->update($obj);
 		} else {
@@ -132,6 +133,7 @@ class Dormio {
 	}
 	
 	function _insert($obj) {
+		//echo "_INSERT {$obj}\n";
 		$obj->_raw = array();
 		$params = $this->_params($obj);
 		if(!$params) throw new Exception("No fields to update on entity [{$obj->_entity->name}]");
@@ -144,6 +146,7 @@ class Dormio {
 	}
 
 	function update($obj) {
+		//echo "UPDATE {$obj}\n";
 		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object hasn't been bound to Dormio");
 		if(!isset($obj->_raw)) throw new Dormio_Exception("Object has no previous data");
 		

@@ -216,7 +216,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 			$obj->{$field} = $value;
 		}
 	
-		return $this->dormio->_insert($obj);
+		return $this->dormio->save($obj);
 	}
 	
 	function create($arr) {
@@ -247,6 +247,8 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
 	
 	public $source_spec;
 	
+	public $source_obj;
+	
 	public $accessor;
 	
 	function __construct(Dormio_Config_Entity $entity, Dormio $dormio, $obj, $spec) {
@@ -254,6 +256,17 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
 		$this->accessor = $this->dormio->config->getThroughAccessor($spec);
 		$this->filterBind("{$this->accessor}__{$spec['map_local_field']}", '=', $obj->pk, false);
 		$this->source_spec = $spec;
+		$this->source_obj = $obj;
+	}
+	
+	function add($obj) {
+		if(!isset($obj->_is_bound)) throw new Dormio_Manager_Exception("Object not bound to Dormio");
+		if(!isset($obj->pk)) $obj->save();
+
+		$o = $this->dormio->getObject($this->source_spec['through']);
+		$o->{$this->source_spec['map_local_field']} = $this->source_obj->pk;
+		$o->{$this->source_spec['map_remote_field']} = $obj->pk;
+		$this->dormio->_insert($o);
 	}
 }
 
