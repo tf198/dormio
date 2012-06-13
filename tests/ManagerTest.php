@@ -208,15 +208,15 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		  array('UPDATE "comment" SET "the_comment_user"=? WHERE "comment_id" = ?', array(array(1, 4))));
 		$this->assertDigestedAll();
 	}
-/*
+
 	function testForeignKeyAdd() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
-		$blog = new Blog($this->pdo);
-		$blog->load(2);
+		
+		$blog = $this->dormio->getObject('Blog', 2);
 		$this->assertEquals($blog->title, 'Andy Blog 2');
 
-		$comment = new Comment($this->pdo);
+		$comment = $this->dormio->getObject('Comment');
 		$comment->title = "Another new comment";
 		$comment->user = 1;
 		$blog->comments->add($comment);
@@ -224,15 +224,14 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->assertEquals($this->pdo->digest(),
 				array('INSERT INTO "comment" ("title", "the_comment_user", "blog_id") VALUES (?, ?, ?)', array(array('Another new comment', 1, 2))));
 	}
-
+/*
 	function testManyToManyAdd() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");
 
-		$blog = $this->pom->get('Blog', 1);
+		$blog = $this->dormio->getObject('Blog', 1);
 
-		$tag = $blog->tags->create();
-		$tag->tag = 'Black';
+		$tag = $blog->tags->create(array('tag' => 'Black'));
 
 		$blog->tags->add($tag);
 		// tag is automatically saved before attaching
@@ -249,7 +248,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 
 		$this->assertDigestedAll();
 	}
-
+/*
 	function testClear() {
 		$this->load("sql/test_schema.sql");
 		$this->load("sql/test_data.sql");

@@ -118,18 +118,14 @@ class Dormio {
 		$params = array();
 		foreach($obj->_entity->getFields() as $name=>$spec) {
 			if($spec['is_field'] && isset($obj->$name)) {
-				// check they are not trying to change the pk
-				if($name == 'pk') continue;
-				$column=  $spec['db_column'];
-				
-				// ignore unchanged items
-				if(isset($obj->_raw[$column]) && $obj->_raw[$column] == $obj->$name) continue;
-				
 				$value = $obj->$name;
 				if(is_object($value)) $value = $value->pk;
 				
-				$params[$column] = $value;
-				$obj->_raw[$column] = $value;
+				// ignore unchanged items
+				if(isset($obj->_raw[$name]) && $obj->_raw[$name] == $value) continue;
+				
+				$params[$spec['db_column']] = $value;
+				$obj->_raw[$name] = $value;
 			}
 		}
 		return $params;
@@ -143,7 +139,7 @@ class Dormio {
 		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
 		$stmt->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
-		//$obj->_raw = $params;
+		$obj->_raw['pk'] = $obj->pk;
 		return true;
 	}
 
@@ -156,6 +152,7 @@ class Dormio {
 			echo "Nothing to save\n";
 			return false;
 		}
+		if(isset($params[$obj->_entity->pk['db_column']])) throw new Dormio_Exception("Unable to updated PK");
 
 		$query = array(
 			'from' => "{{$obj->_entity->table}}",
