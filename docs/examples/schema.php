@@ -29,9 +29,10 @@ $config->generateAutoEntities();
 // these 5 lines create every table defined in our entities and their indexes
 foreach($config->getEntities() as $entity_name) {
 	$entity = $config->getEntity($entity_name);
-	$sf = Dormio_Schema::factory('sqlite', $entity);
-	$sf->createTable();
-	$sf->batchExecute($pdo, $sf->sql);
+	$schema = Dormio_Schema::fromEntity($entity);
+	$sf = Dormio_Schema::factory('sqlite', $schema);
+	$sql = $sf->createSQL();
+	$sf->batchExecute($pdo, $sql);
 }
 
 // have a look at the result
@@ -46,7 +47,8 @@ while($row = $stmt->fetch(PDO::FETCH_NUM)) {
 echo "\n\nMySQL statements that would be used\n---\n";
 foreach($config->getEntities() as $entity_name) {
 	$entity = $config->getEntity($entity_name);
-	$sf = Dormio_Schema::factory('mysql', $entity);
+	$schema = Dormio_Schema::fromEntity($entity);
+	$sf = Dormio_Schema::factory('mysql', $schema);
 	$sf->createTable();
 	foreach($sf->sql as $sql) echo "{$sql};\n";
 }

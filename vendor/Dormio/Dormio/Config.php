@@ -262,6 +262,17 @@ class Dormio_Config_Entity {
 	function isField($field) {
 		return isset($this->fields[$field]);
 	}
+	
+	function asArray() {
+		return array(
+			'name' => $this->name,
+			'table' => $this->table,
+			'verbose' => $this->verbose,
+			'indexes' => $this->indexes,
+			'model_class' => $this->model_class,
+			'fields' => $this->fields,
+		);
+	}
 
 	function validateField($field, $spec) {
 		// check it has a type
