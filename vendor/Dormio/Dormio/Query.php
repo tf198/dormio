@@ -297,7 +297,10 @@ class Dormio_Query {
 		foreach($entity->getFields() as $key=>$spec) {
 			if($spec['is_field']) {
 				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
-				$as = $this->_addField($alias, $spec['db_column']);
+				//$as = $this->_addField($alias, $spec['db_column']);
+				//$this->reverse[$as] = $path . $key;
+				$as = "{$alias}_{$key}";
+				$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$as}}";
 				$this->reverse[$as] = $path . $key;
 			}
 		}

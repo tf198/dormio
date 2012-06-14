@@ -27,94 +27,101 @@
  * @subpackage Manager
  */
 class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countable{
-	
+
 	/**
 	 * @var Dormio
 	 */
 	public $dormio;
-	
+
 	/**
 	 * @var int
 	 */
 	private $_count;
-	
+
 	/**
 	 * Track the filters for related managers
 	 * @var unknown_type
 	 */
 	public $filters = array();
-	
+
 	/**
 	 * Cache the pdo statement
 	 * @var PDOStatement
 	 */
 	private $_stmt;
-	
+
 	/**
 	 * Cache of params
 	 * @var multitype:mixed
 	 */
 	private $_params;
-	
+
 	function __construct(Dormio_Config_Entity $entity, Dormio $dormio) {
 		$this->dormio = $dormio;
-		
+
 		parent::__construct($entity, $dormio->dialect);
 	}
-	
+
 	function __clone() {
 		$this->_reset();
 	}
-	
+
 	function _reset() {
 		$this->_count = null;
 		$this->_stmt = null;
 		$this->_params = null;
 	}
-	
+
 	function compile($prepare=false) {
 		$query = $this->select();
 		$args = count($query[1]);
 		$store = ($prepare) ? $this->dormio->pdo->prepare($query[0]) : $query[0];
 		return array($store, $args, $this->entity->name, $this->reverse);
 	}
-	
-	function object() {
-		return $this->dormio->getObject($this->entity->name);
-	}
-	
+
 	/**
 	 * Execute the query and return a multi-dimentional array
 	 * @return multitype:multitype:string
 	 */
-	function findArray() {
+	function findData() {
 		if(!$this->_stmt) {
 			$query = $this->select();
+			//var_dump($query);
 			$this->_stmt = $this->dormio->pdo->prepare($query[0]);
 			$this->_params = $query[1];
 		}
 		$this->_stmt->execute($this->_params);
-		$data = $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
-		return array_map(array($this, 'mapArray'), $data);
+		return $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
-	
+
+	function findArray() {
+		return array_map(array($this, 'mapArray'), $this->findData());
+	}
+
 	/**
 	 * Execute the query and return an array of type $obj
 	 * @param Object $obj
 	 * @return multitype:Object
 	 */
 	function findObjects($obj) {
-		return new Dormio_ObjectSet($this->findArray(), $obj);
+		// create a field map
+		$map = array();
+		foreach($obj->_entity->getFields() as $key=>$spec) {
+			if($spec['is_field']) {
+				$map[$key] = $this->alias . "_" . $key;
+			} 
+		}
+		return new Dormio_ObjectSet($this->findData(), $obj, $map);
 	}
-	
+
 	/**
-	 * Execute the query and return the associated Object 
+	 * Execute the query and return the associated Object
 	 * @return Dormio_Object
 	 */
 	function find() {
-		return new Dormio_ObjectSet($this->findArray(), $this->object());
+		return $this->findObjects($this->dormio->getObject($this->entity->name));
 	}
-	
+
 	/**
 	 * Execute the query and return a single row
 	 * @throws Dormio_Manager_NoResultException
@@ -129,7 +136,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
 		return $data[0];
 	}
-	
+
 	/**
 	 * Execute the query and return a single row
 	 * @throws Dormio_Manager_NoResultException
@@ -137,10 +144,13 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return multitype:Dormio_Object
 	 */
 	function findOne($id=null) {
-		$data = $this->findOneArray($id);
-		return Dormio::mapObject($data, $this->object());
+		//$data = $this->findOneArray($id);
+		//return Dormio::mapObject($data, $this->object());
+		$all = $this->find();
+		if(count($all)!=1) throw new Dormio_Manager_Exception("Expected 1, got " . count($all));
+		return $all[0];
 	}
-	
+
 	/**
 	 * Get an aggregator for SQL methods e.g. COUNT() MAX() AVG() etc...
 	 * @return Dormio_Aggregator
@@ -148,7 +158,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	function getAggregator() {
 		return new Dormio_Aggregator($this);
 	}
-	
+
 	/**
 	 * Deletes the records specified by this query
 	 * Also deletes related records where on_delete is set to 'cascade'
@@ -160,7 +170,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		foreach($sql as $query) $i += $this->dormio->executeQuery($query, true);
 		return $i;
 	}
-	
+
 	/**
 	 * Does a batch update
 	 * @param multitype:string $params key/values to set
@@ -170,7 +180,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		$query = parent::update($params);
 		return $this->dormio->executeQuery($query, true);
 	}
-	
+
 	/**
 	 * Gets a prepared statement for high performance inserts
 	 * @param multitype:string $fields field names
@@ -180,7 +190,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		$query = parent::insert(array_flip($fields));
 		return $this->dormio->pdo->prepare($query[0]);
 	}
-	
+
 	/**
 	 * Make Dormio_Manager objects iteratable
 	 * @return Iterator
@@ -188,7 +198,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	function getIterator() {
 		return $this->find();
 	}
-	
+
 	function filterBind($key, $op, &$value, $clone=true) {
 		// add the ability for IN to accept Dormio_Manager as well as arrays
 		if($op == 'IN' && $value instanceof Dormio_Manager) {
@@ -200,7 +210,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		$this->filters[$key] = $value;
 		return parent::filterBind($key, $op, $value, $clone);
 	}
-	
+
 	/**
 	 * Return number of results this query has
 	 * Will perform a COUNT operation on the database
@@ -215,14 +225,14 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		}
 		return $this->_count;
 	}
-	
+
 	/**
 	 * Add an object to the current queryset
 	 * @param unknown_type $obj
 	 */
 	function add($obj) {
 		if(!isset($obj->_is_bound)) throw new Dormio_Manager_Exception("Object not bound to Dormio");
-	
+
 		// sanity tests
 		if($obj->_entity->name != $this->entity->name) {
 			throw new Dormio_Manager_Exception("Can only add entities of type [{$this->entity->name}]");
@@ -230,16 +240,16 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		if(count($this->params) != count($this->filters)) {
 			throw new Dormio_Manager_Exception("Can only add objects to simple filter queries");
 		}
-	
+
 		// update the passed objects with the filter fields
 		foreach($this->filters as $field=>$value) {
 			if(strpos($field, '__') !== false) throw new Dormio_Manager_Exception("Cannot add objects to joined queries");
 			$obj->{$field} = $value;
 		}
-	
+
 		return $this->dormio->save($obj);
 	}
-	
+
 	function create($arr) {
 		$obj = $this->object();
 		Dormio::mapObject($arr, $obj);
@@ -254,16 +264,15 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
  * @subpackage Manager
  */
 class Dormio_Manager_OneToMany extends Dormio_Manager {
-	
+
 	public $source_spec;
-	
+
 	public $source_obj;
-	
+
 	function __construct(Dormio_Config_Entity $entity, Dormio $dormio, $obj, $spec) {
 		parent::__construct($entity, $dormio);
-		$local = $spec['local_field'];
-		if(!isset($obj->$local)) $obj->$local = null;
-		$this->filterBind($spec['remote_field'], '=', $obj->$local, false);
+		//if(!isset($obj->$local)) $obj->$local = null;
+		$this->filterBind($spec['remote_field'], '=', $obj->{$spec['local_field']}, false);
 		$this->source_spec = $spec;
 		$this->source_obj = $obj;
 	}
@@ -275,11 +284,11 @@ class Dormio_Manager_OneToMany extends Dormio_Manager {
  * @subpackage Manager
  */
 class Dormio_Manager_ManyToMany extends Dormio_Manager {
-	
+
 	public $source_spec;
-	
+
 	public $source_obj;
-	
+
 	function __construct(Dormio_Config_Entity $entity, Dormio $dormio, $obj, $spec) {
 		parent::__construct($entity, $dormio);
 		$accessor = $this->dormio->config->getThroughAccessor($spec);
@@ -287,7 +296,7 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
 		$this->source_spec = $spec;
 		$this->source_obj = $obj;
 	}
-	
+
 	function add($obj) {
 		if(!isset($obj->_is_bound)) throw new Dormio_Manager_Exception("Object not bound to Dormio");
 		if(!isset($obj->pk)) $obj->save();
@@ -297,12 +306,12 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
 		$o->{$this->source_spec['map_remote_field']} = $obj->pk;
 		$this->dormio->_insert($o);
 	}
-	
+
 	function clear() {
 		$q = $this->dormio->getManager($this->source_spec['through']);
 		return $q->filter($this->source_spec['map_local_field'], '=', $this->source_obj->pk)->delete();
 	}
-	
+
 	function remove($obj) {
 		$pk = is_object($obj) ? $obj->pk : $obj;
 		$q = $this->dormio->getManager($this->source_spec['through']);
@@ -316,9 +325,9 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager {
  * @subpackage Manager
  */
 class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
-	
+
 	private $obj;
-	
+
 	/**
 	 * Need to *magic* this so we can act as an object but still get updated
 	 * @param string $field
@@ -328,6 +337,7 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 			try {
 				$this->obj = $this->findOne();
 			} catch(Dormio_Manager_NoResultException $e) {
+				var_dump($e);
 				$this->obj = new stdClass();
 				$this->obj->pk = $this->source_obj->pk;
 			}

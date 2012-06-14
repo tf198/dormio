@@ -22,7 +22,7 @@
 * @package Dormio
 * @subpackage Schema
 */
-class Dormio_Schema_SQLite extends Dormio_Schema_Generic {
+class Dormio_Schema_sqlite extends Dormio_Schema_Generic {
 
 	protected $version='sqlite';
 	
