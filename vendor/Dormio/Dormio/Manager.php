@@ -106,11 +106,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	function findObjects($obj) {
 		// create a field map
 		$map = array();
-		foreach($obj->_entity->getFields() as $key=>$spec) {
-			if($spec['is_field']) {
-				$map[$key] = $this->alias . "_" . $key;
-			} 
+		foreach($this->reverse as $key=>$value) {
+			if(substr($key, 0, 2) == $this->alias) $map[$value] = $key;
 		}
+		//var_dump($map);
 		return new Dormio_ObjectSet($this->findData(), $obj, $map);
 	}
 
