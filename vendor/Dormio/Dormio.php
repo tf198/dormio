@@ -231,6 +231,7 @@ class Dormio {
 		
 		$entity = $this->config->getEntity($spec['entity']);
 		$type = $spec['type'];
+		class_exists('Dormio_Manager');
 		switch($type) {
 			case 'foreignkey':
 			case 'onetoone':
@@ -354,7 +355,7 @@ class Dormio_Cache {
  */
 class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	
-	private $data, $obj, $fields;
+	private $data, $obj, $reverse;
 	
 	private $p, $c;
 	
@@ -363,12 +364,11 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	 * @param multitype:mixed $data
 	 * @param Dormio_Object $obj
 	 */
-	function __construct($data, $obj, $fields) {
+	function __construct($data, $obj, $reverse) {
 		$this->data = $data;
 		$this->obj = $obj;
 		$this->c = count($data);
-		$this->fields = $fields;
-		//var_dump($fields);
+		$this->reverse = $reverse;
 	}
 	
 	function offsetExists($offset) {
@@ -379,8 +379,8 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 		$this->obj->_data = $this->data[$offset];
 		
 		//var_dump($this->obj->_data);
-		foreach($this->fields as $key=>$field) {
-			$this->obj->$key = $this->obj->_data[$field];
+		foreach($this->reverse as $key=>$field) {
+			$this->obj->$field = $this->obj->_data[$key];
 		}
 		return $this->obj;
 	}

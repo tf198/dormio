@@ -65,6 +65,14 @@ class Dormio_Object {
 		return $this->$key;
 	}
 	
+	function __get($field) {
+		var_dump("GET {$field}");
+		if($this->pk) {
+			$this->load($this->pk);
+		}
+		return $this->$field;
+	}
+	
 	/*
 	function __toString() {
 		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
