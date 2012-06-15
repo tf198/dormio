@@ -148,6 +148,11 @@ class Dormio {
 		
 		$params = array();
 		foreach($obj->_entity->getFields() as $name=>$spec) {
+			
+			if(isset($obj->_map)) {
+				$name = $obj->_map[$name];
+			}
+			
 			if($spec['is_field'] && isset($obj->$name)) {
 				$value = $obj->$name;
 				if(is_object($value)) $value = $value->pk;
@@ -328,7 +333,7 @@ class Dormio {
 				}
 				self::mapObject($data, $obj->$key, $value);
 			} else {
-				$obj->$key = $data[$value];
+				$obj->$key = $obj->_data[$value];
 			}
 		}
 		return $obj;

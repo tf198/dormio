@@ -53,29 +53,25 @@ class Dormio_Object {
 		}
 	}
 	
-	function related($field) {
-		$key = "{$field}_manager";
-		if(!isset($this->$key)) {
-			$this->$key = $this->dormio->getRelated($this, $field);
-		}
-		return $this->$key;
-	}
-	
 	/**
 	 * Bit of *magic* to bind related types as required
 	 * @param string $field
 	 */
 	function __get($field) {
+		/*
 		if($this->_entity->isField($field)) {
 			$spec = $this->_entity->getField($field);
 			// lazy loading
-			if($spec['is_field']) {
+			if($spec['is_field'] && !isset($spec['entity'])) {
 				$this->load($this->pk);
 				return $this->$field;
 			}
 		}
+		*/
 		// assume it is a related field and allow exceptions to get thrown
-		return $this->related($field);
+		Dormio::$logger && Dormio::$logger->log("GET {$field}");
+		$this->$field = $this->dormio->getRelated($this, $field);
+		return $this->$field;
 	}
 	
 	function __toString() {
