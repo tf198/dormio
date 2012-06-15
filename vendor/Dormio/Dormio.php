@@ -323,6 +323,8 @@ class Dormio {
 	}
 	
 	static function mapObject($data, $obj, $map) {
+		//var_dump($data);
+		//var_dump($map);
 		$obj->_data = $data;
 		$obj->_map = $map;
 		foreach($map as $key=>$value) {
@@ -336,6 +338,8 @@ class Dormio {
 				$obj->$key = $obj->_data[$value];
 			}
 		}
+		//var_dump(implode(', ', array_keys($data)));
+		//var_dump(implode(', ', array_keys(get_object_vars($obj))));
 		return $obj;
 	}
 	

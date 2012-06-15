@@ -35,6 +35,8 @@ class Dormio_Object {
 	 */
 	public $_entity;
 	
+	private $_hydrated = false;
+	
 	function load($id) {
 		$this->dormio->load($this, $id);
 	}
@@ -53,25 +55,33 @@ class Dormio_Object {
 		}
 	}
 	
+	function hydrate() {
+		$this->load($this->pk);
+		$this->_hydrated = true;
+	}
+	
 	/**
 	 * Bit of *magic* to bind related types as required
 	 * @param string $field
 	 */
+	
 	function __get($field) {
-		/*
-		if($this->_entity->isField($field)) {
-			$spec = $this->_entity->getField($field);
-			// lazy loading
-			if($spec['is_field'] && !isset($spec['entity'])) {
-				$this->load($this->pk);
-				return $this->$field;
-			}
-		}
-		*/
-		// assume it is a related field and allow exceptions to get thrown
-		Dormio::$logger && Dormio::$logger->log("GET {$field}");
-		$this->$field = $this->dormio->getRelated($this, $field);
+		if($this->_hydrated) throw new Dormio_Exception("No such field: {$field}");
+		$this->hydrate();
 		return $this->$field;
+	}
+	
+	
+	function related($field) {
+		$key = $field . "_manager";
+		if(!isset($this->$key)) {
+			$this->$key = $this->dormio->getRelated($this, $field);
+		}
+		return $this->$key;
+	}
+	
+	function __call($method, $params) {
+		return $this->related($method);
 	}
 	
 	function __toString() {

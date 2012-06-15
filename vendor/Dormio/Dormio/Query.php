@@ -298,7 +298,8 @@ class Dormio_Query {
 			if($spec['is_field']) {
 				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
 				$as = $this->_addField($alias, $spec['db_column']);
-				$this->reverse[$as] = $path . $key;
+				$accessor = $path . $key;
+				$this->reverse[$as] = $accessor;
 			}
 		}
 	}

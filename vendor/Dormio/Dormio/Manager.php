@@ -86,6 +86,15 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		$this->_stmt->execute($this->_params);
 		return $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
+	
+	function _findOne($id=null) {
+		$query = $this->limit(2);
+		if($id !== null) $query->filter('pk', '=', $id, false);
+		$data = $query->_find();
+		if(!$data) throw new Dormio_Manager_NoResultException("Query returned no records");
+		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
+		return $data[0];
+	}
 
 	function findArray() {
 		return array_map(array($this, 'mapArray'), $this->_find());
@@ -116,12 +125,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return multitype:string
 	 */
 	function findOneArray($id=null) {
-		$query = $this->limit(2);
-		if($id !== null) $query->filter('pk', '=', $id, false);
-		$data = $this->_find();
-		if(!$data) throw new Dormio_Manager_NoResultException("Query returned no records");
-		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
-		return Dormio::mapArray($data[0], $this->reverse);
+		return Dormio::mapArray($this->_findOne($id), $this->reverse);
 	}
 
 	/**
@@ -133,7 +137,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	function findOne($id=null) {
 		//$data = $this->findOneArray($id);
 		//return Dormio::mapObject($data, $this->object());
-		$data = $this->_find($id);
+		$data = $this->_findOne($id);
 		$map = Dormio::mapFields($this->reverse);
 		return Dormio::mapObject($data, $this->dormio->getObjectFromEntity($this->entity), $map);
 	}
@@ -325,7 +329,7 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 			try {
 				$this->obj = $this->findOne();
 			} catch(Dormio_Manager_NoResultException $e) {
-				var_dump($e);
+				//var_dump($e);
 				$this->obj = new stdClass();
 				$this->obj->pk = $this->source_obj->pk;
 			}
