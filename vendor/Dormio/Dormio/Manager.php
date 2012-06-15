@@ -72,22 +72,15 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		$this->_params = null;
 	}
 
-	function compile($prepare=false) {
-		$query = $this->select();
-		$args = count($query[1]);
-		$store = ($prepare) ? $this->dormio->pdo->prepare($query[0]) : $query[0];
-		return array($store, $args, $this->entity->name, $this->reverse);
-	}
-	
 	function object() {
-		return $this->dormio->getObject($this->entity->name);
+		return $this->dormio->getObjectFromEntity($this->entity);
 	}
 
 	/**
 	 * Execute the query and return a multi-dimentional array
 	 * @return multitype:multitype:string
 	 */
-	function findData() {
+	function _find() {
 		if(!$this->_stmt) {
 			$query = $this->select();
 			//var_dump($query);
@@ -99,7 +92,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	}
 
 	function findArray() {
-		return array_map(array($this, 'mapArray'), $this->findData());
+		return array_map(array($this, 'mapArray'), $this->_find());
 	}
 
 	/**
@@ -108,7 +101,8 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return multitype:Object
 	 */
 	function findObjects($obj) {
-		return new Dormio_ObjectSet($this->findData(), $obj, $this->reverse);
+		$map = Dormio::mapFields($this->reverse);
+		return new Dormio_ObjectSet($this->_find(), $obj, $map);
 	}
 
 	/**
@@ -116,7 +110,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return Dormio_Object
 	 */
 	function find() {
-		return $this->findObjects($this->dormio->getObject($this->entity->name));
+		return $this->findObjects($this->dormio->getObjectFromEntity($this->entity));
 	}
 
 	/**

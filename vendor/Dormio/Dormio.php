@@ -109,13 +109,17 @@ class Dormio {
 		}
 		return $stored;
 	}
-
+	
 	function getObject($entity_name, $id=null, $lazy=false) {
 		$entity = $this->config->getEntity($entity_name);
+		return $this->getObjectFromEntity($entity, $id, $lazy);
+	}
+	
+	function getObjectFromEntity($entity, $id=null, $lazy=false) {
 		$class_name = $entity->model_class;
 		$obj = new $class_name;
-		$this->bind($obj, $entity_name);
-
+		$this->bindEntity($obj, $entity);
+		
 		if($id !== null) {
 			if($lazy) {
 				$obj->pk = $id;
@@ -140,7 +144,7 @@ class Dormio {
 	}
 	
 	function _params($obj) {
-		if(!isset($obj->_raw)) throw new Dormio_Exception("No raw data to compare to");
+		if(!isset($obj->_data)) throw new Dormio_Exception("No raw data to compare to");
 		
 		$params = array();
 		foreach($obj->_entity->getFields() as $name=>$spec) {
@@ -149,10 +153,10 @@ class Dormio {
 				if(is_object($value)) $value = $value->pk;
 				
 				// ignore unchanged items
-				if(isset($obj->_raw[$name]) && $obj->_raw[$name] == $value) continue;
+				if(isset($obj->_data[$name]) && $obj->_data[$name] == $value) continue;
 				
 				$params[$spec['db_column']] = $value;
-				$obj->_raw[$name] = $value;
+				$obj->_data[$name] = $value;
 			}
 		}
 		return $params;
@@ -160,21 +164,21 @@ class Dormio {
 	
 	function _insert($obj) {
 		//echo "_INSERT {$obj}\n";
-		$obj->_raw = array();
+		$obj->_data = array();
 		$params = $this->_params($obj);
 		if(!$params) throw new Exception("No fields to update on entity [{$obj->_entity->name}]");
 
 		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
 		$stmt->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
-		$obj->_raw['pk'] = $obj->pk;
+		$obj->_data['pk'] = $obj->pk;
 		return true;
 	}
 
 	function update($obj) {
 		//echo "UPDATE {$obj}\n";
 		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object hasn't been bound to Dormio");
-		if(!isset($obj->_raw)) throw new Dormio_Exception("Object has no previous data");
+		if(!isset($obj->_data)) throw new Dormio_Exception("Object has no previous data");
 		
 		$params = $this->_params($obj);
 		if(!$params) {
@@ -206,10 +210,18 @@ class Dormio {
 		return $i;
 	}
 
-	function bind($obj, $entity_name) {
+	function bind($obj, $entity_name=null) {
 		if(!isset($obj->_is_bound)) {
 			if(!$entity_name) $entity_name = get_class($obj);
-			$obj->_entity = $this->config->getEntity($entity_name);
+			$entity = $this->config->getEntity($entity_name);
+			$this->bindEntity($obj, $entity);
+		}
+		return $obj;
+	}
+	
+	function bindEntity($obj, $entity) {
+		if(!isset($obj->_is_bound)) {
+			$obj->_entity = $entity;
 			$obj->dormio = $this;
 			$obj->pk = null;
 			$obj->_is_bound = true;
@@ -304,6 +316,38 @@ class Dormio {
 		}
 		return $result;
 	}
+	
+	static function mapObject($data, $obj, $map) {
+		$obj->_data = $data;
+		$obj->_map = $map;
+		foreach($map as $key=>$value) {
+			if(is_array($value)) {
+				if(!isset($obj->$key)) {
+					$child = $obj->_entity->getRelatedEntity($key);
+					$obj->$key = $obj->dormio->getObjectFromEntity($child);
+				}
+				self::mapObject($data, $obj->$key, $value);
+			} else {
+				$obj->$key = $data[$value];
+			}
+		}
+		return $obj;
+	}
+	
+	static function mapFields($reverse) {
+		$result = array();
+		foreach($reverse as $field=>$path) {
+			$parts = explode('__', $path);
+			$arr = &$result;
+			$p = count($parts)-1;
+			for($i=0; $i<$p; $i++) {
+				$arr = &$arr[$parts[$i]];
+				if(!is_array($arr)) $arr = array();
+			}
+			$arr[$parts[$p]] = $field;
+		}
+		return $result;
+	}
 }
 
 /**
@@ -355,7 +399,7 @@ class Dormio_Cache {
  */
 class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	
-	private $data, $obj, $reverse;
+	private $data, $obj, $map;
 	
 	private $p, $c;
 	
@@ -364,11 +408,11 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	 * @param multitype:mixed $data
 	 * @param Dormio_Object $obj
 	 */
-	function __construct($data, $obj, $reverse) {
+	function __construct($data, $obj, $map) {
 		$this->data = $data;
 		$this->obj = $obj;
 		$this->c = count($data);
-		$this->reverse = $reverse;
+		$this->map = $map;
 	}
 	
 	function offsetExists($offset) {
@@ -376,13 +420,7 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	}
 	
 	function offsetGet($offset) {
-		$this->obj->_data = $this->data[$offset];
-		
-		//var_dump($this->obj->_data);
-		foreach($this->reverse as $key=>$field) {
-			$this->obj->$field = $this->obj->_data[$key];
-		}
-		return $this->obj;
+		return Dormio::mapObject($this->data[$offset], $this->obj, $this->map);
 	}
 	
 	function offsetSet($offset, $value) {
@@ -414,11 +452,8 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 		$this->p++;
 		// need to map here as current() gets called multiple times for each row
 		if(isset($this->data[$this->p])) {
-			$this->offsetGet($this->p);
-		} else {
-			$this->obj = null;
+			Dormio::mapObject($this->data[$this->p], $this->obj, $this->map);
 		}
-		//Dormio::mapObject($this->data[$this->p], $this->obj);
 	}
 	
 	function valid() {

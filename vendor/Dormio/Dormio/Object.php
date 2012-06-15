@@ -53,10 +53,6 @@ class Dormio_Object {
 		}
 	}
 	
-	function getFields() {
-		return array_keys(get_object_vars($this));
-	}
-	
 	function related($field) {
 		$key = "{$field}_manager";
 		if(!isset($this->$key)) {
@@ -65,18 +61,25 @@ class Dormio_Object {
 		return $this->$key;
 	}
 	
+	/**
+	 * Bit of *magic* to bind related types as required
+	 * @param string $field
+	 */
 	function __get($field) {
-		var_dump("GET {$field}");
-		if($this->pk) {
-			$this->load($this->pk);
+		if($this->_entity->isField($field)) {
+			$spec = $this->_entity->getField($field);
+			// lazy loading
+			if($spec['is_field']) {
+				$this->load($this->pk);
+				return $this->$field;
+			}
 		}
-		return $this->$field;
+		// assume it is a related field and allow exceptions to get thrown
+		return $this->related($field);
 	}
 	
-	/*
 	function __toString() {
 		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
 		return ($this->pk) ? "[{$this->_entity->name} {$this->pk}]" : "[New {$this->_entity->name}]";
 	}
-	*/
 }
