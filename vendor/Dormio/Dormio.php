@@ -89,15 +89,15 @@ class Dormio {
 	}
 
 	function load($obj, $id) {
-		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object not bound to dormio");
+		//if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object not bound to dormio");
 
 		$stmt = $this->_getSelect($obj->_entity);
 		$stmt->execute(array($id));
 		
-		$obj->_data = $stmt->fetch(PDO::FETCH_ASSOC);
-		if(!$obj->_data) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no record with primary key {$id}");
+		$data = $stmt->fetch(PDO::FETCH_ASSOC);
+		if(!$data) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no record with primary key {$id}");
+		$obj->setData($data);
 		
-		foreach($obj->_data as $key=>$value) $obj->$key = $value;
 		return $obj;
 	}
 
@@ -118,7 +118,8 @@ class Dormio {
 	function getObjectFromEntity($entity, $id=null, $lazy=false) {
 		$class_name = $entity->model_class;
 		$obj = new $class_name;
-		$this->bindEntity($obj, $entity);
+		//$this->bindEntity($obj, $entity);
+		$obj->bind($this, $entity);
 		
 		if($id !== null) {
 			if($lazy) {
@@ -139,30 +140,18 @@ class Dormio {
 	 * @return boolean
 	 */
 	function insert($obj, $entity_name=null) {
-		$this->bind($obj, $entity_name);
+		if(!$obj->isBound()) {
+			throw new Dormio_Exception("Object not bound");
+		}
 		return $this->_insert($obj);
 	}
 	
 	function _params($obj) {
-		if(!isset($obj->_data)) throw new Dormio_Exception("No raw data to compare to");
-		
 		$params = array();
-		foreach($obj->_entity->getFields() as $name=>$spec) {
-			
-			if(isset($obj->_map)) {
-				$name = $obj->_map[$name];
-			}
-			
-			if($spec['is_field'] && isset($obj->$name)) {
-				$value = $obj->$name;
-				if(is_object($value)) $value = $value->pk;
-				
-				// ignore unchanged items
-				if(isset($obj->_data[$name]) && $obj->_data[$name] == $value) continue;
-				
-				$params[$spec['db_column']] = $value;
-				$obj->_data[$name] = $value;
-			}
+		foreach($obj->getUpdated() as $field=>$value) {
+			if(is_object($value)) $value = $value->pk;
+			$spec = $obj->_entity->getField($field);
+			$params[$spec['db_column']] = $value;
 		}
 		return $params;
 	}
@@ -171,8 +160,8 @@ class Dormio {
 		//echo "_INSERT {$obj}\n";
 		$obj->_data = array();
 		$params = $this->_params($obj);
-		if(!$params) throw new Exception("No fields to update on entity [{$obj->_entity->name}]");
-
+		if(!$params) throw new Exception("No fields to insert on entity [{$obj->_entity->name}]");
+		
 		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
 		$stmt->execute(array_values($params));
 		$obj->pk = $this->pdo->lastInsertId();
@@ -214,7 +203,7 @@ class Dormio {
 		foreach($sql as $q) $i += $this->executeQuery($q, true);
 		return $i;
 	}
-
+/*
 	function bind($obj, $entity_name=null) {
 		if(!isset($obj->_is_bound)) {
 			if(!$entity_name) $entity_name = get_class($obj);
@@ -233,10 +222,8 @@ class Dormio {
 		}
 		return $obj;
 	}
-	
+*/	
 	function getRelated($obj, $field) {
-		if(!$obj->_is_bound) throw new Dormio_Exception("Object not bound to Dormio");
-		if(isset($obj->is_bound_related)) return $obj;
 
 		try {
 			$spec = $obj->_entity->getField($field);
@@ -260,10 +247,8 @@ class Dormio {
 			default:
 				throw new Dormio_Exception("Field [{$field}] has an unexpected related type [{$type}]");
 		}
-		
-		return $obj->$field;
 	}
-	
+
 	function _getSelect($entity) {
 		$key = "_{$entity->name}_SELECT";
 		if(!$stored = $this->cache->get($key)) {
@@ -401,6 +386,50 @@ class Dormio_Cache {
 	}
 }
 
+class Dormio_ResultMapper implements ArrayAccess{
+	
+	private $map, $data;
+	
+	function __construct($map) {
+		$this->map = $map;
+	}
+	
+	function setData($data) {
+		$this->data = $data;
+	}
+	
+	function offsetGet($offset) {
+		return $this->data[$this->map[$offset]];
+	}
+	
+	function offsetSet($offset, $value) {
+		throw new Dormio_Exception("Dormio_ResultMapper is not mutable");
+	}
+	
+	function offsetExists($offset) {
+		return isset($this->map[$offset]);
+	}
+	
+	function offsetUnset($offset) {
+		unset($this->data[$this->map[$offset]]);
+		unset($this->map[$offset]);
+	}
+	
+	function getChildMapper($name) {
+		$name .= '__';
+		$l = strlen($name);
+		$child_map = array();
+		foreach($this->map as $path=>$field) {
+			if(substr($path, 0, $l) == $name) {
+				$child_map[substr($path, $l)] = $field;
+			}
+		}
+		$child = new Dormio_ResultMapper($child_map);
+		$child->setData($this->data);
+		return $child;
+	}
+}
+
 /**
  * Array-type object for iterating results as Objects
  * @author Tris Forster
@@ -408,7 +437,7 @@ class Dormio_Cache {
  */
 class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	
-	private $data, $obj, $map;
+	private $data, $obj, $mapper;
 	
 	private $p, $c;
 	
@@ -417,11 +446,12 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	 * @param multitype:mixed $data
 	 * @param Dormio_Object $obj
 	 */
-	function __construct($data, $obj, $map) {
+	function __construct($data, $obj, $reverse) {
 		$this->data = $data;
 		$this->obj = $obj;
 		$this->c = count($data);
-		$this->map = $map;
+		$this->mapper = new Dormio_ResultMapper($reverse);
+		$this->obj->setData($this->mapper);
 	}
 	
 	function offsetExists($offset) {
@@ -429,7 +459,8 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	}
 	
 	function offsetGet($offset) {
-		return Dormio::mapObject($this->data[$offset], $this->obj, $this->map);
+		$this->mapper->setData($this->data[$offset]);
+		return $this->obj;
 	}
 	
 	function offsetSet($offset, $value) {
@@ -461,7 +492,7 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 		$this->p++;
 		// need to map here as current() gets called multiple times for each row
 		if(isset($this->data[$this->p])) {
-			Dormio::mapObject($this->data[$this->p], $this->obj, $this->map);
+			$this->mapper->setData($this->data[$this->p]);
 		}
 	}
 	

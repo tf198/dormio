@@ -28,64 +28,126 @@ class Dormio_Object {
 	/**
 	 * @var Dormio
 	 */
-	public $dormio;
+	public $_dormio;
 	
 	/**
 	 * @var Dormio_Config_Entity
 	 */
 	public $_entity;
 	
-	private $_hydrated = false;
+	public $_data = array();
+	
+	public $_updated = array();
+	
+	public $_related = array();
+	
+	public $_child_objects = array();
+	
+	public $_fields;
+	
+	public $pk;
+	
+	function bind(Dormio $dormio, Dormio_Config_Entity $entity) {
+		$this->_dormio = $dormio;
+		$this->_entity = $entity;
+		
+		$this->_fields = $this->_entity->getFields();
+	}
+	
+	function isBound() {
+		return isset($this->_dormio);
+	}
 	
 	function load($id) {
-		$this->dormio->load($this, $id);
+		$this->_dormio->load($this, $id);
 	}
 
 	function save() {
-		return $this->dormio->save($this);
+		return $this->_dormio->save($this);
 	}
 	
 	function delete() {
-		return $this->dormio->delete($this);
+		return $this->_dormio->delete($this);
 	}
 	
 	function setValues($arr) {
 		foreach($arr as $key=>$value) {
-			$this->$key = $value;
+			$this->setFieldValue($key, $value);
 		}
 	}
 	
-	function hydrate() {
-		$this->load($this->pk);
-		$this->_hydrated = true;
+	function setData($data, $map=null) {
+		$this->_data = $data;
+		$this->pk = isset($this->_data['pk']) ? $this->_data['pk'] : null;
 	}
 	
-	/**
-	 * Bit of *magic* to bind related types as required
-	 * @param string $field
-	 */
+	function getFieldValue($field, $throw=true) {
+		if(isset($this->_data[$field])) {
+			return $this->_data[$field];
+		}
+		if($throw) throw new Dormio_Exception("No value for field: {$field}");
+		return null;
+	}
+	
+	function setFieldValue($field, $value) {
+		$this->_updated[$field] = $value;
+	}
+	
+	function getUpdated() {
+		return $this->_updated;
+	}
 	
 	function __get($field) {
-		if($this->_hydrated) throw new Dormio_Exception("No such field: {$field}");
-		$this->hydrate();
-		return $this->$field;
+		// changed values
+		if(isset($this->_updated[$field])) {
+			return $this->_updated[$field];
+		}
+		
+		$spec = $this->_entity->getField($field);
+		//var_dump($spec);
+		if($spec['is_field']) {
+			if(isset($spec['entity'])) { // foreignkey or onetoone
+				return $this->getRelatedChild($field, $spec);
+			} else {
+				return $this->getFieldValue($field);
+			}
+		}
+		
+		return $this->getRelated($field);
 	}
 	
+	function getRelatedChild($field, $spec) {
+		if(!isset($this->_child_objects[$field])) {
+			$entity = $this->_dormio->config->getEntity($spec['entity']);
+			$obj = $this->_dormio->getObjectFromEntity($entity);
+			$mapper = $this->_data->getChildMapper($field);
+			$obj->setData($mapper);
+			$this->_child_objects[$field] = $obj;
+		}
+		return $this->_child_objects[$field];
+	}
+	
+	function getRelated($field) {
+		if(!isset($this->_related[$field])) {
+			$this->_related[$field] = $this->_dormio->getRelated($this, $field);
+		}
+		return $this->_related[$field];
+	}
 	
 	function related($field) {
-		$key = $field . "_manager";
-		if(!isset($this->$key)) {
-			$this->$key = $this->dormio->getRelated($this, $field);
-		}
-		return $this->$key;
+		return $this->getRelated($field);
 	}
 	
-	function __call($method, $params) {
-		return $this->related($method);
+	function display() {
+		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
+		return ($this->pk) ? "[{$this->_entity->name} {$this->pk}]" : "[New {$this->_entity->name}]";
 	}
 	
 	function __toString() {
-		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
-		return ($this->pk) ? "[{$this->_entity->name} {$this->pk}]" : "[New {$this->_entity->name}]";
+		try {
+			return $this->display();
+		} catch(Exception $e) {
+			return "Object display error: {$e->getMessage()}";
+		}
 	}
 }
