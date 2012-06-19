@@ -318,20 +318,19 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 
 	private $obj;
 	
-	/**
-	 * Need to *magic* this so we can act as an object but still get updated
-	 * @param string $field
-	 */
-	function getObject() {
-		if(!$this->obj || $this->obj->pk != $this->bound_id) {
+	function setBoundId($id) {
+		if($id != $this->bound_id) {
+			parent::setBoundId($id);
 			try {
 				$this->obj = $this->findOne();
-				Dormio::$logger && Dormio::$logger->log("Found onetoone object {$this->obj->ident()}");
 			} catch(Dormio_Manager_NoResultException $e) {
 				Dormio::$logger && Dormio::$logger->log("No result - returning empty object");
 				$this->obj = $this->dormio->getObjectFromEntity($this->entity);
 			}
 		}
+	}
+	
+	function getObject() {
 		return $this->obj;
 	}
 }

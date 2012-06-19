@@ -2,14 +2,7 @@
 <phpunit bootstrap="tests/bootstrap.php" colors="true">
 	<testsuites>
 		<testsuite name="Dormio Tests">
-			<include>
-				<file>tests/ConfigTest.php</file>
-				<file>tests/DialectTest.php</file>
-				<file>tests/QueryTest.php</file>
-				<file>tests/SchemaTest.php</file>
-				<file>tests/IntrospectionTest.php</file>
-				<file>tests/ExampleTest.php</file>
-			</include>
+			<directory>tests</directory>
 		</testsuite>
 	</testsuites>
 </phpunit>

@@ -191,7 +191,7 @@ class Dormio_Object {
 	 * @param string $field
 	 * @param multitype:string $spec
 	 */
-	function getRelatedObject($field, $spec, $reverse=false) {
+	function getRelatedObject($field, $spec) {
 		if(isset($this->_related_objects[$field])) {
 			$obj = $this->_related_objects[$field];
 		} else {
@@ -200,23 +200,15 @@ class Dormio_Object {
 			$this->_related_objects[$field] = $obj;
 		}
 
-		try {
-			if($this->_data instanceof Dormio_ResultMapper) {
-				Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
-				//$remote = $reverse ? 'remote_field' : 'local_field';
-				$remote = $reverse ? 'local_field' : 'remote_field';
-				$mapper = $this->_data->getChildMapper($field, $spec[$remote]);
-				$obj->setData($mapper);
-			} else {
-				//var_dump($spec);
-				Dormio::$logger && Dormio::$logger->log("Lazy loading field {$field}");
-				$remote = $reverse ? 'local_field' : 'remote_field';
-				$pk =  $this->_data[$spec[$remote]];
-				$obj->setPrimaryKey($pk);
-			}
-		} catch(Exception $e) {
-			var_dump($field, $spec, $this->_data);
-			throw $e;
+		if(isset($this->_data[$field . "__pk"])) {
+			Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
+			$mapper = $this->_data->getChildMapper($field);
+			$obj->setData($mapper);
+		} else {
+			Dormio::$logger && Dormio::$logger->log("Lazy loading field {$field}");
+				
+			$pk =  $this->_data[$field];
+			$obj->setPrimaryKey($pk);
 		}
 		return $obj;
 	}
@@ -227,12 +219,10 @@ class Dormio_Object {
 	 */
 	function getRelated($field) {
 		$spec = $this->_entity->getField($field);
-		//var_dump($field, $spec);
 		
-		if($spec['type'] == 'onetoone') {
-			// need to reverse it
-			Dormio::$logger && Dormio::$logger->log("Reverse object {$field}");
-			return $this->getRelatedObject($field, $spec, true);
+		if($spec['type'] == 'onetoone' && isset($this->_data[$field . "__pk"])) {
+			Dormio::$logger && Dormio::$logger->log("Trying to eager hydrate field {$field}");
+			return $this->getRelatedObject($field, $spec);
 		}
 		
 		// use cached if possible
@@ -240,14 +230,19 @@ class Dormio_Object {
 			list($manager, $bound_field) = $this->_related_managers[$field];
 		} else {
 			$manager = $this->_dormio->getRelatedManager($this->_entity, $field);
-			$spec = $this->_entity->getField($field);
 			$bound_field = (isset($spec['local_field'])) ? $spec['local_field'] : 'pk';
 			$this->_related_managers[$field] = array($manager, $bound_field);
 		}
 		
 		// update with current bound value
+		
 		$manager->setBoundId($this->getFieldValue($bound_field));
-		return $manager;
+		if($spec['type'] == 'onetoone') {
+			return $manager->getObject();
+		} else {
+			
+			return $manager;
+		}
 	}
 	
 	function related($field) {

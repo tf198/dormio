@@ -304,9 +304,8 @@ class Dormio_ResultMapper implements ArrayAccess{
 		unset($this->map[$offset]);
 	}
 	
-	function getChildMapper($name, $remote_field) {
-		Dormio::$logger && Dormio::$logger->log("getChildMapper: {$name} {$remote_field}");
-		//var_dump($this->map);
+	function getChildMapper($name) {
+		Dormio::$logger && Dormio::$logger->log("getChildMapper: {$name}");
 		$prefix = $name . '__';
 		$l = strlen($prefix);
 		$child_map = array();
@@ -315,8 +314,6 @@ class Dormio_ResultMapper implements ArrayAccess{
 				$child_map[substr($path, $l)] = $field;
 			}
 		}
-		// for lazy loading we need to add the related field
-		if(!isset($child_map[$remote_field])) $child_map[$remote_field] = $this->map[$name];
 		$child = new Dormio_ResultMapper($child_map);
 		$child->setRawData($this->raw);
 		return $child;
