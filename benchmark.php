@@ -77,17 +77,19 @@ bench('Dormio::getObject()');
 for($i=0; $i<LOOP; $i++) {
 	$o = $dormio->getObject('Blog', 2);
 }
+assert($o->title == 'Andy Blog 2');
 bench('Dormio::getObject() multiple');
 
 $o = $dormio->getObject('Blog');
 $o->setValues(array('title'=>'Test', 'body'=>'Testing', 'author'=>1));
-$dormio->insert($o, 'Blog');
+$o->save();
+assert($o->pk == 4);
 bench('Insert one object');
 
 for($i=0; $i<LOOP; $i++) {
 	$o = $dormio->getObject('Blog');
 	$o->setValues(array('title'=>'Test ' . $i, 'body'=>'Testing', 'author'=>1));
-	$dormio->save($o);
+	$o->save();
 }
 assert($o->pk == LOOP + 4);
 //var_dump($o->pk);
@@ -102,8 +104,8 @@ bench('Dormio_Manager::__construct() - ARRAY');
 $data = $blogs->findArray();
 bench('findArray()');
 
-foreach($data as $item) { $item['title']; }
-unset($data);
+foreach($data as $item) { }
+assert($item['title'] == 'Test ' . (LOOP-1));
 bench('Array iteration');
 
 $iter = $blogs->find();
@@ -111,6 +113,7 @@ bench('find()');
 
 foreach($iter as $item) { $item->title; }
 unset($iter);
+assert($item->title == 'Test ' . (LOOP-1));
 bench('Object iteration');
 
 $result = $blogs->filter('author__profile_set__age', '<', 40)->getAggregator()->count()->run();
