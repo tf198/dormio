@@ -326,6 +326,9 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 			} catch(Dormio_Manager_NoResultException $e) {
 				Dormio::$logger && Dormio::$logger->log("No result - returning empty object");
 				$this->obj = $this->dormio->getObjectFromEntity($this->entity);
+				foreach($this->filters as $key=>$value) {
+					$this->obj->setFieldValue($key, $value);
+				}
 			}
 		}
 	}

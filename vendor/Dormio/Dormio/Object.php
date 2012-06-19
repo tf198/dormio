@@ -213,6 +213,7 @@ class Dormio_Object {
 			$pk =  $this->_data[$field];
 			$obj->setPrimaryKey($pk);
 		}
+		
 		return $obj;
 	}
 	
