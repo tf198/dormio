@@ -3,10 +3,10 @@ Blog 2
   My second entry
 
 All Blogs
-  Andy Blog 1
-  Andy Blog 2
-  Bob Blog 1
-  Hello, World
+  My first blog
+  My second entry
+  Bob is a blogger
+  A tirade against blog demos
 
 Comments for 'Andy Blog 2'
   Andy Comment 1 on Andy Blog 2

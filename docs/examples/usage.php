@@ -25,10 +25,8 @@ $blog->body = "Welcome one and all";
 $blog->author = 1;
 
 $blog->save();
-//$dormio->save($blog, 'Blog');
 
-$blog->body = "My first blog";
-//$dormio->save($blog, 'Blog');
+$blog->body = "A tirade against blog demos";
 $blog->save();
 
 // get a blog

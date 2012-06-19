@@ -12,6 +12,8 @@ class ExampleTest extends PHPUnit_Framework_TestCase {
 	 * Check we haven't introduced any memory leaks
 	 */
 	function testBenchmark() {
+		if(gethostname() != 'TFC-SERVER') $this->markTestSkipped();
+		
 		$last = exec('php benchmark.php', $output, $ret);
 		$this->assertEquals(0, $ret, "Failed to run benchmark script");
 		$scores = sscanf(array_pop($output), "%f %f | %f %f");
