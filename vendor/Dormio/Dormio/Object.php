@@ -200,7 +200,8 @@ class Dormio_Object {
 			$this->_related_objects[$field] = $obj;
 		}
 
-		if(isset($this->_data[$field . "__pk"])) {
+		if(isset($this->_data[$field . "__" . $spec['local_field']])) {
+			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
 			$mapper = $this->_data->getChildMapper($field);
 			$obj->setData($mapper);
@@ -222,7 +223,8 @@ class Dormio_Object {
 	function getRelated($field) {
 		$spec = $this->_entity->getField($field);
 		
-		if($spec['type'] == 'onetoone' && isset($this->_data[$field . "__pk"])) {
+		if($spec['type'] == 'onetoone' && isset($this->_data[$field . "__" . $spec['local_field']])) {
+			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Trying to eager hydrate field {$field}");
 			return $this->getRelatedObject($field, $spec);
 		}
