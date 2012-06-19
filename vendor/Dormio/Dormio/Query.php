@@ -625,8 +625,6 @@ class Dormio_Query {
 	 * @return multitype:mixed
 	 */
 	function mapArray($row) {
-		return Dormio::mapArray($row, $this->reverse);
-		/*
 		$result = array();
 		foreach($row as $key=>$value) {
 			$parts = explode('__', $this->reverse[$key]);
@@ -639,7 +637,6 @@ class Dormio_Query {
 			$arr[$parts[$p]] = $value;
 		}
 		return $result;
-		*/
 	}
 }
 

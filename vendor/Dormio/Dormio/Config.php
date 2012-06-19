@@ -25,13 +25,23 @@
 */
 class Dormio_Config {
 
+	/**
+	 * Entity cache
+	 * @var multitype:Dormio_Config_Entity
+	 */
 	public $_entities = array();
 
+	/**
+	 * Source config
+	 * @var multitype:mixed
+	 */
 	public $_config = array();
 
+	/**
+	 * Backward relations
+	 * @var multitype:mixed
+	 */
 	public $_relations = array('auto' => array());
-
-	private static $instance;
 	
 	/**
 	 * Register entities with the config manager
@@ -431,7 +441,7 @@ class Dormio_Config_Entity {
 	}
 
 	function __toString() {
-		return "Entity {$this->name}: " . implode(', ', $this->getFieldNames());
+		return "[Entity {$this->name}]";
 	}
 	
 	static function title($str) {

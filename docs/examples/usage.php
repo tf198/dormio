@@ -19,15 +19,17 @@ $config->addEntities($entities);
 $dormio = new Dormio($pdo, $config);
 
 // Can map onto any object you want
-$blog = new stdClass();
+$blog = $dormio->getObject('Blog');
 $blog->title = "Hello, World";
 $blog->body = "Welcome one and all";
 $blog->author = 1;
 
-$dormio->save($blog, 'Blog');
+$blog->save();
+//$dormio->save($blog, 'Blog');
 
 $blog->body = "My first blog";
-$dormio->save($blog, 'Blog');
+//$dormio->save($blog, 'Blog');
+$blog->save();
 
 // get a blog
 $blog = $dormio->getObject('Blog', 2);
@@ -37,7 +39,7 @@ echo "  {$blog->body}\n";
 $blogs = $dormio->getManager('Blog');
 echo "\nAll Blogs\n";
 foreach($blogs as $row) {
-	echo "  {$row->title}\n";
+	echo "  {$row->body}\n";
 }
 
 // get the related comments
@@ -63,8 +65,6 @@ $tag = $tags->filter('tag', '=', 'Orange')->findOne();
 foreach($tag->blog_set as $blog) {
 	echo "  {$blog->title}\n";
 }
-
-
 
 // create a new comment about the blog
 $comment = $dormio->getObject('Comment');

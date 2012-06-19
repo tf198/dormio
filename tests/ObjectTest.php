@@ -128,7 +128,7 @@ $this->dumpAllSQL();
 		$b1 = $this->dormio->getObject('Blog', '1');
 
 		// Lazy
-		$this->assertEquals($b1->the_user()->name, 'Andy');
+		$this->assertEquals($b1->the_user->name, 'Andy');
 		$this->assertEquals($this->pdo->digest(), array('SELECT "blog_id" AS "pk", "title", "the_blog_user" AS "the_user" FROM "blog" WHERE "blog_id" = ?', array(array('1'))));
 		$this->assertEquals($this->pdo->digest(), array('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1 WHERE t1."user_id" = ? LIMIT 2', array(array('1'))));
 

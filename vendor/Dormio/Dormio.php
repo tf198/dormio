@@ -79,28 +79,6 @@ class Dormio {
 		$this->cache = $cache;
 	}
 
-	function save($obj, $entity_name=null) {
-		//echo "SAVE {$obj}\n";
-		if(isset($obj->pk)) {
-			$this->update($obj);
-		} else {
-			$this->insert($obj, $entity_name);
-		}
-	}
-
-	function load($obj, $id) {
-		//if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object not bound to dormio");
-
-		$stmt = $this->_getSelect($obj->_entity);
-		$stmt->execute(array($id));
-		
-		$data = $stmt->fetch(PDO::FETCH_ASSOC);
-		if(!$data) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no record with primary key {$id}");
-		$obj->setData($data);
-		
-		return $obj;
-	}
-
 	function getManager($name) {
 		$key = "_{$name}_MANAGER";
 		if(!$stored = $this->cache->get($key)) {
@@ -110,140 +88,100 @@ class Dormio {
 		return $stored;
 	}
 	
-	function getObject($entity_name, $id=null, $lazy=false) {
+	function getObject($entity_name, $id=null) {
 		$entity = $this->config->getEntity($entity_name);
-		return $this->getObjectFromEntity($entity, $id, $lazy);
+		return $this->getObjectFromEntity($entity, $id);
 	}
 	
-	function getObjectFromEntity($entity, $id=null, $lazy=false) {
+	function getObjectFromEntity(Dormio_Config_Entity $entity, $id=null) {
 		$class_name = $entity->model_class;
-		$obj = new $class_name;
-		//$this->bindEntity($obj, $entity);
-		$obj->bind($this, $entity);
+		$obj = new $class_name($this, $entity);
 		
-		if($id !== null) {
-			if($lazy) {
-				$obj->pk = $id;
-			} else {
-				$this->load($obj, $id);
-			}
-		}
+		$obj->setPrimaryKey($id);
 
 		return $obj;
 	}
-
-	/**
-	 * Do an INSERT for an object
-	 * Object can be bound or unbound
-	 * @param Object $obj
-	 * @param string $entity_name
-	 * @return boolean
-	 */
-	function insert($obj, $entity_name=null) {
-		if(!$obj->isBound()) {
-			throw new Dormio_Exception("Object not bound");
-		}
-		return $this->_insert($obj);
-	}
 	
-	function _params($obj) {
+	function fieldsToColumns(array $fields, Dormio_Config_Entity $entity) {
 		$params = array();
-		foreach($obj->getUpdated() as $field=>$value) {
-			if(is_object($value)) $value = $value->pk;
-			$spec = $obj->_entity->getField($field);
+		foreach($fields as $key=>$value) {
+			$spec = $entity->getField($key);
+			if(is_object($value)) $value = $value->getFieldValue($spec['remote_field']);
 			$params[$spec['db_column']] = $value;
 		}
+		//var_dump($params);
 		return $params;
 	}
 	
-	function _insert($obj) {
-		//echo "_INSERT {$obj}\n";
-		$obj->_data = array();
-		$params = $this->_params($obj);
-		if(!$params) throw new Exception("No fields to insert on entity [{$obj->_entity->name}]");
+	function selectEntity($entity, $id) {
+		$stmt = $this->_getSelect($entity);
+		$stmt->execute(array($id));
 		
-		$stmt = $this->_getInsert($obj->_entity, array_keys($params));
-		$stmt->execute(array_values($params));
-		$obj->pk = $this->pdo->lastInsertId();
-		$obj->_data['pk'] = $obj->pk;
-		return true;
+		$data = $stmt->fetch(PDO::FETCH_ASSOC);
+		if(!$data) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no record with primary key {$id}");
+		return $data;
 	}
-
-	function update($obj) {
-		//echo "UPDATE {$obj}\n";
-		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object hasn't been bound to Dormio");
-		if(!isset($obj->_data)) throw new Dormio_Exception("Object has no previous data");
+	
+	function insertEntity($entity, $params) {
+		if(!$params) throw new Exception("No fields to insert on entity [{$entity->name}]");
+		$params = $this->fieldsToColumns($params, $entity);
 		
-		$params = $this->_params($obj);
+		$stmt = $this->_getInsert($entity, array_keys($params));
+		$stmt->execute(array_values($params));
+		$id = $this->pdo->lastInsertId();
+		self::$logger && self::$logger->log("Inserted entity [{$entity->name}] with pk {$id}");
+		return $id;
+	}
+	
+	function updateEntity($entity, $id, $params) {
 		if(!$params) {
-			echo "Nothing to save\n";
+			self::$logger && self::$logger->log("Nothing to update");
 			return false;
 		}
-		if(isset($params[$obj->_entity->pk['db_column']])) throw new Dormio_Exception("Unable to updated PK");
-
+		
+		$params = $this->fieldsToColumns($params, $entity);
+		
 		$query = array(
-			'from' => "{{$obj->_entity->table}}",
-			'where' => array("{{$obj->_entity->pk['db_column']}} = ?")
+			'from' => "{{$entity->table}}",
+			'where' => array("{{$entity->pk['db_column']}} = ?")
 			);
 
 		$sql = $this->dialect->update($query, array_keys($params));
 
 		$values = array_values($params);
-		$values[] = $obj->pk;
+		$values[] = $id;
 		$this->executeQuery(array($sql, $values));
+		self::$logger && self::$logger->log("Updated entity [{$entity->name}] with pk {$id}");
 		return true;
 	}
-	
-	function delete($obj) {
-		if(!isset($obj->_is_bound)) throw new Dormio_Exception("Object not bound to Dormio");
-		
-		$q = new Dormio_Query($obj->_entity, $this->dialect);
-		$sql =$q->deleteById($obj->pk);
+
+	function deleteEntity(Dormio_Config_Entity $entity, $id) {
+		$q = new Dormio_Query($entity, $this->dialect);
+		$sql =$q->deleteById($id);
 		$i = 0;
 		foreach($sql as $q) $i += $this->executeQuery($q, true);
 		return $i;
 	}
-/*
-	function bind($obj, $entity_name=null) {
-		if(!isset($obj->_is_bound)) {
-			if(!$entity_name) $entity_name = get_class($obj);
-			$entity = $this->config->getEntity($entity_name);
-			$this->bindEntity($obj, $entity);
-		}
-		return $obj;
-	}
-	
-	function bindEntity($obj, $entity) {
-		if(!isset($obj->_is_bound)) {
-			$obj->_entity = $entity;
-			$obj->dormio = $this;
-			$obj->pk = null;
-			$obj->_is_bound = true;
-		}
-		return $obj;
-	}
-*/	
-	function getRelated($obj, $field) {
 
+	function getRelatedManager(Dormio_Config_Entity $entity, $field) {
 		try {
-			$spec = $obj->_entity->getField($field);
+			$spec = $entity->getField($field);
 		} catch(Dormio_Config_Exception $e) {
-			throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no field [{$field}]");
+			throw new Dormio_Exception("{$entity} has no field [{$field}]");
 		}
-		if(!isset($spec['entity'])) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no related field [{$field}]");
-		self::$logger && self::$logger->log("BIND {$spec['type']} {$obj->_entity->name}->{$field}", LOG_DEBUG);
+		if(!isset($spec['entity'])) throw new Dormio_Exception("{$entity} has no related field [{$field}]");
+		self::$logger && self::$logger->log("BIND {$spec['type']} {$entity}->{$field}", LOG_DEBUG);
 		
-		$entity = $this->config->getEntity($spec['entity']);
+		$related_entity = $this->config->getEntity($spec['entity']);
 		$type = $spec['type'];
 		class_exists('Dormio_Manager');
 		switch($type) {
-			case 'foreignkey':
 			case 'onetoone':
-				return new Dormio_Manager_OneToOne($entity, $this, $obj, $spec);
+				return new Dormio_Manager_OneToOne($related_entity, $this, $spec);
 			case 'onetomany':
-				return new Dormio_Manager_OneToMany($entity, $this, $obj, $spec);
+				return new Dormio_Manager_OneToMany($related_entity, $this, $spec);
 			case 'manytomany':
-				return new Dormio_Manager_ManyToMany($entity, $this, $obj, $spec);
+				return new Dormio_Manager_ManyToMany($related_entity, $this, $spec);
 			default:
 				throw new Dormio_Exception("Field [{$field}] has an unexpected related type [{$type}]");
 		}
@@ -291,57 +229,6 @@ class Dormio {
 		$stmt->execute($query[1]);
 		return ($row_count) ? $stmt->rowCount() : $stmt;
 	}
-
-	static function mapArray($row, $reverse) {
-		$result = array();
-		foreach($row as $key=>$value) {
-			$parts = isset($reverse[$key]) ? explode('__', $reverse[$key]) : array($key);
-			$arr = &$result;
-			$p = count($parts)-1;
-			for($i=0; $i<$p; $i++) {
-				$arr = &$arr[$parts[$i]];
-				if(!is_array($arr)) $arr = array('pk' => $arr); // convert id to array
-			}
-			$arr[$parts[$p]] = $value;
-		}
-		return $result;
-	}
-	
-	static function mapObject($data, $obj, $map) {
-		//var_dump($data);
-		//var_dump($map);
-		$obj->_data = $data;
-		$obj->_map = $map;
-		foreach($map as $key=>$value) {
-			if(is_array($value)) {
-				if(!isset($obj->$key)) {
-					$child = $obj->_entity->getRelatedEntity($key);
-					$obj->$key = $obj->dormio->getObjectFromEntity($child);
-				}
-				self::mapObject($data, $obj->$key, $value);
-			} else {
-				$obj->$key = $obj->_data[$value];
-			}
-		}
-		//var_dump(implode(', ', array_keys($data)));
-		//var_dump(implode(', ', array_keys(get_object_vars($obj))));
-		return $obj;
-	}
-	
-	static function mapFields($reverse) {
-		$result = array();
-		foreach($reverse as $field=>$path) {
-			$parts = explode('__', $path);
-			$arr = &$result;
-			$p = count($parts)-1;
-			for($i=0; $i<$p; $i++) {
-				$arr = &$arr[$parts[$i]];
-				if(!is_array($arr)) $arr = array();
-			}
-			$arr[$parts[$p]] = $field;
-		}
-		return $result;
-	}
 }
 
 /**
@@ -388,18 +275,20 @@ class Dormio_Cache {
 
 class Dormio_ResultMapper implements ArrayAccess{
 	
-	private $map, $data;
+	private $map, $raw;
 	
 	function __construct($map) {
 		$this->map = $map;
 	}
 	
-	function setData($data) {
-		$this->data = $data;
+	function setRawData($raw) {
+		$this->raw = $raw;
 	}
 	
 	function offsetGet($offset) {
-		return $this->data[$this->map[$offset]];
+		if(!$this->raw) throw new Dormio_Exception("No raw data provided");
+		$key = $this->map[$offset];
+		return $this->raw[$key];
 	}
 	
 	function offsetSet($offset, $value) {
@@ -411,21 +300,23 @@ class Dormio_ResultMapper implements ArrayAccess{
 	}
 	
 	function offsetUnset($offset) {
-		unset($this->data[$this->map[$offset]]);
+		unset($this->raw[$this->map[$offset]]);
 		unset($this->map[$offset]);
 	}
 	
-	function getChildMapper($name) {
-		$name .= '__';
-		$l = strlen($name);
+	function getChildMapper($name, $remote_field) {
+		$prefix = $name . '__';
+		$l = strlen($prefix);
 		$child_map = array();
 		foreach($this->map as $path=>$field) {
-			if(substr($path, 0, $l) == $name) {
+			if(substr($path, 0, $l) == $prefix) {
 				$child_map[substr($path, $l)] = $field;
 			}
 		}
+		// for lazy loading we need to add the related field
+		if(!isset($child_map[$remote_field])) $child_map[$remote_field] = $this->map[$name];
 		$child = new Dormio_ResultMapper($child_map);
-		$child->setData($this->data);
+		$child->setRawData($this->raw);
 		return $child;
 	}
 }
@@ -451,7 +342,6 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 		$this->obj = $obj;
 		$this->c = count($data);
 		$this->mapper = new Dormio_ResultMapper($reverse);
-		$this->obj->setData($this->mapper);
 	}
 	
 	function offsetExists($offset) {
@@ -459,7 +349,8 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	}
 	
 	function offsetGet($offset) {
-		$this->mapper->setData($this->data[$offset]);
+		$this->mapper->setRawData($this->data[$offset]);
+		$this->obj->setData($this->mapper);
 		return $this->obj;
 	}
 	
@@ -492,7 +383,8 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 		$this->p++;
 		// need to map here as current() gets called multiple times for each row
 		if(isset($this->data[$this->p])) {
-			$this->mapper->setData($this->data[$this->p]);
+			$this->mapper->setRawData($this->data[$this->p]);
+			$this->obj->setData($this->mapper);
 		}
 	}
 	
