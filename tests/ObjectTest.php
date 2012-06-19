@@ -120,8 +120,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		//$this->dumpAllSQL();
 		// profile 1 should have had its user blanked by the previous delete
 		$profile = $this->dormio->getObject('Profile', 1);
-		$this->markTestIncomplete();
-		$this->assertNull($profile->user->pk);
+		
+		$this->assertNull($profile->user->ident());
 	}
 
 	function testForeignKey() {
@@ -132,7 +132,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		// Lazy
 		$this->assertEquals($b1->the_user->name, 'Andy');
-		//$this->assertEquals($this->pdo->digest(), array('SELECT "blog_id" AS "pk", "title", "the_blog_user" AS "the_user" FROM "blog" WHERE "blog_id" = ?', array(array('1'))));
+		$this->assertEquals($this->pdo->digest(), array('SELECT "blog_id" AS "pk", "title", "the_blog_user" AS "the_user" FROM "blog" WHERE "blog_id" = ?', array(array('1'))));
 		$this->assertEquals($this->pdo->digest(), array('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id" = ?', array(array('1'))));
 
 		// Eager
