@@ -95,6 +95,7 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	function testCleanUp() {
+		if(gethostname() != 'TFC-SERVER') $this->markTestSkipped();
 		$start = memory_get_usage();
 		$this->config->getEntity('Blog');
 		$this->config->getEntity('Comment');
