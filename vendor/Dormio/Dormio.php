@@ -97,7 +97,7 @@ class Dormio {
 		$class_name = $entity->model_class;
 		$obj = new $class_name($this, $entity);
 		
-		$obj->setPrimaryKey($id);
+		if($id) $obj->setPrimaryKey($id);
 
 		return $obj;
 	}
@@ -118,7 +118,7 @@ class Dormio {
 		$stmt->execute(array($id));
 		
 		$data = $stmt->fetch(PDO::FETCH_ASSOC);
-		if(!$data) throw new Dormio_Exception("Entity [{$obj->_entity->name}] has no record with primary key {$id}");
+		if(!$data) throw new Dormio_Exception("{$entity} has no record with primary key {$id}");
 		return $data;
 	}
 	
@@ -178,7 +178,7 @@ class Dormio {
 		switch($type) {
 			case 'onetoone':
 				return new Dormio_Manager_OneToOne($related_entity, $this, $spec);
-			case 'onetomany':
+			case 'onetomany': // inverse foreignkey
 				return new Dormio_Manager_OneToMany($related_entity, $this, $spec);
 			case 'manytomany':
 				return new Dormio_Manager_ManyToMany($related_entity, $this, $spec);
@@ -305,6 +305,8 @@ class Dormio_ResultMapper implements ArrayAccess{
 	}
 	
 	function getChildMapper($name, $remote_field) {
+		Dormio::$logger && Dormio::$logger->log("getChildMapper: {$name} {$remote_field}");
+		//var_dump($this->map);
 		$prefix = $name . '__';
 		$l = strlen($prefix);
 		$child_map = array();
@@ -349,6 +351,7 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	}
 	
 	function offsetGet($offset) {
+		Dormio::$logger && Dormio::$logger->log('offsetGet: {$offset}');
 		$this->mapper->setRawData($this->data[$offset]);
 		$this->obj->setData($this->mapper);
 		return $this->obj;

@@ -227,7 +227,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		if($obj->_entity->name != $this->entity->name) {
 			throw new Dormio_Manager_Exception("Can only add entities of type [{$this->entity->name}]");
 		}
-		var_dump($this->filters);
+		//var_dump($this->filters);
 		if(count($this->params) != count($this->filters)) {
 			throw new Dormio_Manager_Exception("Can only add objects to simple filter queries");
 		}
@@ -289,11 +289,11 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager_Related {
 	}
 
 	function add($obj) {
-		if(!isset($obj->pk)) $obj->save();
+		$obj->save();
 
 		$o = $this->dormio->getObject($this->source_spec['through']);
 		$o->{$this->source_spec['map_local_field']} = $this->bound_id;
-		$o->{$this->source_spec['map_remote_field']} = $obj->pk;
+		$o->{$this->source_spec['map_remote_field']} = $obj->ident();
 		$o->save();
 	}
 
@@ -303,7 +303,7 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager_Related {
 	}
 
 	function remove($obj) {
-		$pk = is_object($obj) ? $obj->pk : $obj;
+		$pk = is_object($obj) ? $obj->ident() : $obj;
 		$q = $this->dormio->getManager($this->source_spec['through']);
 		return $q->filter($this->source_spec['map_remote_field'], '=', $pk)->filter($this->source_spec['map_local_field'], '=', $this->bound_id)->delete();
 	}
@@ -317,7 +317,7 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager_Related {
 class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 
 	private $obj;
-
+	
 	/**
 	 * Need to *magic* this so we can act as an object but still get updated
 	 * @param string $field
@@ -326,8 +326,9 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 		if(!$this->obj || $this->obj->pk != $this->bound_id) {
 			try {
 				$this->obj = $this->findOne();
+				Dormio::$logger && Dormio::$logger->log("Found onetoone object {$this->obj->ident()}");
 			} catch(Dormio_Manager_NoResultException $e) {
-				//var_dump($e);
+				Dormio::$logger && Dormio::$logger->log("No result - returning empty object");
 				$this->obj = $this->dormio->getObjectFromEntity($this->entity);
 			}
 		}

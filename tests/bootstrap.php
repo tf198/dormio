@@ -10,4 +10,10 @@ class Comment extends Dormio_Object {
 	}
 }
 
+class Test_Logger {
+	function log($message, $level=LOG_INFO) {
+		fputs(STDOUT, $message . PHP_EOL);
+	}
+}
+
 $GLOBALS['test_entities'] = include('data/entities.php');

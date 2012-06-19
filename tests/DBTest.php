@@ -83,7 +83,12 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function assertDigestedAll() {
-		$this->assertEquals(0, $this->pdo->count(), 'Undigested queries: ' . $this->pdo->count());
+		$c = $this->pdo->count();
+		if($c == 0) {
+			$this->assertTrue(true);	
+		} else {
+			$this->fail("{$c} undigested queries: " . $this->pdo->stack[0][0]);
+		}
 	}
 	
 	function assertThrows($expected, $callable) {

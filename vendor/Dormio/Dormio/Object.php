@@ -56,33 +56,43 @@ class Dormio_Object {
 	public $_related_objects = array();
 	
 	/**
-	 * @var mixed
+	 * @var bool
 	 */
-	public $pk;
+	private $_hydrated;
 	
 	function __construct(Dormio $dormio, Dormio_Config_Entity $entity, $id=null) {
 		$this->_dormio = $dormio;
 		$this->_entity = $entity;
-		$this->pk = $id;
+		$this->_hydrated = false;
 	}
 	
 	function load($id) {
 		if(!$id) throw new Dormio_Exception("No primary key given");
+		Dormio::$logger && Dormio::$logger->log("Load id {$id}");
 		$data = $this->_dormio->selectEntity($this->_entity, $id);
 		$this->setData($data);
+		$this->_hydrated = true;
 	}
 
 	function save() {
-		if($this->pk) {
-			$this->_dormio->updateEntity($this->_entity, $this->pk, $this->_updated);
+		if($this->ident()) {
+			if(isset($this->_updated['pk'])) {
+				throw new Dormio_Exception('Cannot update primary key');
+			}
+			$this->_dormio->updateEntity($this->_entity, $this->ident(), $this->_updated);
 		} else {
-			$this->pk = $this->_dormio->insertEntity($this->_entity, $this->_updated);
+			$pk = $this->_dormio->insertEntity($this->_entity, $this->_updated);
+			$this->_data['pk'] = $pk;
 		}
+		$this->_updated = array();
+	}
+	
+	function ident() {
+		return isset($this->_data['pk']) ? $this->_data['pk'] : null;
 	}
 	
 	function delete() {
-		$this->_dormio->deleteEntity($this->_entity. $this->pk);
-		$this->pk = null;
+		return $this->_dormio->deleteEntity($this->_entity, $this->ident());
 	}
 	
 	function setValues($arr) {
@@ -92,18 +102,31 @@ class Dormio_Object {
 	}
 	
 	function setData($data) {
+		if(!isset($data['pk'])) throw new Dormio_Exception("Cannot set data without a primary key");
 		$this->_data = $data;
 		$this->_updated = array();
-		$this->pk = $this->getFieldValue('pk');
+		$this->_hydrated = false;
 	}
 	
 	function setPrimaryKey($id) {
-		$this->_data = array();
+		//if(!$id) throw new Dormio_Exception("No primary key given");
+		Dormio::$logger && Dormio::$logger->log("setPrimaryKey: {$id}");
+		$this->_data = array('pk' => $id);
 		$this->_updated = array();
-		$this->pk = $id;
+		$this->_hydrated = false;
+	}
+	
+	function hydrate() {
+		if($this->_hydrated) throw new Dormio_Exception("{$this->_entity} already hydrated");
+		if(!isset($this->_data['pk'])) {
+			throw new Dormio_Exception("No primary key set for {$this->_entity}");
+		}
+		Dormio::$logger && Dormio::$logger->log("Hydrating {$this->_entity}");
+		$this->load($this->ident());
 	}
 	
 	function getFieldValue($field, $throw=true) {
+		//Dormio::$logger && Dormio::$logger->log("getFieldValue {$this->_entity}->{$field}", LOG_DEBUG);
 		
 		// changed values
 		if(isset($this->_updated[$field])) {
@@ -112,14 +135,18 @@ class Dormio_Object {
 		
 		// from database
 		if(isset($this->_data[$field])) {
-			return $this->_data[$field];
+			$value = $this->_data[$field];
+			//Dormio::$logger && Dormio::$logger->log("Got value {$value}");
+			return $value;
 		}
 		
 		// not yet hydrated
 		if($this->_entity->isField($field)) {
-			if(!$this->pk) throw new Dormio_Exception("No primary key set for {$this->_entity}");
-			$this->load($this->pk);
-			return $this->_data[$field];
+			Dormio::$logger && Dormio::$logger->log("Need to rehydrate for field {$field}");
+			$this->hydrate();
+			$value = $this->_data[$field];
+			Dormio::$logger && Dormio::$logger->log("Got value {$value}");
+			return $value;
 		}
 		
 		if($throw) throw new Dormio_Exception("{$this->_entity} has no field {$field}");
@@ -127,6 +154,8 @@ class Dormio_Object {
 	}
 	
 	function setFieldValue($field, $value) {
+		if($field == 'pk') throw new Dormio_Exception("Unable to update primary key");
+		Dormio::$logger && Dormio::$logger->log("SET {$this->_entity}->{$field}: {$value}", LOG_DEBUG);
 		$this->_updated[$field] = $value;
 	}
 	
@@ -134,7 +163,7 @@ class Dormio_Object {
 		$spec = $this->_entity->getField($field);
 		//var_dump($spec);
 		if($spec['is_field']) {
-			if(isset($spec['entity'])) { // foreignkey or onetoone
+			if(isset($spec['entity'])) { // foreignkey or forward onetoone
 				return $this->getRelatedObject($field, $spec);
 			} else { // standard field
 				return $this->getFieldValue($field);
@@ -146,6 +175,7 @@ class Dormio_Object {
 	}
 	
 	function __set($field, $value) {
+		
 		$spec = $this->_entity->getField($field);
 		
 		if($spec['is_field']) {
@@ -156,7 +186,12 @@ class Dormio_Object {
 		throw new Dormio_Exception("Unable to set field [{$field}] on {$this->_entity}");
 	}
 	
-	function getRelatedObject($field, $spec) {
+	/**
+	 * Related objects with a field on the current entity
+	 * @param string $field
+	 * @param multitype:string $spec
+	 */
+	function getRelatedObject($field, $spec, $reverse=false) {
 		if(isset($this->_related_objects[$field])) {
 			$obj = $this->_related_objects[$field];
 		} else {
@@ -164,15 +199,42 @@ class Dormio_Object {
 			$obj = $this->_dormio->getObjectFromEntity($entity);
 			$this->_related_objects[$field] = $obj;
 		}
-		
-		if($obj->pk != $this->_data[$field]) {
-			$mapper = $this->_data->getChildMapper($field, $spec['remote_field']);
-			$obj->setData($mapper);
+
+		try {
+			if($this->_data instanceof Dormio_ResultMapper) {
+				Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
+				//$remote = $reverse ? 'remote_field' : 'local_field';
+				$remote = $reverse ? 'local_field' : 'remote_field';
+				$mapper = $this->_data->getChildMapper($field, $spec[$remote]);
+				$obj->setData($mapper);
+			} else {
+				//var_dump($spec);
+				Dormio::$logger && Dormio::$logger->log("Lazy loading field {$field}");
+				$remote = $reverse ? 'local_field' : 'remote_field';
+				$pk =  $this->_data[$spec[$remote]];
+				$obj->setPrimaryKey($pk);
+			}
+		} catch(Exception $e) {
+			var_dump($field, $spec, $this->_data);
+			throw $e;
 		}
 		return $obj;
 	}
 	
+	/**
+	 * Return a manager for a related entity
+	 * @param unknown_type $field
+	 */
 	function getRelated($field) {
+		$spec = $this->_entity->getField($field);
+		//var_dump($field, $spec);
+		
+		if($spec['type'] == 'onetoone') {
+			// need to reverse it
+			Dormio::$logger && Dormio::$logger->log("Reverse object {$field}");
+			return $this->getRelatedObject($field, $spec, true);
+		}
+		
 		// use cached if possible
 		if(isset($this->_related_managers[$field])) {
 			list($manager, $bound_field) = $this->_related_managers[$field];
@@ -185,12 +247,7 @@ class Dormio_Object {
 		
 		// update with current bound value
 		$manager->setBoundId($this->getFieldValue($bound_field));
-		
-		if($manager instanceof Dormio_Manager_OneToOne) {
-			return $manager->getObject();
-		} else {
-			return $manager;
-		}
+		return $manager;
 	}
 	
 	function related($field) {
@@ -199,7 +256,7 @@ class Dormio_Object {
 	
 	function display() {
 		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
-		return ($this->pk) ? "[{$this->_entity->name} {$this->pk}]" : "[New {$this->_entity->name}]";
+		return (isset($this->_data['pk'])) ? "[{$this->_entity->name} {$this->_data['pk']}]" : "[New {$this->_entity->name}]";
 	}
 	
 	function __toString() {
