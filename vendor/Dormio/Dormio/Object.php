@@ -206,7 +206,9 @@ class Dormio_Object {
 			$obj->setData($mapper);
 		} else {
 			Dormio::$logger && Dormio::$logger->log("Lazy loading field {$field}");
-				
+			if(!isset($this->_data[$field])) {
+				$this->hydrate();
+			}
 			$pk =  $this->_data[$field];
 			$obj->setPrimaryKey($pk);
 		}
