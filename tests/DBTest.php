@@ -80,12 +80,16 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 	function assertSQL() {
 		$params = func_get_args();
 		$sql = array_shift($params);
-		$this->assertEquals(array($sql, array($params)), $this->pdo->digest());
-	}
-	
-	function assertPartialSQL($sql) {
-		$q = $this->pdo->digest();
-		$this->assertStringStartsWith($sql, $q[0]);
+		
+		$executed = $this->pdo->digest();
+		
+		if(substr($sql, -3) == '...') {
+			$this->assertStringStartsWith(substr($sql, 0, -3), $executed[0]);
+		} else {
+			$this->assertEquals($sql, $executed[0]);
+		}
+		
+		$this->assertEquals(array($params), $executed[1], "Params passed to SQL differ");
 	}
 
 	function assertDigestedAll() {

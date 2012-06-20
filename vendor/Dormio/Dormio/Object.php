@@ -68,6 +68,7 @@ class Dormio_Object {
 	
 	function load($id) {
 		if(!$id) throw new Dormio_Exception("No primary key given");
+		if($this->_updated) throw new Dormio_Exception("Unsaved data for {$this}");
 		Dormio::$logger && Dormio::$logger->log("Load id {$id}");
 		$data = $this->_dormio->selectEntity($this->_entity, $id);
 		$this->setData($data);
@@ -104,6 +105,7 @@ class Dormio_Object {
 	
 	function setData($data) {
 		if(!isset($data['pk'])) throw new Dormio_Exception("Cannot set data without a primary key");
+		if($this->_updated) throw new Dormio_Exception("Unsaved data for {$this}");
 		$this->_data = $data;
 		$this->_updated = array();
 		$this->_hydrated = false;
@@ -112,6 +114,7 @@ class Dormio_Object {
 	function setPrimaryKey($id) {
 		//if(!$id) throw new Dormio_Exception("No primary key given");
 		Dormio::$logger && Dormio::$logger->log("setPrimaryKey: {$id}");
+		if($this->_updated) throw new Dormio_Exception("Unsaved data for {$this} ({$id})");
 		$this->_data = array('pk' => $id);
 		$this->_updated = array();
 		$this->_hydrated = false;
@@ -214,7 +217,10 @@ class Dormio_Object {
 				$this->hydrate();
 			}
 			$pk =  $this->_data[$field];
-			$obj->setPrimaryKey($pk);
+			if($obj->ident() != $pk) {
+				//var_dump("P1", $field, $obj->ident(), $pk);
+				$obj->setPrimaryKey($pk);
+			}
 		}
 		
 		return $obj;
