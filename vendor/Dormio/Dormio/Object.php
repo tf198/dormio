@@ -84,6 +84,7 @@ class Dormio_Object {
 			$pk = $this->_dormio->insertEntity($this->_entity, $this->_updated);
 			$this->_data['pk'] = $pk;
 		}
+		foreach($this->_updated as $key=>$value) $this->_data[$key] = $value;
 		$this->_updated = array();
 	}
 	
@@ -204,7 +205,9 @@ class Dormio_Object {
 			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
 			$mapper = $this->_data->getChildMapper($field);
-			$obj->setData($mapper);
+			if($obj->ident() != $mapper['pk']) {
+				$obj->setData($mapper);
+			}
 		} else {
 			Dormio::$logger && Dormio::$logger->log("Lazy loading field {$field}");
 			if(!isset($this->_data[$field])) {
@@ -227,7 +230,11 @@ class Dormio_Object {
 		if($spec['type'] == 'onetoone' && isset($this->_data[$field . "__" . $spec['local_field']])) {
 			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Trying to eager hydrate field {$field}");
-			return $this->getRelatedObject($field, $spec);
+			$obj = $this->getRelatedObject($field, $spec);
+			if(!$obj->ident()) {
+				$obj->setFieldValue($spec['remote_field'], $this->getFieldValue($spec['local_field']));
+			}
+			return $obj;
 		}
 		
 		// use cached if possible

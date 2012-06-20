@@ -292,7 +292,9 @@ class Dormio_ResultMapper implements ArrayAccess{
 	}
 	
 	function offsetSet($offset, $value) {
-		throw new Dormio_Exception("Dormio_ResultMapper is not mutable");
+		if(!isset($this->map[$offset])) $this->map[$offset] = $offset;
+		$this->raw[$this->map[$offset]] = $value;
+		//var_dump($this);
 	}
 	
 	function offsetExists($offset) {
