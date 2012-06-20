@@ -3,7 +3,8 @@ PHPUNIT=  phpunit
 PHP = php
 VERSION = 0.8.1
 
-DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn Dormio
+#DOC_OPTIONS = -ed docs/examples -o HTML:frames:earthli -ti Dormio -dn Dormio
+DOC_OPTIONS = 
 
 all: build
 

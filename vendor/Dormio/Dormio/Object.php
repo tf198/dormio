@@ -19,7 +19,7 @@
  */
 
 /**
- * Basic ORM class
+ * Basic object modeling for tables
  * Allows for easy table manipulation using objects
  * @package Dormio
  *

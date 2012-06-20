@@ -62,10 +62,16 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		parent::__construct($entity, $dormio->dialect);
 	}
 
+	/**
+	 * Resets required fields on clone
+	 */
 	function __clone() {
 		$this->_reset();
 	}
 
+	/**
+	 * Reset non-cloneable fields
+	 */
 	function _reset() {
 		$this->_count = null;
 		$this->_stmt = null;
@@ -76,7 +82,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * Execute the query and return a multi-dimentional array
 	 * @return multitype:multitype:string
 	 */
-	function _find() {
+	function findArray() {
 		if(!$this->_stmt) {
 			$query = $this->select();
 			//var_dump($query);
@@ -87,18 +93,21 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		return $this->_stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
 	
-	function _findOne($id=null) {
+	/**
+	 * Execute the query and return a single data array
+	 * Optionally you can give it a primary key.
+	 * @param string $id
+	 * @throws Dormio_Manager_MultipleResultsException if more than one record matches
+	 * @throws Dormio_Manager_NoResultException if no records match
+	 * @return multitype:string
+	 */
+	function findOneArray($id=null) {
 		$query = $this->limit(2);
 		if($id !== null) $query->filter('pk', '=', $id, false);
-		$data = $query->_find();
+		$data = $query->findArray();
 		if(!$data) throw new Dormio_Manager_NoResultException("Query returned no records");
 		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
 		return $data[0];
-	}
-
-	function findArray() {
-		//return array_map(array($this, 'mapArray'), $this->_find());
-		return $this->_find();
 	}
 
 	/**
@@ -107,7 +116,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return multitype:Object
 	 */
 	function findObjects($obj) {
-		return new Dormio_ObjectSet($this->_find(), $obj, array_flip($this->reverse));
+		return new Dormio_ObjectSet($this->findArray(), $obj, array_flip($this->reverse));
 	}
 
 	/**
@@ -120,26 +129,16 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 
 	/**
 	 * Execute the query and return a single row
-	 * @throws Dormio_Manager_NoResultException
-	 * @throws Dormio_Manager_MultipleResultsException
-	 * @return multitype:string
-	 */
-	function findOneArray($id=null) {
-		//return $this->mapArray($this->_findOne($id));
-		return $this->_findOne($id);
-	}
-
-	/**
-	 * Execute the query and return a single row
-	 * @throws Dormio_Manager_NoResultException
-	 * @throws Dormio_Manager_MultipleResultsException
+	 * Optionally you can give it a primary key to load
+	 * @throws Dormio_Manager_NoResultException if no records match
+	 * @throws Dormio_Manager_MultipleResultsException if more than one records match
 	 * @return multitype:Dormio_Object
 	 */
 	function findOne($id=null) {
 		//$mapper = new Dormio_ResultMapper(array_flip($this->reverse));
 		//$mapper->setRawData($this->_findOne($id));
 		$obj = $this->dormio->getObjectFromEntity($this->entity);
-		$obj->setData($this->_findOne($id));
+		$obj->setData($this->findOneArray($id));
 		return $obj;
 	}
 
@@ -191,6 +190,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		return $this->find();
 	}
 
+	/**
+	 * Tracks the bound fields for add()
+	 * @see Dormio_Query::filterBind()
+	 */
 	function filterBind($key, $op, &$value, $clone=true) {
 		// add the ability for IN to accept Dormio_Manager as well as arrays
 		if($op == 'IN' && $value instanceof Dormio_Manager) {
@@ -213,7 +216,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		if(!isset($this->_count)) {
 			$o = clone $this;
 			$o->query['select'] = array('COUNT(*) AS count');
-			$result = $o->_find();
+			$result = $o->findArray();
 			$this->_count = (int)$result[0]['count'];
 		}
 		return $this->_count;
@@ -221,7 +224,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 
 	/**
 	 * Add an object to the current queryset
-	 * @param unknown_type $obj
+	 * @param Dormio_Object $obj
 	 */
 	function add($obj) {
 
@@ -243,6 +246,10 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 		return $obj->save();
 	}
 
+	/**
+	 * Create and add a new object to the current queryset
+	 * @param multitype:mixed $arr key/value pairs for object properties
+	 */
 	function create($arr) {
 		$obj = $this->dormio->getObjectFromEntity($this->entity);
 		$obj->_data = $arr;
@@ -252,6 +259,11 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	}
 }
 
+/**
+ * Enables binding of managers to source objects
+ * @package Dormio
+ * @subpackage Manager
+ */
 class Dormio_Manager_Related extends Dormio_Manager {
 	
 	public $bound_id;
@@ -290,6 +302,10 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager_Related {
 		$this->source_spec = $spec;
 	}
 
+	/**
+	 * Creates a link in the mid-table
+	 * @see Dormio_Manager::add()
+	 */
 	function add($obj) {
 		$obj->save();
 
@@ -299,11 +315,18 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager_Related {
 		$o->save();
 	}
 
+	/**
+	 * Removes all links from the mid-table
+	 */
 	function clear() {
 		$q = $this->dormio->getManager($this->source_spec['through']);
 		return $q->filter($this->source_spec['map_local_field'], '=', $this->bound_id)->delete();
 	}
 
+	/**
+	 * Remove a specific link from the mid-table
+	 * @param Dormio_Object $obj
+	 */
 	function remove($obj) {
 		$pk = is_object($obj) ? $obj->ident() : $obj;
 		$q = $this->dormio->getManager($this->source_spec['through']);
@@ -320,6 +343,10 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 
 	private $obj;
 	
+	/**
+	 * Loads the related object 
+	 * @see Dormio_Manager_Related::setBoundId()
+	 */
 	function setBoundId($id) {
 		if($id != $this->bound_id) {
 			parent::setBoundId($id);
@@ -335,6 +362,10 @@ class Dormio_Manager_OneToOne extends Dormio_Manager_OneToMany {
 		}
 	}
 	
+	/**
+	 * Get the related object
+	 * @return Dormio_Object
+	 */
 	function getObject() {
 		return $this->obj;
 	}

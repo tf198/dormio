@@ -48,13 +48,20 @@ class Dormio_Aggregator {
     return $this;
   }
   
+  /**
+   * Execute the aggregator statement and return the result
+   * @return multitype:int
+   */
   function run() {
-  	$result = $this->manager->_find();
+  	$result = $this->manager->findArray();
 	return $result[0];
   }
   
   /**
   * Runs a COUNT(<DISTINCT> $field) on the dataset
+  * @param string $field
+  * @param bool $distinct
+  * @return Dormio_Aggregator
   */
   function count($field='pk', $distinct=false) {
     return $this->add("COUNT", (($distinct) ? "DISTINCT " : null), $field);
@@ -62,6 +69,8 @@ class Dormio_Aggregator {
   
   /**
   * Runs a MAX($field) on the dataset
+  * @param string $field
+  * @return Dormio_Aggregator
   */
   function max($field='pk') {
     return $this->add("MAX", null, $field);
@@ -69,6 +78,8 @@ class Dormio_Aggregator {
   
   /**
   * Runs a MIN($field) on the dataset
+  * @param string $field
+  * @return Dormio_Aggregator
   */
   function min($field='pk') {
     return $this->add("MIN", null, $field);
@@ -76,6 +87,8 @@ class Dormio_Aggregator {
   
   /**
   * Runs a AVG($field) on the dataset
+  * @param string $field
+  * @return Dormio_Aggregator
   */
   function avg($field='pk') {
     return $this->add("AVG", null, $field);
@@ -83,6 +96,8 @@ class Dormio_Aggregator {
   
   /**
   * Runs a SUM($field) on the dataset
+  * @param string $field
+  * @return Dormio_Aggregator
   */
   function sum($field='pk') {
     return $this->add("SUM", null, $field);

@@ -56,6 +56,7 @@ class Dormio_Dialect {
 class Dormio_Dialect_Exception extends Exception {}
 
 /**
+ * Generic SQL dialect
  * @package Dormio
  * @subpackage Dialect
  */
@@ -67,6 +68,7 @@ class Dormio_Dialect_Generic {
 	 * All value arrays are concatenated using commas, except 'where' which uses ' AND '
 	 * @param multitype:mixed $spec
 	 * @return string			SQL statement
+	 * @todo this is a bit of a bottleneck - try to improve
 	 */
 	function compile($spec) {
 		if(isset($spec['where'])) $spec['where'] = array(implode(' AND ', $spec['where']));
@@ -186,6 +188,7 @@ class Dormio_Dialect_Generic {
 }
 
 /**
+ * MySQL specific dialect
  * @package Dormio
  * @subpackage Dialect
  */
@@ -200,6 +203,7 @@ class Dormio_Dialect_MySQL extends Dormio_Dialect_Generic {
 }
 
 /**
+ * Microsoft tSQL dialect
  * @package Dormio
  * @subpackage Dialect
  */

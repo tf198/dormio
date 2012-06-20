@@ -63,11 +63,11 @@ class Dormio {
 
 	/**
 	 * 
-	 * @param unknown_type $pdo
-	 * @param unknown_type $config
-	 * @param unknown_type $cache
+	 * @param PDO $pdo
+	 * @param Dormio_Config $config
+	 * @param Dormio_Cache $cache
 	 */
-	public function __construct($pdo, $config, $cache=null) {
+	public function __construct(PDO $pdo, Dormio_Config $config, $cache=null) {
 		$this->pdo = $pdo;
 		$this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		if(get_class($pdo) == 'Dormio_Logging_PDO') Dormio_Logging_PDO::$logger = &self::$logger;
@@ -79,6 +79,11 @@ class Dormio {
 		$this->cache = $cache;
 	}
 
+	/**
+	 * Get a manager for the named entity
+	 * @param string $name
+	 * @return Dormio_Manager
+	 */
 	function getManager($name) {
 		$key = "_{$name}_MANAGER";
 		if(!$stored = $this->cache->get($key)) {
@@ -88,11 +93,23 @@ class Dormio {
 		return $stored;
 	}
 	
+	/**
+	 * Get an object representing an entity
+	 * @param string $entity_name
+	 * @param string $id
+	 * @return Dormio_Object
+	 */
 	function getObject($entity_name, $id=null) {
 		$entity = $this->config->getEntity($entity_name);
 		return $this->getObjectFromEntity($entity, $id);
 	}
 	
+	/**
+	 * Get an object representing an entity
+	 * @param Dormio_Config_Entity $entity
+	 * @param string $id
+	 * @return Dormio_Object
+	 */
 	function getObjectFromEntity(Dormio_Config_Entity $entity, $id=null) {
 		$class_name = $entity->model_class;
 		$obj = new $class_name($this, $entity);
@@ -102,6 +119,13 @@ class Dormio {
 		return $obj;
 	}
 	
+	/**
+	 * Convert array keys from field names to column names
+	 * Also converts objects to their related field
+	 * @param multitype:mixed $fields
+	 * @param Dormio_Config_Entity $entity
+	 * @return multitype:string
+	 */
 	function fieldsToColumns(array $fields, Dormio_Config_Entity $entity) {
 		$params = array();
 		foreach($fields as $key=>$value) {
@@ -109,11 +133,16 @@ class Dormio {
 			if(is_object($value)) $value = $value->getFieldValue($spec['remote_field']);
 			$params[$spec['db_column']] = $value;
 		}
-		//var_dump($params);
 		return $params;
 	}
 	
-	function selectEntity($entity, $id) {
+	/**
+	 * Get data for an entity by primary key
+	 * @param Dormio_Config_Entity $entity
+	 * @param string $id
+	 * @return multitype:string
+	 */
+	function selectEntity(Dormio_Config_Entity $entity, $id) {
 		$stmt = $this->_getSelect($entity);
 		$stmt->execute(array($id));
 		
@@ -122,7 +151,13 @@ class Dormio {
 		return $data;
 	}
 	
-	function insertEntity($entity, $params) {
+	/**
+	 * Insert data for an entity and return the new primary key
+	 * @param Dormio_Config_Entity $entity
+	 * @param multitype:mixed $params
+	 * @return string	inserted primary key
+	 */
+	function insertEntity(Dormio_Config_Entity $entity, $params) {
 		if(!$params) throw new Exception("No fields to insert on entity [{$entity->name}]");
 		$params = $this->fieldsToColumns($params, $entity);
 		
@@ -133,6 +168,15 @@ class Dormio {
 		return $id;
 	}
 	
+	/**
+	 * Update data for an entity by primary key
+	 * Can be safely run with no params for no action
+	 * Returns whether an UPDATE was required
+	 * @param Dormio_Config_Entity $entity
+	 * @param string $id
+	 * @param multitype:mixed $params
+	 * @return bool
+	 */
 	function updateEntity($entity, $id, $params) {
 		if(!$params) {
 			self::$logger && self::$logger->log("Nothing to update");
@@ -155,6 +199,15 @@ class Dormio {
 		return true;
 	}
 
+	/**
+	 * Delete an entity by primary key
+	 * Will delete related entities where cascade is set.
+	 * Returns the total number of rows deleted
+	 * Enter description here ...
+	 * @param Dormio_Config_Entity $entity
+	 * @param string $id
+	 * @return int number of rows deleted
+	 */
 	function deleteEntity(Dormio_Config_Entity $entity, $id) {
 		$q = new Dormio_Query($entity, $this->dialect);
 		$sql =$q->deleteById($id);
@@ -163,6 +216,13 @@ class Dormio {
 		return $i;
 	}
 
+	/**
+	 * Get manager for an entity by field name
+	 * @param Dormio_Config_Entity $entity
+	 * @param string $field
+	 * @throws Dormio_Exception
+	 * @return Dormio_Manager_Related
+	 */
 	function getRelatedManager(Dormio_Config_Entity $entity, $field) {
 		try {
 			$spec = $entity->getField($field);
@@ -187,7 +247,12 @@ class Dormio {
 		}
 	}
 
-	function _getSelect($entity) {
+	/**
+	 * Creates and caches a SELECT statement for load by primary key
+	 * @param Dormio_Config_Entity $entity
+	 * @return PDOStatement
+	 */
+	function _getSelect(Dormio_Config_Entity $entity) {
 		$key = "_{$entity->name}_SELECT";
 		if(!$stored = $this->cache->get($key)) {
 				
@@ -212,6 +277,13 @@ class Dormio {
 		return $stored;
 	}
 
+	/**
+	 * Creates and caches an INSERT statement for an entity
+	 * One query cached for each set of params
+	 * @param Dormio_Config_Entity $entity
+	 * @param array $params
+	 * @return PDOStatement
+	 */
 	function _getInsert(Dormio_Config_Entity $entity, array $params) {
 		$key = "_{$entity->name}_INSERT_" . implode('_', $params);
 		if(!$stored = $this->cache->get($key)) {
@@ -224,12 +296,25 @@ class Dormio {
 		return $stored;
 	}
 
+	/**
+	 * Execute a query pair
+	 * Returns an open statement or the number of rows affected
+	 * @param multitype:mixed $query array($sql, $params)
+	 * @param bool $row_count return row count instead of statement
+	 * @return PDOStatement|int
+	 */
 	function executeQuery($query, $row_count=false) {
 		$stmt = $this->pdo->prepare($query[0]);
 		$stmt->execute($query[1]);
 		return ($row_count) ? $stmt->rowCount() : $stmt;
 	}
 	
+	/**
+	 * Filter data for related field
+	 * @param multitype:string $arr original data
+	 * @param string $name field name
+	 * @return multitype:string
+	 */
 	static function getRelatedData($arr, $name) {
 		Dormio::$logger && Dormio::$logger->log("getRelatedData: {$name}");
 		$prefix = $name . '__';
@@ -246,6 +331,7 @@ class Dormio {
 
 /**
  * Simple cache implementation
+ * Should be easy to wrap a decent cache (e.g. APC) and swap this out.
  * @author Tris Forster
  * @package Dormio
  */
@@ -293,9 +379,28 @@ class Dormio_Cache {
  */
 class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	
-	private $data, $obj;
+	/**
+	 * Source data
+	 * @var multitype:multitype:string
+	 */
+	private $data;
 	
-	private $p, $c;
+	/**
+	 * @var Dormio_Object
+	 */
+	private $obj;
+	
+	/**
+	 * Internal data pointer
+	 * @var int
+	 */
+	private $p;
+	
+	/**
+	 * Number of rows
+	 * @var int
+	 */
+	private $c;
 	
 	/**
 	 * 
