@@ -10,8 +10,8 @@ INSERT INTO comment VALUES (1, 'Andy Comment 1 on Andy Blog 1', 1, 1);
 INSERT INTO comment VALUES (2, 'Bob Comment 1 on Andy Blog 1', 2, 1);
 INSERT INTO comment VALUES (3, 'Andy Comment 1 on Bob Blog 1', 1, 3);
 
-INSERT INTO profile VALUES (1, 1, 23, 'Edam');
-INSERT INTO profile VALUES (2, 2, 46, 'Stilton');
+INSERT INTO profile VALUES (1, 2, 23, 'Edam');
+INSERT INTO profile VALUES (2, 1, 46, 'Stilton');
 
 INSERT INTO tag VALUES (1, 'Red');
 INSERT INTO tag VALUES (2, 'Orange');

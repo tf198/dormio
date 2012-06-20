@@ -119,8 +119,8 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$user->load(1);
 		$this->assertEquals($user->delete(), 4); // user 1, comment 3, comment_tag 3, profile 2 blanked => 3
 		//$this->dumpAllSQL();
-		// profile 1 should have had its user blanked by the previous delete
-		$profile = $this->dormio->getObject('Profile', 1);
+		// profile 2 should have had its user blanked by the previous delete
+		$profile = $this->dormio->getObject('Profile', 2);
 		
 		$this->assertNull($profile->user->ident());
 	}
@@ -206,29 +206,29 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$p = $this->dormio->getObject('Profile', 2);
 		$this->assertEquals($p->age, 46);
 		$this->assertSQL('SELECT "profile_id" AS "pk", "user_id" AS "user", "age", "fav_cheese" FROM "profile" WHERE "profile_id" = ?', 2);
-		$this->assertEquals($p->user->name, 'Bob');
-		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id" = ?', 2);
+		$this->assertEquals($p->user->name, 'Andy');
+		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id" = ?', 1);
 		$this->assertDigestedAll();
 
 		
 		// Forward Eager
 		$p = $this->dormio->getManager('Profile')->with('user')->findOne(2);
-		$this->assertEquals($p->user->name, 'Bob');
+		$this->assertEquals($p->user->name, 'Andy');
 		$this->assertSQL('SELECT t1."profile_id" AS "pk", t1."user_id" AS "user", t1."age" AS "age", t1."fav_cheese" AS "fav_cheese", t2."user_id" AS "user__pk", t2."name" AS "user__name" FROM "profile" AS t1 LEFT JOIN "user" AS t2 ON t1."user_id"=t2."user_id" WHERE t1."profile_id" = ? LIMIT 2', 2);
 		$this->assertDigestedAll();
 		
 		// Reverse Lazy
-		$u1 = $this->dormio->getObject('User', 1);
+		$u1 = $this->dormio->getObject('User', 2);
 		$this->assertEquals($u1->profile->age, 23);
 		$this->assertEquals($u1->profile->fav_cheese, 'Edam'); // cached query
 		// doesn't even need to load the user for this
-		$this->assertSQL('SELECT t1."profile_id" AS "pk", t1."user_id" AS "user", t1."age" AS "age", t1."fav_cheese" AS "fav_cheese" FROM "profile" AS t1 WHERE t1."user_id" = ? LIMIT 2', 1);
+		$this->assertSQL('SELECT t1."profile_id" AS "pk", t1."user_id" AS "user", t1."age" AS "age", t1."fav_cheese" AS "fav_cheese" FROM "profile" AS t1 WHERE t1."user_id" = ? LIMIT 2', 2);
 		$this->assertDigestedAll();
 		
 		// Reuse
 		$users = $this->dormio->getManager('User');
-		$ages = array(23, 46, null);
-		$cheeses = array('Edam', 'Stilton', null);
+		$ages = array(46, 23, null);
+		$cheeses = array('Stilton', 'Edam', null);
 		$i=0;
 		foreach($users as $user) {
 			if($user->profile->ident()) {
@@ -250,8 +250,9 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertEquals(2, $i);
 		$this->assertSQL('SELECT t1."user_id" AS "pk", t1."name" AS "name", t2."profile_id" AS "profile__pk", t2."user_id" AS "profile__user", t2."age" AS "profile__age", t2."fav_cheese" AS "profile__fav_cheese" FROM "user" AS t1 LEFT JOIN "profile" AS t2 ON t1."user_id"=t2."user_id"');
 		
-		$this->markTestIncomplete("Rogue select on null onetoone");
-		$this->assertDigestedAll();
+		//$this->markTestIncomplete("Rogue select on null onetoone");
+		//$this->assertDigestedAll();
+		$this->dumpAllSQL();
 		
 		Dormio::$logger = null;
 	}

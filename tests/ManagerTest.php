@@ -377,7 +377,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		// need to get all users and their associated profiles
 		// note user 3 doesn't have a profile attached
 		$set = $users->with('profile');
-		$expected = array("23", "46", null);
+		$expected = array("46", "23", null);
 		$i=0;
 		foreach($set as $user) {
 			if($user->profile->ident()) {

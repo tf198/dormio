@@ -275,11 +275,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 			}
 		} else {
 			Dormio::$logger && Dormio::$logger->log("Lazy loading field {$field}");
-			if(!isset($this->_data[$field])) {
-				$this->hydrate();
-			}
-			//var_dump('P2', $field, $this->_data);
-			$pk =  $this->_data[$field];
+			$pk = $this->getFieldValue($field, false);
 			if($obj->ident() != $pk) {
 				//var_dump("P1", $field, $obj->ident(), $pk);
 				$obj->setPrimaryKey($pk);
@@ -297,9 +293,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 	function getRelated($field) {
 		$spec = $this->_entity->getField($field);
 		
-		//if($spec['type'] == 'onetoone' && array_key_exists("{$field}__{$spec['local_field']}", $this->_data)) {
-		if($spec['type'] == 'onetoone' && isset($this->_data["{$field}__{$spec['local_field']}"])) {
-			//var_dump($spec);
+		if($spec['type'] == 'onetoone' && array_key_exists("{$field}__{$spec['local_field']}", $this->_data)) {
 			Dormio::$logger && Dormio::$logger->log("Trying to eager hydrate field {$field}");
 			$obj = $this->getRelatedObject($field, $spec);
 			// if it is a new object set the remote field

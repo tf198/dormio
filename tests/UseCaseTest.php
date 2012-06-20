@@ -45,8 +45,8 @@ class Dormio_UseCaseTest extends Dormio_DBTest {
 		}
 		
 		$this->assertSQL('SELECT t1."profile_id"...');
-		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 23', 1);
-		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 46', 2);
+		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 23', 2);
+		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 46', 1);
 		
 		
 		$this->assertDigestedAll();
@@ -63,8 +63,8 @@ class Dormio_UseCaseTest extends Dormio_DBTest {
 		}
 		
 		$this->assertSQL('SELECT t1."profile_id"...');
-		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 23', 1);
-		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 46', 2);
+		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 23', 2);
+		$this->assertSQL('UPDATE "user" SET "name"=? WHERE "user_id" = ?', 'Person aged 46', 1);
 		
 		
 		$this->assertDigestedAll();
@@ -88,9 +88,9 @@ class Dormio_UseCaseTest extends Dormio_DBTest {
 		
 		$this->assertSQL('SELECT t1."user_id"...');
 		$this->assertSQL('SELECT t1."profile_id"...', 1);
-		$this->assertSQL('UPDATE "profile" SET "fav_cheese"=? WHERE "profile_id" = ?', 'Brie', 1);
-		$this->assertSQL('SELECT t1."profile_id"...', 2);
 		$this->assertSQL('UPDATE "profile" SET "fav_cheese"=? WHERE "profile_id" = ?', 'Brie', 2);
+		$this->assertSQL('SELECT t1."profile_id"...', 2);
+		$this->assertSQL('UPDATE "profile" SET "fav_cheese"=? WHERE "profile_id" = ?', 'Brie', 1);
 		$this->assertSQL('SELECT t1."profile_id"...', 3);
 		$this->assertSQL('INSERT INTO "profile" ("user_id", "age", "fav_cheese") VALUES (?, ?, ?)', 3, 56, 'Cheddar');
 		
@@ -116,13 +116,11 @@ class Dormio_UseCaseTest extends Dormio_DBTest {
 		}
 		
 		$this->assertSQL('SELECT t1."user_id"...');
-		$this->assertSQL('UPDATE "profile" SET "fav_cheese"=? WHERE "profile_id" = ?', 'Brie', 1);
 		$this->assertSQL('UPDATE "profile" SET "fav_cheese"=? WHERE "profile_id" = ?', 'Brie', 2);
-		$this->assertSQL('SELECT t1."profile_id...', 3);
+		$this->assertSQL('UPDATE "profile" SET "fav_cheese"=? WHERE "profile_id" = ?', 'Brie', 1);
 		$this->assertSQL('INSERT INTO "profile" ("user_id", "age", "fav_cheese") VALUES (?, ?, ?)', 3, 56, 'Cheddar');
 		
 		$this->assertDigestedAll();
-		$this->markTestIncomplete("Need to get rid of rogue select");
 	}
 	
 	function testForeignKeyUpdateLazy() {
