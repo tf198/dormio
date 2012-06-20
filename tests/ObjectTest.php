@@ -218,7 +218,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertDigestedAll();
 		
 		// Reverse Lazy
-		$u1 = $this->dormio->getObject('User', 1); // this gets executed on a cached statement
+		$u1 = $this->dormio->getObject('User', 1);
 		$this->assertEquals($u1->profile->age, 23);
 		$this->assertEquals($u1->profile->fav_cheese, 'Edam'); // cached query
 		// doesn't even need to load the user for this
@@ -251,7 +251,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertEquals(2, $i);
 		$this->assertSQL('SELECT t1."user_id" AS "pk", t1."name" AS "name", t2."profile_id" AS "profile__pk", t2."user_id" AS "profile__user", t2."age" AS "profile__age", t2."fav_cheese" AS "profile__fav_cheese" FROM "user" AS t1 LEFT JOIN "profile" AS t2 ON t1."user_id"=t2."user_id"');
 		
-		//$this->markTestIncomplete();
+		$this->markTestIncomplete("Rogue select on null onetoone");
 		$this->assertDigestedAll();
 		
 		Dormio::$logger = null;

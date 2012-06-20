@@ -98,7 +98,8 @@ class Dormio_Object implements ArrayAccess, Countable{
 			$pk = $this->_dormio->insertEntity($this->_entity, $this->_updated);
 			$this->_data['pk'] = $pk;
 		}
-		foreach($this->_updated as $key=>$value) $this->_data[$key] = $value;
+		//foreach($this->_updated as $key=>$value) $this->_data[$key] = $value;
+		$this->_data = array_merge($this->_data, $this->_updated);
 		$this->_updated = array();
 	}
 	
@@ -170,7 +171,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 	 * @param bool $throw whether to throw an error if unable to get value
 	 */
 	function getFieldValue($field, $throw=true) {
-		Dormio::$logger && Dormio::$logger->log("getFieldValue {$this->_entity}->{$field}", LOG_DEBUG);
+		Dormio::$logger && Dormio::$logger->log("getFieldValue {$this}->{$field}", LOG_DEBUG);
 		
 		// changed values
 		if(isset($this->_updated[$field])) {
@@ -183,6 +184,8 @@ class Dormio_Object implements ArrayAccess, Countable{
 			//Dormio::$logger && Dormio::$logger->log("Got value {$value}");
 			return $value;
 		}
+		
+		if($field == 'pk') throw new Dormio_Exception("{$this->_entity} has no primary key set");
 		
 		// not yet hydrated
 		if($this->_entity->isField($field)) {
@@ -263,10 +266,11 @@ class Dormio_Object implements ArrayAccess, Countable{
 
 		if(isset($this->_data[$field . "__pk"])) { 
 			//var_dump($spec);
-			Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
-			//$mapper = $this->_data->getChildMapper($field);
-			if($obj->ident() != $this->_data[$field . '__pk']) {
+			$pk = $this->_data[$field . "__pk"];
+			Dormio::$logger && Dormio::$logger->log("Eager loading field {$field} ({$pk})");
+			if($obj->ident() != $pk) {
 				$related = Dormio::getRelatedData($this->_data, $field);
+				//var_dump($related);
 				$obj->setData($related);
 			}
 		} else {
@@ -274,6 +278,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 			if(!isset($this->_data[$field])) {
 				$this->hydrate();
 			}
+			//var_dump('P2', $field, $this->_data);
 			$pk =  $this->_data[$field];
 			if($obj->ident() != $pk) {
 				//var_dump("P1", $field, $obj->ident(), $pk);
@@ -292,7 +297,8 @@ class Dormio_Object implements ArrayAccess, Countable{
 	function getRelated($field) {
 		$spec = $this->_entity->getField($field);
 		
-		if($spec['type'] == 'onetoone' && isset($this->_data[$field . "__" . $spec['local_field']])) {
+		//if($spec['type'] == 'onetoone' && array_key_exists("{$field}__{$spec['local_field']}", $this->_data)) {
+		if($spec['type'] == 'onetoone' && isset($this->_data["{$field}__{$spec['local_field']}"])) {
 			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Trying to eager hydrate field {$field}");
 			$obj = $this->getRelatedObject($field, $spec);
