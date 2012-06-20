@@ -1,5 +1,5 @@
 <?php
-require_once(TEST_PATH . '/DBTest.php');
+require_once('DBTest.php');
 
 class Dormio_ObjectTest extends Dormio_DBTest{
 	
@@ -8,13 +8,13 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->load('data/test_data.sql');
 		
 		$blog = $this->dormio->getObject('Blog');
-		$this->assertEquals(0, $this->pdo->count());
+		$this->assertDigestedAll();
 		
 		$blog->load(1);
 		$this->assertSQL('SELECT "blog_id" AS "pk", "title", "the_blog_user" AS "the_user" FROM "blog" WHERE "blog_id" = ?', 1);
 		
 		$blog = $this->dormio->getObject('Blog', 2);
-		$this->assertEquals(0, $this->pdo->count());
+		$this->assertDigestedAll();
 		$this->assertEquals('Andy Blog 2', $blog->title);
 		// statement is cached
 		$this->assertSQL('SELECT "blog_id" AS "pk", "title", "the_blog_user" AS "the_user" FROM "blog" WHERE "blog_id" = ?', 2);
@@ -35,7 +35,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		// load existing
 		$u2 = $this->dormio->getObject('User', 1);
 		// check nothing executed yet
-		$this->assertEquals($this->pdo->count(), 0);
+		$this->assertDigestedAll();
 		// on access hydration
 		$this->assertEquals($u2->name, 'Andy');
 		// should have hit the db now
@@ -50,7 +50,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		// delete
 		$this->assertEquals($u2->delete(),1);
-		$this->assertEquals(8, $this->pdo->count());
+		$this->assertQueryCount(8);
 		//$this->dumpAllSQL();
 		
 	}
@@ -113,7 +113,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		$blog->load(2);
 		$this->assertEquals($blog->delete(), 2); // blog 2, blog_tag 3 => 2
-		$this->pdo->clear();
+		$this->clearSQL();
 		
 		$user = $this->dormio->getObject('User');
 		$user->load(1);
@@ -152,7 +152,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$u1 = $this->dormio->getObject('User', 1, true);
 		$iter = $u1->blog_set;
 		// nothing should have been hit yet
-		$this->assertEquals($this->pdo->count(), 0);
+		$this->assertDigestedAll();
 
 		$expected = array('Andy Blog 1', 'Andy Blog 2');
 		$this->assertQueryset($iter, 'title', $expected);
@@ -237,8 +237,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 			}
 		}
 		$this->assertEquals(2, $i);
-		$this->assertEquals(4, $this->pdo->count());
-		$this->pdo->clear();
+		$this->assertQueryCount(4);
 		
 		// Eager reverse
 		$i = 0;
@@ -266,7 +265,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		$iter = $b1->tags;
 		// db not hit yet
-		$this->assertEquals($this->pdo->count(), 0);
+		$this->assertDigestedAll();
 
 		$expected = array('Yellow', 'Indigo');
 		$this->assertQueryset($iter, 'tag', $expected);

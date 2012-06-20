@@ -39,6 +39,10 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 		}
 		$this->pdo->stack = array();
 	}
+	
+	function clearSQL() {
+		$this->pdo->clear();
+	}
 
 	function assertQueryset($qs, $field, $expected) {
 		$i=0;
@@ -50,6 +54,11 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 			}
 		}
 		$this->assertEquals(count($expected), $i, 'Expected '.count($expected)." results, got {$i}");
+	}
+	
+	function assertQueryCount($expected) {
+		$this->assertEquals($expected, $this->pdo->count());
+		$this->pdo->clear();
 	}
 
 	function dumpSQL() {
