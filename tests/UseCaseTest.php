@@ -158,4 +158,21 @@ class Dormio_UseCaseTest extends Dormio_DBTest {
 		
 		$this->assertDigestedAll();
 	}
+	
+	function testNewUsage() {
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
+		
+		$blog = $this->dormio->getObject('Blog', 1);
+		$this->assertEquals('Andy Blog 1', $blog['title']);
+		$this->assertFalse(isset($blog['testing']));
+		$this->assertTrue(isset($blog['the_user']));
+		
+		$expected = array('Andy Comment 1 on Andy Blog 1', 'Bob Comment 1 on Andy Blog 1');
+		$i=0;
+		foreach($blog->related('comments') as $comment) {
+			$this->assertEquals($expected[$i++], $comment['title']);
+		}
+		$this->assertEquals(2, $i);
+	}
 }

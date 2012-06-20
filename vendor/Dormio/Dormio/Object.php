@@ -24,7 +24,7 @@
  * @package Dormio
  *
  */
-class Dormio_Object {
+class Dormio_Object implements ArrayAccess, Countable{
 
 	/**
 	 * @var Dormio
@@ -329,6 +329,30 @@ class Dormio_Object {
 	 */
 	function related($field) {
 		return $this->getRelated($field);
+	}
+	
+	/* ArrayAccess */
+	
+	function offsetExists($offset) {
+		return (isset($this->_data[$offset]) || isset($this->_updated[$offset]));
+	}
+	
+	function offsetGet($offset) {
+		return $this->getFieldValue($offset);
+	}
+	
+	function offsetSet($offset, $value) {
+		return $this->setFieldValue($offset, $value);
+	}
+	
+	function offsetUnset($offset) {
+		unset($this->_data[$offset], $this->_updated[$offset]);
+	}
+	
+	/* Countable */
+	
+	function count() {
+		return count($this->data);
 	}
 	
 	/**

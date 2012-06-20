@@ -106,6 +106,7 @@ bench('findArray()');
 
 foreach($data as $item) { }
 assert($item['title'] == 'Test ' . (LOOP-1));
+unset($data);
 bench('Array iteration');
 
 $iter = $blogs->find();
