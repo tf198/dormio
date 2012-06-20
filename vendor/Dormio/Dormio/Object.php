@@ -171,7 +171,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 	 * @param bool $throw whether to throw an error if unable to get value
 	 */
 	function getFieldValue($field, $throw=true) {
-		Dormio::$logger && Dormio::$logger->log("getFieldValue {$this}->{$field}", LOG_DEBUG);
+		Dormio::$logger && Dormio::$logger->log("getFieldValue {$this->_entity}->{$field}", LOG_DEBUG);
 		
 		// changed values
 		if(isset($this->_updated[$field])) {
@@ -302,6 +302,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Trying to eager hydrate field {$field}");
 			$obj = $this->getRelatedObject($field, $spec);
+			// if it is a new object set the remote field
 			if(!$obj->ident()) {
 				$obj->setFieldValue($spec['remote_field'], $this->getFieldValue($spec['local_field']));
 			}

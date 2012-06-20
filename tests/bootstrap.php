@@ -5,7 +5,7 @@ Dormio_AutoLoader::register();
 define('TEST_PATH', dirname(__FILE__));
 
 class Comment extends Dormio_Object {
-	function __toString() {
+	function display() {
 		return $this->title;
 	}
 }
