@@ -228,21 +228,23 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$tags = $this->dormio->getManager('Tag');
 		
 		$black = $tags->create(array('tag' => 'Black'));
+		$this->assertSQL('INSERT INTO "tag"...', 'Black');
 		$blog->tags->add($black);
+		$this->assertSQL('INSERT INTO "blog_tag" ("the_blog_id", "the_tag_id") VALUES (?, ?)', 1, 8);
 
 		// try the other way round
 		$white = $tags->create(array('tag' => 'White'));
+		$this->assertSQL('INSERT INTO "tag"...', 'White');
 		$white->blog_set->add($blog);
+		$this->assertSQL('INSERT INTO "blog_tag" ("the_tag_id", "the_blog_id") VALUES (?, ?)', 9, 1);
 		
 		// can do it all in one step
 		$blog->tags->create(array('tag' => 'Brown'));
+		$this->assertSQL('INSERT INTO "tag"...', 'Brown');
+		$this->assertSQL('INSERT INTO "blog_tag" ("the_blog_id", "the_tag_id") VALUES (?, ?)', 1, 10);
 		
-		$this->dumpAllSQL();
-		
-		//$this->assertEquals($this->pdo->digest(), array('INSERT INTO "tag" ("tag") VALUES (?)', array(array('Black'), array('White'), array('Brown'))));
-		//$this->assertEquals($this->pdo->digest(), array('INSERT INTO "blog_tag" ("the_blog_id", "the_tag_id") VALUES (?, ?)', array(array(1, 8), array(1, 9), array(1,10))));
-
-		//$this->assertDigestedAll();
+		$this->assertDigestedAll();
+		$this->assertStatementCount(3);
 		
 		$this->assertQueryset($blog->tags, 'tag', array('Yellow', 'Indigo', 'Black', 'White', 'Brown'));
 		

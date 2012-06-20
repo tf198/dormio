@@ -17,7 +17,9 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertEquals(0, $this->pdo->count());
 		$this->assertEquals('Andy Blog 2', $blog->title);
 		// statement is cached
-		$this->assertEquals($this->pdo->digest(), false);
+		$this->assertSQL('SELECT "blog_id" AS "pk", "title", "the_blog_user" AS "the_user" FROM "blog" WHERE "blog_id" = ?', 2);
+		$this->assertStatementCount(1);
+		$this->assertDigestedAll();
 	}
 	
 	function testInsertUpdateDelete() {
@@ -141,7 +143,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		// all done in a single hit here
 		$this->assertEquals($b1->the_user->name, 'Andy');
 
-		$this->assertEquals($this->pdo->count(), 0);
+		$this->assertDigestedAll();
 
 		// Reverse
 		$u1 = $this->dormio->getObject('User', 1, true);
@@ -183,9 +185,11 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		// the initial queryset
 		$this->assertSQL('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1');
-		// only one prepared statement with three executions
-		$this->assertEquals($this->pdo->digest(), array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(array(1), array(2), array(3))));
-
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 1);
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 2);
+		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 3);
+		$this->assertStatementCount(2);
+		
 		$this->assertDigestedAll();
 	}
 
@@ -201,7 +205,10 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertSQL('SELECT "profile_id" AS "pk", "user_id" AS "user", "age", "fav_cheese" FROM "profile" WHERE "profile_id" = ?', 2);
 		$this->assertEquals($p->user->name, 'Bob');
 		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id" = ?', 2);
+		$this->assertDigestedAll();
 
+		$this->markTestIncomplete();
+		
 		// Forward Eager
 		$p = $this->dormio->getManager('Profile')->with('user')->findOne(2);
 		$this->assertEquals($p->user->name, 'Bob');

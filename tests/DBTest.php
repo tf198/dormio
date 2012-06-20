@@ -55,9 +55,9 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 	function dumpSQL() {
 		$sql = $this->pdo->digest();
 		//var_dump($sql);
-		$params = array();
-		foreach($sql[1] as $set) $params[] = "[" . implode(', ', $set) . "]";
-		echo $sql[0] . " (" . implode(', ', $params) . ")\n";
+		//$params = array();
+		//foreach($sql[1] as $set) $params[] = "[" . implode(', ', $set) . "]";
+		echo $sql[0] . " (" . implode(', ', $sql[1]) . ")\n";
 	}
 
 	function dumpAllSQL() {
@@ -89,7 +89,7 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 			$this->assertEquals($sql, $executed[0]);
 		}
 		
-		$this->assertEquals(array($params), $executed[1], "Params passed to SQL differ");
+		$this->assertEquals($params, $executed[1], "Params passed to SQL differ");
 	}
 
 	function assertDigestedAll() {
@@ -99,6 +99,10 @@ abstract class Dormio_DBTest extends PHPUnit_Framework_TestCase {
 		} else {
 			$this->fail("{$c} undigested queries: " . $this->pdo->stack[0][0]);
 		}
+	}
+	
+	function assertStatementCount($expected) {
+		$this->assertEquals($expected, $this->pdo->statementsPrepared());
 	}
 	
 	function assertThrows($expected, $callable) {
