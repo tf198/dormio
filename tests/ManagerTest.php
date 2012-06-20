@@ -10,7 +10,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$blogs = $this->dormio->getManager('Blog');
 	
 		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($blogs, 'findOne'));
-		$this->pdo->digest();
+		$this->assertSQL('SELECT...');
 	
 		// basic pk load
 		$blog = $blogs->findOneArray(2);
@@ -50,7 +50,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$blogs = $this->dormio->getManager('Blog');
 
 		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($blogs, 'findOne'));
-		$this->pdo->digest();
+		$this->assertSQL('SELECT...');
 
 		// bad pk load
 		$this->assertThrows('Dormio_Manager_NoResultException:', array($blogs, 'findOne'), 23);
@@ -103,26 +103,22 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$tag = $this->dormio->getManager('Tag')->filter('tag', '=', 'Green')->findOne();
 		$this->assertQueryset($tag->blog_set, 'title', array('Andy Blog 2'));
 	}
-/*
+
 	function testCreate() {
 		$this->load("data/entities.sql");
-		$blogs = new Dormio_Manager('Blog', $this->pdo);
+		$blogs = $this->dormio->getManager('Blog');
 
-		$b1 = $blogs->create();
-		$this->assertIsA($b1, 'Dormio_Model');
-
-		$b2 = $blogs->create(array('title' => 'Test Blog 1'));
+		$b2 = $blogs->create(array('title' => 'Test Blog 1', 'the_user' => 1));
 		$this->assertEquals($b2->title, 'Test Blog 1');
-		$b2->save();
 
 		try {
 			$b3 = $blogs->create(array('rubbish' => 'duff'));
-			$this->fail("Should bhave thrown exception");
-		} catch(Dormio_Meta_Exception $dme) {
-			$this->assertEquals($dme->getMessage(), "No field 'rubbish' on 'blog'");
+			$this->fail("Should have thrown exception");
+		} catch(Dormio_Config_Exception $e) {
+			$this->assertEquals($e->getMessage(), "Entity [Blog] has no reverse field [rubbish]");
 		}
 	}
-
+/*
 	function testGetOrCreate() {
 		$this->load("data/entities.sql");
 		$this->load("data/test_data.sql");
@@ -197,16 +193,14 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		
 		$blog = $this->dormio->getObject('Blog', 2);
 		$this->assertEquals($blog->title, 'Andy Blog 2');
-		$this->pdo->digest();
+		$this->assertSQL('SELECT...', 2);
 
 		$comment = $blog->comments->create(array('title' => 'New Comment', 'user' => 1));
 		$comment->title = "Updated comment";
 		$comment->save();
 		
-		$this->assertEquals($this->pdo->digest(),
-				array('INSERT INTO "comment" ("title", "the_comment_user", "blog_id") VALUES (?, ?, ?)', array(array('New Comment', 1, 2))));
-		$this->assertEquals($this->pdo->digest(),
-				array('UPDATE "comment" SET "title"=? WHERE "comment_id" = ?', array(array("Updated comment", 4))));
+		$this->assertSQL('INSERT INTO "comment" ("title", "the_comment_user", "blog_id") VALUES (?, ?, ?)', 'New Comment', 1, 2);
+		$this->assertSQL('UPDATE "comment" SET "title"=? WHERE "comment_id" = ?', "Updated comment", 4);
 		$this->assertDigestedAll();
 	}
 
@@ -221,9 +215,8 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$comment->title = "Another new comment";
 		$comment->user = 1;
 		$blog->comments->add($comment);
-		$this->pdo->digest();
-		$this->assertEquals($this->pdo->digest(),
-				array('INSERT INTO "comment" ("title", "the_comment_user", "blog_id") VALUES (?, ?, ?)', array(array('Another new comment', 1, 2))));
+		$this->assertSQL('SELECT...', 2);
+		$this->assertSQL('INSERT INTO "comment" ("title", "the_comment_user", "blog_id") VALUES (?, ?, ?)', 'Another new comment', 1, 2);
 	}
 
 	function testManyToManyAdd() {
@@ -244,7 +237,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		// can do it all in one step
 		$blog->tags->create(array('tag' => 'Brown'));
 		
-		//$this->dumpAllSQL();
+		$this->dumpAllSQL();
 		
 		//$this->assertEquals($this->pdo->digest(), array('INSERT INTO "tag" ("tag") VALUES (?)', array(array('Black'), array('White'), array('Brown'))));
 		//$this->assertEquals($this->pdo->digest(), array('INSERT INTO "blog_tag" ("the_blog_id", "the_tag_id") VALUES (?, ?)', array(array(1, 8), array(1, 9), array(1,10))));
