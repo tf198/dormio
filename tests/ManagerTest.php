@@ -150,7 +150,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 
 		$this->assertEquals($data['pk.count'], 2);
 		$this->assertEquals($data['tag.max'], 'Green');
-		$this->assertSQL('SELECT COUNT(DISTINCT t1."tag_id") AS "t1_tag_id_count", MAX(t1."tag") AS "t1_tag_max" FROM "tag" AS t1 WHERE t1."tag" < ?', 'H');
+		$this->assertSQL('SELECT COUNT(DISTINCT t1."tag_id") AS "pk.count", MAX(t1."tag") AS "tag.max" FROM "tag" AS t1 WHERE t1."tag" < ?', 'H');
 
 		$data = $tags->getAggregator()->count()->avg()->sum()->run();
 		$this->assertEquals($data['pk.count'], 7);

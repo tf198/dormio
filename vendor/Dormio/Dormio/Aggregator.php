@@ -41,14 +41,15 @@ class Dormio_Aggregator {
     $p = $this->manager->_resolvePath($field);
     //$this->manager->query['select'][] = "{$method}({$extra}{{$spec['db_column']}}) AS {{$field}_" . strtolower($method) . "}";
     $m = strtolower($method);
-    $as = "{$p[2]}_{$p[1]}_{$m}";
+    //$as = "{$p[2]}_{$p[1]}_{$m}";
+    $as = "{$field}.{$m}";
     $this->manager->query['select'][] = "{$method}({$extra}{$p[2]}.{{$p[1]}}) AS {{$as}}";
-    $this->manager->reverse[$as] = "{$field}.{$m}";
+    //$this->manager->reverse[$as] = "{$field}.{$m}";
     return $this;
   }
   
   function run() {
-  	$result = $this->manager->findArray();
+  	$result = $this->manager->_find();
 	return $result[0];
   }
   
