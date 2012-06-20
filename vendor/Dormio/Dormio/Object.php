@@ -20,6 +20,7 @@
 
 /**
  * Basic ORM class
+ * Allows for easy table manipulation using objects
  * @package Dormio
  *
  */
@@ -60,12 +61,21 @@ class Dormio_Object {
 	 */
 	private $_hydrated;
 	
-	function __construct(Dormio $dormio, Dormio_Config_Entity $entity, $id=null) {
+	/**
+	 * Create a new Dormio_Object
+	 * @param Dormio $dormio
+	 * @param Dormio_Config_Entity $entity
+	 */
+	function __construct(Dormio $dormio, Dormio_Config_Entity $entity) {
 		$this->_dormio = $dormio;
 		$this->_entity = $entity;
 		$this->_hydrated = false;
 	}
 	
+	/**
+	 * Load data by primary key
+	 * @param string $id primary key to load
+	 */
 	function load($id) {
 		if(!$id) throw new Dormio_Exception("No primary key given");
 		if($this->_updated) throw new Dormio_Exception("Unsaved data for {$this}");
@@ -75,6 +85,9 @@ class Dormio_Object {
 		$this->_hydrated = true;
 	}
 
+	/**
+	 * Save any changes to object
+	 */
 	function save() {
 		if($this->ident()) {
 			if(isset($this->_updated['pk'])) {
@@ -89,20 +102,37 @@ class Dormio_Object {
 		$this->_updated = array();
 	}
 	
+	/**
+	 * Get the current primary key
+	 * @return string
+	 */
 	function ident() {
 		return isset($this->_data['pk']) ? $this->_data['pk'] : null;
 	}
 	
+	/**
+	 * Delete the current object
+	 * Also removes related items if set to cascade
+	 * @return int number of rows removed from all tables
+	 */
 	function delete() {
 		return $this->_dormio->deleteEntity($this->_entity, $this->ident());
 	}
 	
+	/**
+	 * Bulk set values
+	 * @param multitype:string $arr key/value pairs to set
+	 */
 	function setValues($arr) {
 		foreach($arr as $key=>$value) {
 			$this->setFieldValue($key, $value);
 		}
 	}
 	
+	/**
+	 * Hydrate the object with data
+	 * @param multitype:string $data
+	 */
 	function setData($data) {
 		if(!isset($data['pk'])) throw new Dormio_Exception("Cannot set data without a primary key");
 		if($this->_updated) throw new Dormio_Exception("Unsaved data for {$this}");
@@ -111,6 +141,11 @@ class Dormio_Object {
 		$this->_hydrated = false;
 	}
 	
+	/**
+	 * Set the primary key of the object
+	 * Clears all existing values
+	 * @param string $id
+	 */
 	function setPrimaryKey($id) {
 		//if(!$id) throw new Dormio_Exception("No primary key given");
 		Dormio::$logger && Dormio::$logger->log("setPrimaryKey: {$id}");
@@ -129,6 +164,11 @@ class Dormio_Object {
 		$this->load($this->ident());
 	}
 	
+	/**
+	 * Get value for a field
+	 * @param string $field field name
+	 * @param bool $throw whether to throw an error if unable to get value
+	 */
 	function getFieldValue($field, $throw=true) {
 		//Dormio::$logger && Dormio::$logger->log("getFieldValue {$this->_entity}->{$field}", LOG_DEBUG);
 		
@@ -157,12 +197,23 @@ class Dormio_Object {
 		return null;
 	}
 	
+	/**
+	 * Set a field value
+	 * @param string $field
+	 * @param mixed $value
+	 */
 	function setFieldValue($field, $value) {
 		if($field == 'pk') throw new Dormio_Exception("Unable to update primary key");
 		Dormio::$logger && Dormio::$logger->log("SET {$this->_entity}->{$field}: {$value}", LOG_DEBUG);
 		$this->_updated[$field] = $value;
 	}
 	
+	/**
+	 * Magic getter to maintain compatibility with older version
+	 * Enter description here ...
+	 * @param string $field
+	 * @return mixed
+	 */
 	function __get($field) {
 		$spec = $this->_entity->getField($field);
 		//var_dump($spec);
@@ -178,6 +229,11 @@ class Dormio_Object {
 		return $this->getRelated($field);
 	}
 	
+	/**
+	 * Magic setter to maintain compatibility with older version
+	 * @param string $field
+	 * @param mixed $value
+	 */
 	function __set($field, $value) {
 		
 		$spec = $this->_entity->getField($field);
@@ -194,6 +250,7 @@ class Dormio_Object {
 	 * Related objects with a field on the current entity
 	 * @param string $field
 	 * @param multitype:string $spec
+	 * @return Dormio_Object
 	 */
 	function getRelatedObject($field, $spec) {
 		if(isset($this->_related_objects[$field])) {
@@ -204,7 +261,7 @@ class Dormio_Object {
 			$this->_related_objects[$field] = $obj;
 		}
 
-		if(isset($this->_data[$field . "__pk"])) {
+		if(isset($this->_data[$field . "__pk"])) { 
 			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
 			$mapper = $this->_data->getChildMapper($field);
@@ -228,7 +285,8 @@ class Dormio_Object {
 	
 	/**
 	 * Return a manager for a related entity
-	 * @param unknown_type $field
+	 * @param string $field
+	 * @return Dormio_Manager_Related|Dormio_Object
 	 */
 	function getRelated($field) {
 		$spec = $this->_entity->getField($field);
@@ -263,15 +321,30 @@ class Dormio_Object {
 		}
 	}
 	
+	/**
+	 * New accessor for related types
+	 * @param string $field
+	 * @return Dormio_Manager_Related|Dormio_Object
+	 * @todo Needs to return related objects as well
+	 */
 	function related($field) {
 		return $this->getRelated($field);
 	}
 	
+	/**
+	 * String represention of the current object
+	 * Override in subclass to customise
+	 * @return string
+	 */
 	function display() {
 		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
 		return (isset($this->_data['pk'])) ? "[{$this->_entity->name} {$this->_data['pk']}]" : "[New {$this->_entity->name}]";
 	}
 	
+	/**
+	 * Return a nice string representation
+	 * @return string
+	 */
 	function __toString() {
 		try {
 			return $this->display();

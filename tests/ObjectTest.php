@@ -137,6 +137,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertEquals($b1->the_user->name, 'Andy');
 		$this->assertSQL('SELECT "blog_id" AS "pk", "title", "the_blog_user" AS "the_user" FROM "blog" WHERE "blog_id" = ?', 1);
 		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id" = ?', 1);
+		$this->assertDigestedAll();
 
 		// Eager
 		$blogs = $this->dormio->getManager('Blog');
@@ -209,7 +210,6 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertSQL('SELECT "user_id" AS "pk", "name" FROM "user" WHERE "user_id" = ?', 2);
 		$this->assertDigestedAll();
 
-		//$this->markTestIncomplete();
 		
 		// Forward Eager
 		$p = $this->dormio->getManager('Profile')->with('user')->findOne(2);
