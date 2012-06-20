@@ -14,31 +14,31 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 	
 		// basic pk load
 		$blog = $blogs->findOneArray(2);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 2);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 2);
 	
 		// bad pk load
 		$this->assertThrows('Dormio_Manager_NoResultException:', array($blogs, 'findOneArray'), 23);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 23);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 23);
 	
 		// eager load
 		$blog = $blogs->with('the_user')->findOneArray(1);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user", t2."user_id" AS "t2_user_id", t2."name" AS "t2_name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."blog_id" = ? LIMIT 2', 1);
-		$this->assertEquals('Andy', $blog['the_user']['name']);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", t2."user_id" AS "the_user__pk", t2."name" AS "the_user__name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."blog_id" = ? LIMIT 2', 1);
+		$this->assertEquals('Andy', $blog['the_user__name']);
 	
 		// complex query and pk
 		$blog = $blogs->filter('the_user__name', '=', 'Andy')->findOneArray(2);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" = ? AND t1."blog_id" = ? LIMIT 2', 'Andy', 2);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" = ? AND t1."blog_id" = ? LIMIT 2', 'Andy', 2);
 		$this->assertEquals('Andy Blog 2', $blog['title']);
 	
 		// other query
 		$blog = $blogs->filter('title', '=', 'Andy Blog 2')->findOneArray();
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" = ? LIMIT 2', 'Andy Blog 2');
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."title" = ? LIMIT 2', 'Andy Blog 2');
 		$this->assertEquals($blog['pk'], 2);
 	
 		// non specific query
 		$q = $blogs->filter('the_user', '=', 1);
 		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($q, 'findOneArray'));
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ? LIMIT 2', 1);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ? LIMIT 2', 1);
 	
 		$this->assertDigestedAll();
 	}
@@ -54,11 +54,11 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 
 		// bad pk load
 		$this->assertThrows('Dormio_Manager_NoResultException:', array($blogs, 'findOne'), 23);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 23);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 23);
 		
 		// basic pk load
 		$blog = $blogs->findOne(2);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 2);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."blog_id" = ? LIMIT 2', 2);
 		$this->assertEquals('Andy Blog 2', $blog->title);
 
 		// lazy load
@@ -67,23 +67,23 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 
 		// eager load
 		$blog = $blogs->with('the_user')->findOne(1);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user", t2."user_id" AS "t2_user_id", t2."name" AS "t2_name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."blog_id" = ? LIMIT 2', 1);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", t2."user_id" AS "the_user__pk", t2."name" AS "the_user__name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."blog_id" = ? LIMIT 2', 1);
 		$this->assertEquals('Andy', $blog->the_user->name);
 
 		// complex query and pk
 		$blog = $blogs->filter('the_user__name', '=', 'Andy')->findOne(2);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" = ? AND t1."blog_id" = ? LIMIT 2', 'Andy', 2);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" = ? AND t1."blog_id" = ? LIMIT 2', 'Andy', 2);
 		$this->assertEquals('Andy Blog 2', $blog->title);
 
 		// other query
 		$blog = $blogs->filter('title', '=', 'Andy Blog 2')->findOne();
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" = ? LIMIT 2', 'Andy Blog 2');
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."title" = ? LIMIT 2', 'Andy Blog 2');
 		$this->assertEquals($blog->pk, 2);
 
 		// non specific query
 		$q = $blogs->filter('the_user', '=', 1);
 		$this->assertThrows('Dormio_Manager_MultipleResultsException:', array($q, 'findOne'));
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ? LIMIT 2', 1);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ? LIMIT 2', 1);
 
 		$this->assertDigestedAll();
 	}
@@ -350,10 +350,9 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$this->assertEquals($data[1], array(
 			'pk' => '2',
 			'title' => 'Andy Blog 2',
-			'the_user' => array(
-				'pk' => 1,
-				'name' => 'Andy',
-			),
+			'the_user' => 1,
+			'the_user__pk' => 1,
+			'the_user__name' => 'Andy',
 		));
 	}
 

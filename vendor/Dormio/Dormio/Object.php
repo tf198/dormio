@@ -170,7 +170,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 	 * @param bool $throw whether to throw an error if unable to get value
 	 */
 	function getFieldValue($field, $throw=true) {
-		//Dormio::$logger && Dormio::$logger->log("getFieldValue {$this->_entity}->{$field}", LOG_DEBUG);
+		Dormio::$logger && Dormio::$logger->log("getFieldValue {$this->_entity}->{$field}", LOG_DEBUG);
 		
 		// changed values
 		if(isset($this->_updated[$field])) {
@@ -264,9 +264,10 @@ class Dormio_Object implements ArrayAccess, Countable{
 		if(isset($this->_data[$field . "__pk"])) { 
 			//var_dump($spec);
 			Dormio::$logger && Dormio::$logger->log("Eager loading field {$field}");
-			$mapper = $this->_data->getChildMapper($field);
-			if($obj->ident() != $mapper['pk']) {
-				$obj->setData($mapper);
+			//$mapper = $this->_data->getChildMapper($field);
+			if($obj->ident() != $this->_data[$field . '__pk']) {
+				$related = Dormio::getRelatedData($this->_data, $field);
+				$obj->setData($related);
 			}
 		} else {
 			Dormio::$logger && Dormio::$logger->log("Lazy loading field {$field}");

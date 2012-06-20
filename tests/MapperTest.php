@@ -9,6 +9,10 @@ class Dormio_MapperTest extends PHPUnit_Framework_TestCase {
 	private $join_map = array('pk' => 't1_pk', 'title' => 't1_title', 'author' => 't1_author_id', 'author__pk' => 't2_pk', 'author__name' => 't2_name');
 	private $join_data = array('t1_pk' => 23, 't1_title' => 'My Blog', 't1_author_id' => '45', 't2_pk' => '45', 't2_name' => 'Bob');
 	
+	function setUp() {
+		$this->markTestSkipped();
+	}
+	
 	function testNoData() {
 		$mapper = new Dormio_ResultMapper($this->basic_map);
 		try {

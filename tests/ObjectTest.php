@@ -142,7 +142,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		// Eager
 		$blogs = $this->dormio->getManager('Blog');
 		$b1 = $blogs->with('the_user')->findOne(1);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user", t2."user_id" AS "t2_user_id", t2."name" AS "t2_name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."blog_id" = ? LIMIT 2', 1);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", t2."user_id" AS "the_user__pk", t2."name" AS "the_user__name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."blog_id" = ? LIMIT 2', 1);
 		// all done in a single hit here
 		$this->assertEquals($b1->the_user->name, 'Andy');
 
@@ -156,7 +156,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		$expected = array('Andy Blog 1', 'Andy Blog 2');
 		$this->assertQueryset($iter, 'title', $expected);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 1);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 1);
 
 		$this->assertDigestedAll();
 	}
@@ -187,10 +187,10 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertEquals($i_users, 3);
 
 		// the initial queryset
-		$this->assertSQL('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1');
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 1);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 2);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 3);
+		$this->assertSQL('SELECT t1."user_id" AS "pk", t1."name" AS "name" FROM "user" AS t1');
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 1);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 2);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', 3);
 		$this->assertStatementCount(2);
 		
 		$this->assertDigestedAll();
@@ -214,7 +214,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		// Forward Eager
 		$p = $this->dormio->getManager('Profile')->with('user')->findOne(2);
 		$this->assertEquals($p->user->name, 'Bob');
-		$this->assertSQL('SELECT t1."profile_id" AS "t1_profile_id", t1."user_id" AS "t1_user_id", t1."age" AS "t1_age", t1."fav_cheese" AS "t1_fav_cheese", t2."user_id" AS "t2_user_id", t2."name" AS "t2_name" FROM "profile" AS t1 LEFT JOIN "user" AS t2 ON t1."user_id"=t2."user_id" WHERE t1."profile_id" = ? LIMIT 2', 2);
+		$this->assertSQL('SELECT t1."profile_id" AS "pk", t1."user_id" AS "user", t1."age" AS "age", t1."fav_cheese" AS "fav_cheese", t2."user_id" AS "user__pk", t2."name" AS "user__name" FROM "profile" AS t1 LEFT JOIN "user" AS t2 ON t1."user_id"=t2."user_id" WHERE t1."profile_id" = ? LIMIT 2', 2);
 		$this->assertDigestedAll();
 		
 		// Reverse Lazy
@@ -222,7 +222,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$this->assertEquals($u1->profile->age, 23);
 		$this->assertEquals($u1->profile->fav_cheese, 'Edam'); // cached query
 		// doesn't even need to load the user for this
-		$this->assertSQL('SELECT t1."profile_id" AS "t1_profile_id", t1."user_id" AS "t1_user_id", t1."age" AS "t1_age", t1."fav_cheese" AS "t1_fav_cheese" FROM "profile" AS t1 WHERE t1."user_id" = ? LIMIT 2', 1);
+		$this->assertSQL('SELECT t1."profile_id" AS "pk", t1."user_id" AS "user", t1."age" AS "age", t1."fav_cheese" AS "fav_cheese" FROM "profile" AS t1 WHERE t1."user_id" = ? LIMIT 2', 1);
 		$this->assertDigestedAll();
 		
 		// Reuse
@@ -249,7 +249,9 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 			}
 		}
 		$this->assertEquals(2, $i);
-		$this->assertSQL('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name", t2."profile_id" AS "t2_profile_id", t2."user_id" AS "t2_user_id", t2."age" AS "t2_age", t2."fav_cheese" AS "t2_fav_cheese" FROM "user" AS t1 LEFT JOIN "profile" AS t2 ON t1."user_id"=t2."user_id"');
+		$this->assertSQL('SELECT t1."user_id" AS "pk", t1."name" AS "name", t2."profile_id" AS "profile__pk", t2."user_id" AS "profile__user", t2."age" AS "profile__age", t2."fav_cheese" AS "profile__fav_cheese" FROM "user" AS t1 LEFT JOIN "profile" AS t2 ON t1."user_id"=t2."user_id"');
+		
+		//$this->markTestIncomplete();
 		$this->assertDigestedAll();
 		
 		Dormio::$logger = null;
@@ -268,7 +270,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		$expected = array('Yellow', 'Indigo');
 		$this->assertQueryset($iter, 'tag', $expected);
-		$this->assertSQL('SELECT t1."tag_id" AS "t1_tag_id", t1."tag" AS "t1_tag" FROM "tag" AS t1 INNER JOIN "blog_tag" AS t2 ON t1."tag_id"=t2."the_tag_id" WHERE t2."the_blog_id" = ?', 1);
+		$this->assertSQL('SELECT t1."tag_id" AS "pk", t1."tag" AS "tag" FROM "tag" AS t1 INNER JOIN "blog_tag" AS t2 ON t1."tag_id"=t2."the_tag_id" WHERE t2."the_blog_id" = ?', 1);
 
 		// do a test on one with normal fields
 		$c1 = $this->dormio->getObject('Comment', 2, true); // lazy load
@@ -276,7 +278,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		$expected = array('Orange', 'Violet');
 		//var_dump($c1->tags);
 		$this->assertQueryset($c1->tags, 'tag', $expected);
-		$this->assertSQL('SELECT t1."tag_id" AS "t1_tag_id", t1."tag" AS "t1_tag" FROM "tag" AS t1 INNER JOIN "comment_x_tag" AS t2 ON t1."tag_id"=t2."r_tag_id" WHERE t2."l_comment_id" = ?', 2);
+		$this->assertSQL('SELECT t1."tag_id" AS "pk", t1."tag" AS "tag" FROM "tag" AS t1 INNER JOIN "comment_x_tag" AS t2 ON t1."tag_id"=t2."r_tag_id" WHERE t2."l_comment_id" = ?', 2);
 
 		// manytomany on self
 		/*
@@ -301,12 +303,12 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		// overriden fields
 		$expected = array('Andy Blog 2');
 		$this->assertQueryset($tag->blog_set, 'title', $expected);
-		$this->assertSQL('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "blog_tag" AS t2 ON t1."blog_id"=t2."the_blog_id" WHERE t2."the_tag_id" = ?', 4);
+		$this->assertSQL('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 INNER JOIN "blog_tag" AS t2 ON t1."blog_id"=t2."the_blog_id" WHERE t2."the_tag_id" = ?', 4);
 
 		// default fields
 		$expected = array('Andy Comment 1 on Andy Blog 1', 'Andy Comment 1 on Bob Blog 1');
 		$this->assertQueryset($tag->comment_set, 'title', $expected);
-		$this->assertSQL('SELECT t1."comment_id" AS "t1_comment_id", t1."title" AS "t1_title", t1."the_comment_user" AS "t1_the_comment_user", t1."blog_id" AS "t1_blog_id" FROM "comment" AS t1 INNER JOIN "comment_x_tag" AS t2 ON t1."comment_id"=t2."l_comment_id" WHERE t2."r_tag_id" = ?', 4);
+		$this->assertSQL('SELECT t1."comment_id" AS "pk", t1."title" AS "title", t1."the_comment_user" AS "user", t1."blog_id" AS "blog" FROM "comment" AS t1 INNER JOIN "comment_x_tag" AS t2 ON t1."comment_id"=t2."l_comment_id" WHERE t2."r_tag_id" = ?', 4);
 
 		$this->assertDigestedAll();
 	}

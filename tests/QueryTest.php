@@ -1,6 +1,6 @@
 <?php
 class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
-	private $all_blogs = array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1', array());
+	private $all_blogs = array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1', array());
 
 	/**
 	 * @var Dormio_Config
@@ -131,7 +131,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 	function testField() {
 		$blogs = $this->getQuery('Blog');
 		$this->assertEquals($blogs->field('comments__title')->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user", t2."title" AS "t2_title" FROM "blog" AS t1 LEFT JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id"', array()));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", t2."title" AS "comments__title" FROM "blog" AS t1 LEFT JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id"', array()));
 	}
 
 	function testFilter() {
@@ -140,15 +140,15 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 		// normal field
 		$this->assertEquals($blogs->filter('title', '=', 'hello')->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" = ?', array('hello')));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."title" = ?', array('hello')));
 
 		// primary key
 		$this->assertEquals($blogs->filter('pk', '=', 1)->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."blog_id" = ?', array(1)));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."blog_id" = ?', array(1)));
 
 		// foreign key with id
 		$this->assertEquals($blogs->filter('the_user', '=', 2)->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(2)));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(2)));
 
 		// foreign key with obj
 		// TODO: restore test
@@ -156,7 +156,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		 $user = new User(new PDO('sqlite::memory:'));
 		$user->load(3);
 		$this->assertEquals($blogs->filter('the_user', '=', $user)->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(3)));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(3)));
 		*/
 		// non existent field
 		try { $blogs->filter('rubbish', '=', 1); $this->fail('Should have thrown exception');
@@ -175,44 +175,44 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 		// one step relation
 		$this->assertEquals($comments->filter('blog__title', '=', 'hello')->select(),
-				array('SELECT t1."comment_id" AS "t1_comment_id", t1."title" AS "t1_title", t1."the_comment_user" AS "t1_the_comment_user", t1."blog_id" AS "t1_blog_id" FROM "comment" AS t1 INNER JOIN "blog" AS t2 ON t1."blog_id"=t2."blog_id" WHERE t2."title" = ?', array('hello')));
+				array('SELECT t1."comment_id" AS "pk", t1."title" AS "title", t1."the_comment_user" AS "user", t1."blog_id" AS "blog" FROM "comment" AS t1 INNER JOIN "blog" AS t2 ON t1."blog_id"=t2."blog_id" WHERE t2."title" = ?', array('hello')));
 
 		// two step relation
 		$this->assertEquals($comments->filter('blog__the_user__name', '=', 'tris')->select(),
-				array('SELECT t1."comment_id" AS "t1_comment_id", t1."title" AS "t1_title", t1."the_comment_user" AS "t1_the_comment_user", t1."blog_id" AS "t1_blog_id" FROM "comment" AS t1 INNER JOIN "blog" AS t2 ON t1."blog_id"=t2."blog_id" INNER JOIN "user" AS t3 ON t2."the_blog_user"=t3."user_id" WHERE t3."name" = ?', array('tris')));
+				array('SELECT t1."comment_id" AS "pk", t1."title" AS "title", t1."the_comment_user" AS "user", t1."blog_id" AS "blog" FROM "comment" AS t1 INNER JOIN "blog" AS t2 ON t1."blog_id"=t2."blog_id" INNER JOIN "user" AS t3 ON t2."the_blog_user"=t3."user_id" WHERE t3."name" = ?', array('tris')));
 
 		// IN operator
 		$this->assertEquals($blogs->filter('the_user__name', 'IN', array('Andy', 'Dave'))->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" IN (?, ?)', array('Andy', 'Dave')));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t2."name" IN (?, ?)', array('Andy', 'Dave')));
 	}
 	
 	function testFilterSpecial() {
 		$blogs = $this->getQuery('Blog');
 		$this->assertEquals($blogs->filterSpecial('title', 'IS NOT NULL')->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."title" IS NOT NULL', array()));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."title" IS NOT NULL', array()));
 	}
 	
 	function testDistinct() {
 		$blogs = $this->getQuery('Blog');
 		$this->assertEquals($blogs->distinct()->select(),
-				array('SELECT DISTINCT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1', array()));
+				array('SELECT DISTINCT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1', array()));
 	}
 
 	function testWhere() {
 		$blogs = $this->getQuery('Blog');
 
 		$this->assertEquals($blogs->where('{the_user} = ?', array(1))->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(1)));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 WHERE t1."the_blog_user" = ?', array(1)));
 	}
 
 	function testLimit() {
 		$users = $this->getQuery('User');
 
 		$this->assertEquals($users->limit(3)->select(),
-				array('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1 LIMIT 3', array()));
+				array('SELECT t1."user_id" AS "pk", t1."name" AS "name" FROM "user" AS t1 LIMIT 3', array()));
 
 		$this->assertEquals($users->limit(4,2)->select(),
-				array('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1 LIMIT 4 OFFSET 2', array()));
+				array('SELECT t1."user_id" AS "pk", t1."name" AS "name" FROM "user" AS t1 LIMIT 4 OFFSET 2', array()));
 	}
 
 	function testOrder() {
@@ -221,19 +221,19 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 		// single
 		$this->assertEquals($users->orderBy('name')->select(),
-				array('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1 ORDER BY t1."name"', array()));
+				array('SELECT t1."user_id" AS "pk", t1."name" AS "name" FROM "user" AS t1 ORDER BY t1."name"', array()));
 
 		// multiple
 		$this->assertEquals($users->orderBy('name', 'pk')->select(),
-				array('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1 ORDER BY t1."name", t1."user_id"', array()));
+				array('SELECT t1."user_id" AS "pk", t1."name" AS "name" FROM "user" AS t1 ORDER BY t1."name", t1."user_id"', array()));
 
 		// descending
 		$this->assertEquals($users->orderBy('name', '-pk')->select(),
-				array('SELECT t1."user_id" AS "t1_user_id", t1."name" AS "t1_name" FROM "user" AS t1 ORDER BY t1."name", t1."user_id" DESC', array()));
+				array('SELECT t1."user_id" AS "pk", t1."name" AS "name" FROM "user" AS t1 ORDER BY t1."name", t1."user_id" DESC', array()));
 
 		// related
 		$this->assertEquals($blogs->orderBy('the_user__name')->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" ORDER BY t2."name"', array()));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" ORDER BY t2."name"', array()));
 	}
 
 	function testWith() {
@@ -241,7 +241,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 		// single
 		$this->assertEquals($blogs->with('the_user')->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user", t2."user_id" AS "t2_user_id", t2."name" AS "t2_name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id"', array()));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", t2."user_id" AS "the_user__pk", t2."name" AS "the_user__name" FROM "blog" AS t1 LEFT JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id"', array()));
 
 		// TODO: need to add more tests here but seems to work
 	}
@@ -251,7 +251,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 		//var_dump($blogs->filter('tags__tag', '=', 'testing')->select());
 		$this->assertEquals($blogs->filter('tags__tag', '=', 'testing')->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 LEFT JOIN "blog_tag" AS t2 ON t1."blog_id"=t2."the_blog_id" INNER JOIN "tag" AS t3 ON t2."the_tag_id"=t3."tag_id" WHERE t3."tag" = ?', array('testing')));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 LEFT JOIN "blog_tag" AS t2 ON t1."blog_id"=t2."the_blog_id" INNER JOIN "tag" AS t3 ON t2."the_tag_id"=t3."tag_id" WHERE t3."tag" = ?', array('testing')));
 	}
 
 	function testReverse() {
@@ -260,12 +260,12 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 
 		// reverse foreign key
 		$this->assertEquals($blogs->filter('comments__title', '=', 'Test')->select(),
-				array('SELECT t1."blog_id" AS "t1_blog_id", t1."title" AS "t1_title", t1."the_blog_user" AS "t1_the_blog_user" FROM "blog" AS t1 INNER JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id" WHERE t2."title" = ?', array('Test')));
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user" FROM "blog" AS t1 INNER JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id" WHERE t2."title" = ?', array('Test')));
 
 		// reverse manytomany
 		//var_dump($tags->with('blog_set')->select());
 		$this->assertEquals($tags->filter('blog_set__title', '=', 'Test')->select(),
-				array('SELECT t1."tag_id" AS "t1_tag_id", t1."tag" AS "t1_tag" FROM "tag" AS t1 LEFT JOIN "blog_tag" AS t2 ON t1."tag_id"=t2."the_tag_id" INNER JOIN "blog" AS t3 ON t2."the_blog_id"=t3."blog_id" WHERE t3."title" = ?', array('Test')));
+				array('SELECT t1."tag_id" AS "pk", t1."tag" AS "tag" FROM "tag" AS t1 LEFT JOIN "blog_tag" AS t2 ON t1."tag_id"=t2."the_tag_id" INNER JOIN "blog" AS t3 ON t2."the_blog_id"=t3."blog_id" WHERE t3."title" = ?', array('Test')));
 	}
 
 	function testAliases() {

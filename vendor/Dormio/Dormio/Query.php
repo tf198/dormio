@@ -202,8 +202,9 @@ class Dormio_Query {
 		$o = clone $this;
 		$p = $o->_resolvePath($path, 'LEFT');
 		if($alias) $alias = $this->alias . "_" . $alias;
-		$as = $o->_addField($p[2], $p[1], $alias);
-		$o->reverse[$as] = $path;
+		//$as = $o->_addField($p[2], $p[1], $alias);
+		//$o->reverse[$as] = $path;
+		$o->query['select'][] = "{$p[2]}.{{$p[1]}} AS {{$path}}";
 		return $o;
 	}
 
@@ -296,10 +297,12 @@ class Dormio_Query {
 	function _addFields($entity, $alias, $path='') {
 		foreach($entity->getFields() as $key=>$spec) {
 			if($spec['is_field']) {
-				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
-				$as = $this->_addField($alias, $spec['db_column']);
 				$accessor = $path . $key;
-				$this->reverse[$as] = $accessor;
+				$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$accessor}}";
+				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
+				//$as = $this->_addField($alias, $spec['db_column']);
+				//$accessor = $path . $key;
+				//$this->reverse[$as] = $accessor;
 			}
 		}
 	}
@@ -311,12 +314,13 @@ class Dormio_Query {
 	 * @param string $as	override default result key
 	 * @return string		key in the result
 	 */
+	/*
 	function _addField($table_alias, $db_column, $as=null) {
 		if(!$as) $as = "{$table_alias}_{$db_column}";
 		$this->query['select'][] = "{$table_alias}.{{$db_column}} AS {{$as}}";
 		return $as;
 	}
-
+	*/
 	/**
 	 * Resolves bracketed terms in a string.
 	 * eg "{comment__blog__title} = ?" becomes "{blog}.{title} = ?"
@@ -624,6 +628,7 @@ class Dormio_Query {
 	 * @param multitype:string $row
 	 * @return multitype:mixed
 	 */
+	/*
 	function mapArray($row) {
 		$result = array();
 		foreach($row as $key=>$value) {
@@ -638,6 +643,7 @@ class Dormio_Query {
 		}
 		return $result;
 	}
+	*/
 }
 
 /**

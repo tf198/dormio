@@ -229,6 +229,19 @@ class Dormio {
 		$stmt->execute($query[1]);
 		return ($row_count) ? $stmt->rowCount() : $stmt;
 	}
+	
+	static function getRelatedData($arr, $name) {
+		Dormio::$logger && Dormio::$logger->log("getRelatedData: {$name}");
+		$prefix = $name . '__';
+		$l = strlen($prefix);
+		$related = array();
+		foreach($arr as $path=>$field) {
+			if(substr($path, 0, $l) == $prefix) {
+				$related[substr($path, $l)] = $field;
+			}
+		}
+		return $related;
+	}
 }
 
 /**
@@ -273,55 +286,6 @@ class Dormio_Cache {
 	}
 }
 
-class Dormio_ResultMapper implements ArrayAccess{
-	
-	private $map, $raw;
-	
-	function __construct($map) {
-		$this->map = $map;
-	}
-	
-	function setRawData($raw) {
-		$this->raw = $raw;
-	}
-	
-	function offsetGet($offset) {
-		if(!$this->raw) throw new Dormio_Exception("No raw data provided");
-		$key = $this->map[$offset];
-		return $this->raw[$key];
-	}
-	
-	function offsetSet($offset, $value) {
-		if(!isset($this->map[$offset])) $this->map[$offset] = $offset;
-		$this->raw[$this->map[$offset]] = $value;
-		//var_dump($this);
-	}
-	
-	function offsetExists($offset) {
-		return isset($this->map[$offset]);
-	}
-	
-	function offsetUnset($offset) {
-		unset($this->raw[$this->map[$offset]]);
-		unset($this->map[$offset]);
-	}
-	
-	function getChildMapper($name) {
-		Dormio::$logger && Dormio::$logger->log("getChildMapper: {$name}");
-		$prefix = $name . '__';
-		$l = strlen($prefix);
-		$child_map = array();
-		foreach($this->map as $path=>$field) {
-			if(substr($path, 0, $l) == $prefix) {
-				$child_map[substr($path, $l)] = $field;
-			}
-		}
-		$child = new Dormio_ResultMapper($child_map);
-		$child->setRawData($this->raw);
-		return $child;
-	}
-}
-
 /**
  * Array-type object for iterating results as Objects
  * @author Tris Forster
@@ -329,7 +293,7 @@ class Dormio_ResultMapper implements ArrayAccess{
  */
 class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	
-	private $data, $obj, $mapper;
+	private $data, $obj;
 	
 	private $p, $c;
 	
@@ -338,11 +302,10 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	 * @param multitype:mixed $data
 	 * @param Dormio_Object $obj
 	 */
-	function __construct($data, $obj, $reverse) {
+	function __construct($data, $obj) {
 		$this->data = $data;
 		$this->obj = $obj;
 		$this->c = count($data);
-		$this->mapper = new Dormio_ResultMapper($reverse);
 	}
 	
 	function offsetExists($offset) {
@@ -351,8 +314,7 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 	
 	function offsetGet($offset) {
 		Dormio::$logger && Dormio::$logger->log('offsetGet: {$offset}');
-		$this->mapper->setRawData($this->data[$offset]);
-		$this->obj->setData($this->mapper);
+		$this->obj->setData($this->data[$offset]);
 		return $this->obj;
 	}
 	
@@ -385,8 +347,7 @@ class Dormio_ObjectSet implements ArrayAccess, Countable, Iterator {
 		$this->p++;
 		// need to map here as current() gets called multiple times for each row
 		if(isset($this->data[$this->p])) {
-			$this->mapper->setRawData($this->data[$this->p]);
-			$this->obj->setData($this->mapper);
+			$this->obj->setData($this->data[$this->p]);
 		}
 	}
 	
