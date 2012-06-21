@@ -52,7 +52,7 @@ class Dormio_Form extends Phorm_Phorm {
 		'password' => 'Phorm_Field_Password',
 		'timestamp' => 'Phorm_Field_Integer',
 		'foreignkey' => 'Dormio_Field_Related',
-		'manytomany' => 'Form_Field_ManyToMany',
+		'manytomany' => 'Dormio_Field_ManyToMany',
 	);
 	
 	/**
@@ -73,8 +73,8 @@ class Dormio_Form extends Phorm_Phorm {
 		'Phorm_Field_Email' => array('label' => '', 'size' => 25, 'max_length' => 255),
 		'Phorm_Field_DateTime' => array('label' => ''),
 		'Dormio_Field_Related' => array('label' => '', 'manager' => array()),
-		'Form_Field_ManyToMany' => array('label' => '', 'manager' => array(), 'selected' => ''),
-		'Form_Field_Choice' => array('label' => '', 'choices' => array('No options')),
+		'Dormio_Field_ManyToMany' => array('label' => '', 'manager' => array(), 'selected' => ''),
+		'Dormio_Field_Choice' => array('label' => '', 'choices' => array('No options')),
 	);
 	
 	public $buttons = array(
@@ -86,33 +86,33 @@ class Dormio_Form extends Phorm_Phorm {
 		$this->obj = $obj;
 		
 		$this->obj->hydrate();
-		$this->source_data = $this->obj->_data;
+		$this->source_data = $this->obj->getData();
+		$manytomany = array();
 		foreach($this->obj->_entity->getAllFields() as $field=>$spec) {
 			if($spec['is_field']) {
 				if(!isset($this->source_data[$field]) && isset($spec['default'])) {
 					$this->source_data[$field] = $spec['default'];
 				}
 			}
-		}
-		/*
-		// get the data values from the object
-		if($data->ident()) {
-			foreach($data->_meta->fields as $key=>$spec) {
-				if($data->_meta->isLocalField($key)) $this->object_data[$key] = $data->_getModelData($spec['db_column'], $spec['type']);
-				if($spec['type'] == 'manytomany') {
-					// get the selected ids
-					$selected = array();
-					foreach($data->$key->_selectIdent()->values() as $res) $selected[] = current($res);
-					$this->object_data[$key] = $selected;
-				}
-			}
-		} else { // get the defaults
-			foreach($data->_meta->fields as $key=>$spec) {
-				if(isset($spec['default'])) $this->object_data[$key] = $spec['default'];
+			if($spec['type'] == 'manytomany') {
+				$manytomany[] = $field;
 			}
 		}
-		$this->object = $data;
-		*/
+		
+		// add reverse
+		foreach($this->obj->_entity->getRelatedFields() as $field) {
+			$spec = $this->obj->_entity->getField($field);
+			if($spec['type'] == 'manytomany') {
+				$manytomany[] = $field;
+			}
+		}
+		
+		foreach($manytomany as $field) {
+			$selected = array();
+			foreach($this->obj->related($field)->selectIdent()->findArray() as $res) $selected[] = current($res);
+			$this->source_data[$field] = $selected;
+		}
+		
 		parent::__construct($method, $multi_part, $this->source_data, $lang);
 	
 	}
@@ -133,14 +133,14 @@ class Dormio_Form extends Phorm_Phorm {
 				if($spec['type'] == 'manytomany') $manytomany[$field] = $spec;
 			}
 		}
-		/*
+		
 		// only add manytomany fields if we have an ident
-		if($this->object->ident()) {
+		if($this->obj->ident()) {
 			foreach($manytomany as $key=>$spec) {
 				$this->$key = $this->field_for($spec);
 			}
 		}
-		*/
+		
 	}
 	
 	function modified($field) {
@@ -204,8 +204,8 @@ class Dormio_Form extends Phorm_Phorm {
 		return $params;
 	}
 	
-	function params_for_type_form_field_manytomany($params) {
-		return $this->params_for_type_form_field_manager($params);
+	function params_for_type_dormio_field_manytomany($params) {
+		return $this->params_for_type_dormio_field_related($params);
 	}
 	
 	function params_for_type_dormio_field_related($params) {
@@ -219,7 +219,7 @@ class Dormio_Form extends Phorm_Phorm {
 		return $params;
 	}
 	
-	function params_for_type_form_field_choice($params) {
+	function params_for_type_dormio_field_choice($params) {
 		// load the choices from the model
 		$method = "choices_field_" . $params['name'];
 		if(method_exists($this->object, $method)) $params['choices'] = $this->object->$method();
@@ -264,19 +264,17 @@ class Dormio_Form extends Phorm_Phorm {
 		}
 		$result = $this->obj->save();
 	
-		// add any remote fields
-		/*
 		foreach($remote_fields as $field) {
 			$value = $this->$field->get_value();
-			if($value != $this->object_data[$field]) {
-				$removed = array_diff($this->object_data[$field], $value);
-				$added = array_diff($value, $this->object_data[$field]);
-				$manager = $this->object->__get($field);
+			if($value != $this->source_data[$field]) {
+				$removed = array_diff($this->source_data[$field], $value);
+				$added = array_diff($value, $this->source_data[$field]);
+				$manager = $this->obj->related($field);
 				foreach($removed as $id) $manager->remove($id);
 				foreach($added as $id) $manager->add($id);
 			}
 		}
-		*/
+		
 	
 		return $result;
 	}

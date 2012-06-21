@@ -8,9 +8,10 @@
  * @package Dormio/Examples
  *
  */
+
 class Logger implements Dormio_Logger{
 	function log($message, $level=LOG_INFO) {
-		fputs(STDOUT, $message . "\n");
+		echo $message . "<br/>" . PHP_EOL;
 	}
 }
 $pdo = new Dormio_Logging_PDO('sqlite::memory:');

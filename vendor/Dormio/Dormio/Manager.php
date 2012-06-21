@@ -307,11 +307,14 @@ class Dormio_Manager_ManyToMany extends Dormio_Manager_Related {
 	 * @see Dormio_Manager::add()
 	 */
 	function add($obj) {
-		$obj->save();
+		if($obj instanceof Dormio_Object) {
+			$obj->save();
+			$obj = $obj->ident();
+		}
 
 		$o = $this->dormio->getObject($this->source_spec['through']);
 		$o->{$this->source_spec['map_local_field']} = $this->bound_id;
-		$o->{$this->source_spec['map_remote_field']} = $obj->ident();
+		$o->{$this->source_spec['map_remote_field']} = $obj;
 		$o->save();
 	}
 

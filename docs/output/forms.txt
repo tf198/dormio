@@ -1,0 +1,48 @@
+<html>
+  <head><title>Example Form</title></head>
+  <body>
+  	<form method="post" action="docs/examples/forms.php" id="dormio_form">
+
+    <table class="phorm_table">
+<tbody>
+<tr class="phorm_table_row">
+<td class="phorm_table_cell_label"></td>
+<td class="phorm_table_cell_field"><input value="3" class="Phorm_Field_Hidden phorm_field_hidden" maxlength="255" size="25" id="id_pk" name="pk" type="hidden" /></td>
+<td class="phorm_table_help_text"></td>
+</tr>
+<tr class="phorm_table_row">
+<td class="phorm_table_cell_label">Title</td>
+<td class="phorm_table_cell_field"><input value="Bob Blog 1" class="Phorm_Field_Text phorm_field_text" maxlength="30" size="25" id="id_title" name="title" type="text" /></td>
+<td class="phorm_table_help_text"></td>
+</tr>
+<tr class="phorm_table_row">
+<td class="phorm_table_cell_label">Body</td>
+<td class="phorm_table_cell_field"><textarea  class="Phorm_Field_Textarea phorm_field_textarea" cols="40" rows="5" id="id_body" name="body" >Bob is a blogger</textarea></td>
+<td class="phorm_table_help_text"></td>
+</tr>
+<tr class="phorm_table_row">
+<td class="phorm_table_cell_label">Author</td>
+<td class="phorm_table_cell_field"><select  class="Dormio_Field_Related dormio_field_related" id="id_author" name="author" ><option  value="-" >Select...</option>
+<option  value="1" >Andy Andrews</option>
+<option  value="2" selected="selected" >Bobby Brown</option>
+<option  value="3" >Charlie Chalk</option>
+</select></td>
+<td class="phorm_table_help_text"></td>
+</tr>
+<tr class="phorm_table_row">
+<td class="phorm_table_cell_label">Tags</td>
+<td class="phorm_table_cell_field"><select multiple="multiple"  class="Dormio_Field_ManyToMany dormio_field_manytomany" id="id_tags" name="tags[]" ><option  value="1" >Red</option>
+<option  value="2" selected="selected" >Orange</option>
+<option  value="3" >Yellow</option>
+<option  value="4" >Green</option>
+</select></td>
+<td class="phorm_table_help_text"></td>
+</tr>
+</tbody>
+</table>
+    <input type="reset" value="Clear"/>
+<input type="submit" value="Save"/>
+    </form>
+
+  </body>
+</html>

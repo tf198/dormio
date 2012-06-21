@@ -36,6 +36,7 @@ return array(
 		),
 	),
 	'Tag' => array(
+		'extra' => array('display_field' => 'tag'),
 		'fields' => array(
 			'tag' => array('type' => 'string'),
 		),

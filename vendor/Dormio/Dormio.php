@@ -253,7 +253,7 @@ class Dormio {
 	 * @return PDOStatement
 	 */
 	function _getSelect(Dormio_Config_Entity $entity) {
-		$key = "_{$entity->name}_SELECT";
+		$key = "_SELECT:{$entity->name}";
 		if(!$stored = $this->cache->get($key)) {
 				
 			$fields = array();
@@ -285,7 +285,7 @@ class Dormio {
 	 * @return PDOStatement
 	 */
 	function _getInsert(Dormio_Config_Entity $entity, array $params) {
-		$key = "_{$entity->name}_INSERT_" . implode('_', $params);
+		$key = "_INSERT:{$entity->name}:" . implode(':', $params);
 		if(!$stored = $this->cache->get($key)) {
 			$query = array('from' => "{{$entity->table}}");
 			$q = $this->dialect->insert($query, $params);

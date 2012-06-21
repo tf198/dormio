@@ -8,6 +8,10 @@ class ExampleTest extends PHPUnit_Framework_TestCase {
 		$this->assertOutput('schema');
 	}
 	
+	function testForms() {
+		$this->assertOutput('forms');
+	}
+	
 	/**
 	 * Check we haven't introduced any memory leaks
 	 */
