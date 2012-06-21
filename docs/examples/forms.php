@@ -30,23 +30,29 @@ if(isset($argc)) {
 $blog = $dormio->getObject('Blog', 3);
 $form = new Dormio_Form($blog);
 
+$message = "";
 if($form->is_valid()) {
   $form->save();
-  echo "Blog saved\n";
-  var_dump($blog->getData());
-} else {
-  echo <<< EOF
+  $message = '<div class="info">Blog updated</div>';
+}
+
+echo <<< EOF
+<!DOCTYPE html>
 <html>
   <head><title>Example Form</title></head>
+  <link type="text/css" rel="stylesheet" href="form.css"/>
   <body>
-  	{$form->open()}
-    {$form->as_table()}
-    {$form->buttons()}
-    {$form->close()}
+  	<div class='form-block'>{$message}
+  		{$form->open()}
+	    {$form->as_table()}
+	    <div class="form-buttons">
+	    	{$form->buttons()}
+	    </div>
+	    {$form->close()}
+    </div>
   </body>
 </html>
 EOF;
-}
 
 return 42; // for our auto testing
 ?>

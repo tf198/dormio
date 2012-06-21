@@ -1,0 +1,39 @@
+BODY, INPUT, TABLE {
+	font-family: verdana;
+	font-size: 10pt;
+}
+
+.form-block {
+  margin: 2em auto;
+  display: table;
+  border: 1px solid #999;
+  padding: 1em;
+  background-color: #EEE;
+  border-radius: 15px;
+}
+.form-block INPUT, .form-block TEXTAREA {
+  border-radius: 5px;
+  padding: 2px;
+}
+.form-buttons {
+	text-align: right;
+}
+.form-buttons INPUT {
+	padding: 2px 10px;
+}
+.form-block TD {
+	padding: 2px 0.5em;
+}
+.form-block TD.phorm_table_cell_label {
+	text-align: right;
+	font-weight: bold;
+}
+.info {
+	background-color: #98FB98;
+	border: 1px solid #006400;
+	color: #006400;
+	border-radius: 15px;
+	text-align: center;
+	font-weight: bold;
+	padding: 2px;
+}

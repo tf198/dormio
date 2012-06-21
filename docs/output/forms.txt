@@ -1,9 +1,12 @@
+<!DOCTYPE html>
 <html>
   <head><title>Example Form</title></head>
+  <link type="text/css" rel="stylesheet" href="form.css"/>
   <body>
-  	<form method="post" action="docs/examples/forms.php" id="dormio_form">
+  	<div class='form-block'>
+  		<form method="post" action="docs/examples/forms.php" id="dormio_form">
 
-    <table class="phorm_table">
+	    <table class="phorm_table">
 <tbody>
 <tr class="phorm_table_row">
 <td class="phorm_table_cell_label"></td>
@@ -40,9 +43,12 @@
 </tr>
 </tbody>
 </table>
-    <input type="reset" value="Clear"/>
+	    <div class="form-buttons">
+	    	<input type="reset" value="Clear"/>
 <input type="submit" value="Save"/>
-    </form>
+	    </div>
+	    </form>
 
+    </div>
   </body>
 </html>
