@@ -6,6 +6,7 @@
 
 return array(
 	'Blog' => array(
+		'extra' => array('display_field' => 'title'),
 		'fields' => array(
 			'title' => array('type' => 'string', 'max_length' => 30),
 			'body' => array('type' => 'text'),
@@ -31,14 +32,14 @@ return array(
 	'Profile' => array(
 		'fields' => array(
 			'user' => array('type' => 'onetoone', 'entity' => 'User'),
-			'fav_cheese' => array('type' => 'string', 'max_length' => 10),
+			'fav_cheese' => array('type' => 'string', 'max_length' => 10, 'verbose' => 'Favorite Cheese'),
 			'age' => array('type' => 'integer'),
 		),
 	),
 	'Tag' => array(
 		'extra' => array('display_field' => 'tag'),
 		'fields' => array(
-			'tag' => array('type' => 'string'),
+			'tag' => array('type' => 'string', 'max_length' => 10),
 		),
 	)
 );

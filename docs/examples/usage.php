@@ -2,7 +2,8 @@
 /**
 * This is a runable example
 *   > php docs/examples/usage.php
-* @package Dormio/Examples
+* @package Dormio
+* @subpackage Examples
 * @filesource
 */
 

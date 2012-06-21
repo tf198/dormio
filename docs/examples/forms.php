@@ -3,21 +3,18 @@
 * This is a runable example
 *   > php docs/examples/forms.php > form_output.html
 *   > php docs/examples/forms.php pk=3 title="Test Title" body="Hello World" user=2
-* @package Dormio/Examples
+* or point your browser to it
+* 	http://localhost/dormio/docs/examples/forms.php
+* @package Dormio
+* @subpackage Examples
 * @filesource
 */
 
 /**
 * This just registers the autoloader and creates an example database in memory
-* @example setup.php
+* @example example_base.php
 */ 
-$pdo = include('setup.php');
-
-$entities = include('entities.php');
-$config = new Dormio_Config;
-$config->addEntities($entities);
-
-$dormio = new Dormio($pdo, $config);
+include "example_base.php";
 
 // lets fake some POST data so we can test from the command line
 if(isset($argc)) {
@@ -27,32 +24,39 @@ if(isset($argc)) {
   }
 }
 
-$blog = $dormio->getObject('Blog', 3);
-$form = new Dormio_Form($blog);
+$entity = isset($_GET['entity']) ? ucfirst($_GET['entity']) : 'Blog';
+$id = isset($_GET['id']) ? (int) $_GET['id'] : 1;
 
-$message = "";
+$obj = $dormio->getObject($entity, $id);
+$form = new Dormio_Form($obj);
+
 if($form->is_valid()) {
   $form->save();
-  $message = '<div class="info">Blog updated</div>';
+  $message = "Updated {$obj}";
 }
-
-echo <<< EOF
+?>
 <!DOCTYPE html>
 <html>
   <head><title>Example Form</title></head>
-  <link type="text/css" rel="stylesheet" href="form.css"/>
+  <link type="text/css" rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css"/>
+  <style type="text/css">
+.example-form {
+	margin: 2em auto;
+	display: table;
+}
+.validation-advice {
+	color: red;
+	font-style:italic;
+}
+    </style>
   <body>
-  	<div class='form-block'>{$message}
-  		{$form->open()}
-	    {$form->as_table()}
-	    <div class="form-buttons">
-	    	{$form->buttons()}
-	    </div>
-	    {$form->close()}
-    </div>
+	<div class="example-form well">
+	<?php if(isset($message)):?>
+		<div class="alert alert-info">
+			<?php echo $message ?>
+		</div>
+	<?php endif ?>
+  	<?php $form->display('') ?>
+  	</div>
   </body>
 </html>
-EOF;
-
-return 42; // for our auto testing
-?>

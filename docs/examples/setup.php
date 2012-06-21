@@ -1,6 +1,7 @@
 <?
 /**
-* @package Dormio/Examples
+* @package Dormio
+* @subpackage Examples
 * @filesource
 */
 
@@ -16,8 +17,8 @@ Dormio_AutoLoader::register();
 // our basic connection object is just a stock PDO instance
 $pdo = new PDO('sqlite::memory:');
 
-// uncomment this to see what is going on
-#include 'debug.php';
+// set DEBUG to see what is going on
+if(defined('DEBUG')) include 'debug.php';
 
 // quickly set up the schemas and load some data
 foreach(file($example_path . '/entities.sql') as $sql) $pdo->exec($sql);

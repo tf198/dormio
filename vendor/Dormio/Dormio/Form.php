@@ -52,6 +52,7 @@ class Dormio_Form extends Phorm_Phorm {
 		'password' => 'Phorm_Field_Password',
 		'timestamp' => 'Phorm_Field_Integer',
 		'foreignkey' => 'Dormio_Field_Related',
+		'onetoone' => 'Dormio_Field_Related',
 		'manytomany' => 'Dormio_Field_ManyToMany',
 	);
 	
@@ -85,32 +86,25 @@ class Dormio_Form extends Phorm_Phorm {
 	function __construct($obj, $method='post', $multi_part=false, $lang='en') {
 		$this->obj = $obj;
 		
-		$this->obj->hydrate();
+		if($this->obj->ident()) $this->obj->hydrate();
 		$this->source_data = $this->obj->getData();
-		$manytomany = array();
 		foreach($this->obj->_entity->getAllFields() as $field=>$spec) {
 			if($spec['is_field']) {
-				if(!isset($this->source_data[$field]) && isset($spec['default'])) {
-					$this->source_data[$field] = $spec['default'];
+				if(!isset($this->source_data[$field])) {
+					$this->source_data[$field] =  isset($spec['default']) ? $spec['default'] : null;
 				}
 			}
 			if($spec['type'] == 'manytomany') {
-				$manytomany[] = $field;
+				$selected = array();
+				if($obj->ident()) {
+					foreach($this->obj->related($field)->selectIdent()->findArray() as $res) $selected[] = current($res);
+				}
+				$this->source_data[$field] = $selected;
 			}
 		}
 		
-		// add reverse
-		foreach($this->obj->_entity->getRelatedFields() as $field) {
-			$spec = $this->obj->_entity->getField($field);
-			if($spec['type'] == 'manytomany') {
-				$manytomany[] = $field;
-			}
-		}
-		
-		foreach($manytomany as $field) {
-			$selected = array();
-			foreach($this->obj->related($field)->selectIdent()->findArray() as $res) $selected[] = current($res);
-			$this->source_data[$field] = $selected;
+		if(!isset($this->include_fields)) {
+			$this->include_fields = array_keys($this->source_data);
 		}
 		
 		parent::__construct($method, $multi_part, $this->source_data, $lang);
@@ -227,8 +221,9 @@ class Dormio_Form extends Phorm_Phorm {
 	}
 	
 	function buttons() {
-		$result = array();
-		foreach($this->buttons as $type=>$display) $result[] = "<input type=\"{$type}\" value=\"{$display}\"/>";
+		$result = array("<div class=\"df-buttons\">");
+		foreach($this->buttons as $type=>$display) $result[] = "<input class=\"btn btn-{$type}\" type=\"{$type}\" value=\"{$display}\"/>";
+		$result[] = "</div>";
 		return implode("\n", $result);
 	}
 	
@@ -281,7 +276,6 @@ class Dormio_Form extends Phorm_Phorm {
 	
 	function override($type, $name, $param) {
 		$method = $type . '_' . $name;
-		//if(method_exists($this->object, $method)) $param = $this->object->$method($param);
 		if(method_exists($this, $method)) $param = $this->$method($param);
 		return $param;
 	}
