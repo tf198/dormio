@@ -327,6 +327,19 @@ class Dormio {
 		}
 		return $related;
 	}
+	
+	static function title($input) {
+		return ucwords(str_replace('_', ' ', $input));
+	}
+	
+	static  function URL($params=array()) {
+	  	$params = array_merge($_GET, $params);
+	  	$url = $_SERVER['SCRIPT_NAME'];
+	  	
+	  	foreach($params as $key=>&$value) $value = urlencode($key) . "=" . urlencode($value);
+	  	if($params) $url .= "?" . implode('&', $params);
+	  	return $url;
+	}
 }
 
 /**

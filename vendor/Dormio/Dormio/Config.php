@@ -218,7 +218,7 @@ class Dormio_Config_Entity {
 		
 		$this->name = $name;
 		$this->table = (isset($entity['table'])) ? $entity['table'] : strtolower($name);
-		$this->verbose = (isset($entity['verbose'])) ? $entity['verbose'] : self::title($name);
+		$this->verbose = (isset($entity['verbose'])) ? $entity['verbose'] : Dormio::title($name);
 		$this->indexes = (isset($entity['indexes'])) ? $entity['indexes'] : array();
 		$this->model_class = (isset($entity['model_class'])) ? $entity['model_class'] : 'Dormio_Object';
 		$this->extra = (isset($entity['extra'])) ? $entity['extra'] : array();
@@ -272,10 +272,30 @@ class Dormio_Config_Entity {
 		return array_keys($this->config->getReverseFields($this->name));
 	}
 	
+	/**
+	 * Returns all local fields
+	 * @return multitype:array
+	 */
 	function getFields() {
 		return $this->fields;
 	}
 	
+	/**
+	 * Return all non-entity local fields
+	 * @return multitype:array
+	 */
+	function getSimpleFields() {
+		$result = array();
+		foreach($this->fields as $field=>$spec) {
+			if(!isset($spec['entity'])) $result[$field] = $spec;
+		}
+		return $result;
+	}
+	
+	/**
+	 * Returns all local and related fields, including reverse ones
+	 * @return multitype:array
+	 */
 	function getAllFields() {
 		$fields = $this->fields;
 		foreach($this->getRelatedFields() as $field) $fields[$field] = $this->getField($field);
@@ -340,7 +360,7 @@ class Dormio_Config_Entity {
 			throw new Dormio_Config_Exception("Field [{$field}] has an [entity] element defined but is not a recognised related type");
 		}
 
-		$defaults = array('verbose' => self::title($field), 'db_column' => strtolower($field), 'null_ok' => false, 'is_field' => true);
+		$defaults = array('verbose' => Dormio::title($field), 'db_column' => strtolower($field), 'null_ok' => false, 'is_field' => true);
 		$spec = array_merge($defaults, $spec);
 		return $spec;
 	}
@@ -349,7 +369,7 @@ class Dormio_Config_Entity {
 		$this->validateRelated($field, $spec);
 
 		$defaults = array(
-			'verbose' => self::title($field),
+			'verbose' => Dormio::title($field),
 			'db_column' => strtolower($field) . "_id",
 			'null_ok' => false,
 			'local_field' => $field,
@@ -365,7 +385,7 @@ class Dormio_Config_Entity {
 			'local_field' => $spec['remote_field'],
 			'remote_field' => $spec['local_field'],
 			'entity' => $this->name,
-			'verbose' => self::title($spec['related_name']),
+			'verbose' => Dormio::title($spec['related_name']),
 			'on_delete' => $spec['on_delete'],
 			'is_field' => false,
 		);
@@ -381,7 +401,7 @@ class Dormio_Config_Entity {
 
 		// set some defaults
 		$defaults = array(
-			'verbose' => self::title($field),
+			'verbose' => Dormio::title($field),
 			'through' => null,
 			'map_local_field' => null,
 			'map_remote_field' => null,
@@ -416,6 +436,7 @@ class Dormio_Config_Entity {
 			'map_local_field' => $spec['map_remote_field'],
 			'map_remote_field' => $spec['map_local_field'],
 			'is_field' => false,
+			'verbose' => $this->verbose,
 		);
 
 		return $spec;
@@ -443,17 +464,13 @@ class Dormio_Config_Entity {
 
 	function validateHasMany($entity, $field, $spec) {
 		$this->validateModel($entity, $field, $spec);
-		if(!$spec['verbose']) $spec['verbose'] = self::title($field);
+		if(!$spec['verbose']) $spec['verbose'] = Dormio::title($field);
 
 		return $spec;
 	}
 
 	function __toString() {
 		return "[Entity {$this->name}]";
-	}
-	
-	static function title($str) {
-		return ucwords(str_replace('_', ' ', $str));
 	}
 }
 
