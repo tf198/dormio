@@ -21,7 +21,8 @@
 /**
  * @var string
  */
-define('DORMIO_PATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
+define('VENDOR_PATH', dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR);
+define('PHORMS_ROOT', VENDOR_PATH . "Phorms" . DIRECTORY_SEPARATOR);
 
 /**
  * Basic autoloader for Dormio
@@ -35,8 +36,18 @@ class Dormio_AutoLoader {
 	 * @param string $className
 	 */
 	static function autoload($className) {
-		$filename = DORMIO_PATH . str_replace('_', DIRECTORY_SEPARATOR, $className) . ".php";
-		if(is_readable($filename)) require $filename;
+		$parts = explode('_', $className);
+		switch($parts[0]) {
+			case 'Dormio':
+				$filename = VENDOR_PATH . 'Dormio' . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts) . ".php";
+				break;
+			case 'Phorm':
+				$filename = VENDOR_PATH . 'Phorms' . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts) . ".class.php";
+				break;
+			default:
+				return;
+		}
+		if(is_readable($filename)) include $filename;
 	}
 	
 	/**

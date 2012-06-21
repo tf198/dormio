@@ -191,9 +191,16 @@ class Dormio_Config_Entity {
 	public $fields;
 
 	/**
+	 * The config object
 	 * @var Dormio_Config
 	 */
 	public $config;
+	
+	/**
+	 * Extra data about the table
+	 * @var multitype:string
+	 */
+	public $extra;
 
 	/**
 	 * Construct a new Dormio_Dormio_Config_Entity
@@ -214,6 +221,7 @@ class Dormio_Config_Entity {
 		$this->verbose = (isset($entity['verbose'])) ? $entity['verbose'] : self::title($name);
 		$this->indexes = (isset($entity['indexes'])) ? $entity['indexes'] : array();
 		$this->model_class = (isset($entity['model_class'])) ? $entity['model_class'] : 'Dormio_Object';
+		$this->extra = (isset($entity['extra'])) ? $entity['extra'] : array();
 		
 		// set a primary key field (can be overridden)
 		$this->fields['pk'] = array('type' => 'ident', 'db_column' => strtolower($name) . "_id", 'is_field' => true, 'verbose' => 'ID', 'validated' => true);

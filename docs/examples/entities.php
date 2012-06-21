@@ -21,6 +21,7 @@ return array(
 		),
 	),
 	'User' => array(
+		'extra' => array('display_field' => 'display_name'),
 		'fields' => array(
 			'username' => array('type' => 'string', 'max_length' => 50),
 			'password' => array('type' => 'password'),

@@ -142,6 +142,10 @@ class Dormio_Object implements ArrayAccess, Countable{
 		$this->_hydrated = false;
 	}
 	
+	function getData() {
+		return $this->_data;
+	}
+	
 	/**
 	 * Set the primary key of the object
 	 * Clears all existing values
@@ -323,6 +327,12 @@ class Dormio_Object implements ArrayAccess, Countable{
 		}
 	}
 	
+	function getManager($field) {
+		$spec = $this->_entity->getField($field);
+		if(!isset($spec['entity'])) throw new Dormio_Exception("Field {$field} is not related to {$this->_entity}");
+		return $this->_dormio->getManager($spec['entity']);
+	}
+	
 	/**
 	 * New accessor for related types
 	 * @param string $field
@@ -364,6 +374,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 	 */
 	function display() {
 		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
+		if(isset($this->_entity->extra['display_field'])) return $this->getFieldValue($this->_entity->extra['display_field']);
 		return (isset($this->_data['pk'])) ? "[{$this->_entity->name} {$this->_data['pk']}]" : "[New {$this->_entity->name}]";
 	}
 	
