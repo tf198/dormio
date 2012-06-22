@@ -7,8 +7,6 @@ $table = new Dormio_Table_Query($query);
 
 $table->setClasses(array(
 			'table' => 'table table-bordered table-condensed',
-			'sort-asc' => 'icon-arrow-down',
-			'sort-desc' => 'icon-arrow-up',
 		))->setPageSize(2);
 
 ?>

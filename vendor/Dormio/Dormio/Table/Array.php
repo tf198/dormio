@@ -9,7 +9,7 @@
  * @package Dormio
  * @subpackage Tables
  */
-class Dormio_Table_Array implements Iterator{
+class Dormio_Table_Array implements Iterator, Countable{
 
 	public $template = null;
 
@@ -42,6 +42,8 @@ class Dormio_Table_Array implements Iterator{
 		'sort-desc' => 'dt-sort-desc',
 		'th' => 'dt-heading',
 		'td' => 'dt-field',
+		'bool-false' => 'dt-bool-false',
+		'bool-true' => 'dt-bool-true',
 	);
 
 	public $row_number;
@@ -89,14 +91,10 @@ class Dormio_Table_Array implements Iterator{
 	 * @return Table_Simple
 	 */
 	public function setColumnHeadings(array $headings=null) {
-		if($headings===null) $headings = array_combine($this->fields, array_map('Dormio_Table_Array::make_heading', $this->fields));
+		if($headings===null) $headings = array_combine($this->fields, array_map('Dormio::title', $this->fields));
 		$this->column_headings = $headings;
 		$this->show_headings = true;
 		return $this;
-	}
-
-	public static function make_heading($input) {
-		return ucfirst(str_replace('_', ' ', $input));
 	}
 
 	/**
@@ -154,11 +152,12 @@ class Dormio_Table_Array implements Iterator{
 		if($this->sort_field!==null && $field == $this->sort_field) {
 			if($this->sort_desc) {
 				$class = $this->classes['sort-desc'];
+				$icon = "&nbsp;<span class=\"{$this->classes['sort-desc']}\">&uArr;</span>";
 			} else {
 				$sort = "-" . $sort;
-				$class = $this->classes['sort-asc'];
+				$icon = "&nbsp;<span class=\"{$this->classes['sort-asc']}\">&dArr;</span>";
 			}
-			$icon = "&nbsp;<span class=\"{$class}\"/>";
+			
 		}
 		$url = Dormio::URL(array($this->param_sort => $sort));
 		return "<a href=\"{$url}\">{$heading}</a>{$icon}";
@@ -263,6 +262,7 @@ class Dormio_Table_Array implements Iterator{
 
 	public function render_default($value, $field=null) {
 		return HTML::chars($value);
+		
 	}
 
 	public function render_field_id() {
@@ -270,7 +270,8 @@ class Dormio_Table_Array implements Iterator{
 	}
 
 	public function render_type_boolean($value) {
-		return ($value) ? "TRUE" : "FALSE";
+		// think these entities are available on all browsers
+		return ($value) ? "<span class=\"{$this->classes['bool-true']}\">&#x2713;</span>" : "<span class=\"{$this->classes['bool-false']}\">&#x2717</span>";
 	}
 
 	function current() {
@@ -295,5 +296,9 @@ class Dormio_Table_Array implements Iterator{
 	function next() {
 		$this->data->next();
 		$this->row_number++;
+	}
+	
+	function count() {
+		return count($this->data);
 	}
 }

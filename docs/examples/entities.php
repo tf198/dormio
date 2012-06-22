@@ -41,5 +41,15 @@ return array(
 		'fields' => array(
 			'tag' => array('type' => 'string', 'max_length' => 10),
 		),
+	),
+	'FieldTest' => array(
+		'extra' => array(),
+		'fields' => array(
+			'string' => array('type' => 'string'),
+			'integer' => array('type' => 'integer'),
+			'float' => array('type' => 'float'),
+			'foreignkey' => array('type' => 'foreignkey', 'model' => 'User'),
+			'onetoone' => array('type' => 'onetoone', 'model' => '')
+		),
 	)
 );

@@ -109,10 +109,6 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		return htmlentities($short);
 	}
 
-	function render_type_boolean($value) {
-		return ($value) ? 'Yes' : 'No';
-	}
-
 	function render_type_timestamp($value) {
 		if(!$value) return null;
 		if(time()-$value < 86400) return date('H:i:s', $value);
@@ -133,7 +129,9 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		foreach($this->fields as $field) {
 			if(isset($this->entity_fields[$field])) {
 				$spec = $this->entity_fields[$field];
-				if($spec['type']=='foreignkey') $this->queryset = $this->queryset->with($field);
+				if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
+					$this->queryset = $this->queryset->with($field);
+				}
 			}
 		}
 

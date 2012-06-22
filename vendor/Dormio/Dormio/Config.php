@@ -320,6 +320,37 @@ class Dormio_Config_Entity {
 		return isset($this->fields[$field]);
 	}
 	
+	/**
+	 * Get a field parameter
+	 * @param string $field
+	 * @param string $param
+	 * @param mixed $default
+	 * @return string
+	 */
+	function getParam($field, $param, $default=null) {
+		$spec = $this->fields[strtolower($field)];
+		if(isset($spec[$param])) {
+			return $spec[$param];
+		} else {
+			return $default;
+		}
+	}
+	
+	/**
+	 * Get the named param for all fields
+	 * e.g. getParams('verbose');
+	 * @param string $param
+	 * @param mixed $default
+	 * @return multitype:string
+	 */
+	function getParams($param, $default=null) {
+		$result = array();
+		foreach(array_keys($this->fields) as $field) {
+			$result[$field] = $this->getParam($field, $param, $default);
+		}
+		return $result;
+	}
+	
 	function asArray() {
 		return array(
 			'name' => $this->name,

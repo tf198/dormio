@@ -149,6 +149,14 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	function getAggregator() {
 		return new Dormio_Aggregator($this);
 	}
+	
+	function getFields() {
+		return $this->entity->getFieldNames();
+	}
+	
+	function getHeadings() {
+		return $this->entity->getParams('verbose');
+	}
 
 	/**
 	 * Deletes the records specified by this query
