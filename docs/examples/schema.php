@@ -17,25 +17,14 @@ Dormio_AutoLoader::register();
 // get a connection
 $pdo = new PDO('sqlite::memory:');
 
-// When you use Dormio methods this is set automatically
-// We'll set it here otherwise errors tend to disappear into the ether
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
 // load our entities
 $config = new Dormio_Config;
 $config->addEntities(include $example_path . '/entities.php');
 
-// force generation of automatic entities
-$config->generateAutoEntities();
+$dormio = new Dormio($pdo, $config);
 
-// these 5 lines create every table defined in our entities and their indexes
-foreach($config->getEntities() as $entity_name) {
-	$entity = $config->getEntity($entity_name);
-	$schema = Dormio_Schema::fromEntity($entity);
-	$sf = Dormio_Schema::factory('sqlite', $schema);
-	$sql = $sf->createSQL();
-	$sf->batchExecute($pdo, $sql);
-}
+$admin = new Dormio_Admin($dormio);
+$admin->syncdb();
 
 // have a look at the result
 $stmt = $pdo->prepare('SELECT sql FROM SQLITE_MASTER');
