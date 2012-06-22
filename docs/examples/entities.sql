@@ -7,6 +7,9 @@ CREATE TABLE "user" ("user_id" INTEGER PRIMARY KEY AUTOINCREMENT, "username" TEX
 CREATE TABLE "profile" ("profile_id" INTEGER PRIMARY KEY AUTOINCREMENT, "user_id" INTEGER NOT NULL, "fav_cheese" TEXT NOT NULL, "age" INTEGER NOT NULL);
 CREATE INDEX "profile_user_0" ON "profile" ("user_id" ASC);
 CREATE TABLE "tag" ("tag_id" INTEGER PRIMARY KEY AUTOINCREMENT, "tag" TEXT NOT NULL);
+CREATE TABLE "fieldtest" ("fieldtest_id" INTEGER PRIMARY KEY AUTOINCREMENT, "string" TEXT NOT NULL, "integer" INTEGER NOT NULL, "float" REAL NOT NULL, "foreignkey_id" INTEGER NOT NULL, "onetoone_id" INTEGER NOT NULL);
+CREATE INDEX "fieldtest_foreignkey_0" ON "fieldtest" ("foreignkey_id" ASC);
+CREATE INDEX "fieldtest_onetoone_0" ON "fieldtest" ("onetoone_id" ASC);
 CREATE TABLE "blog_x_tag" ("blog_x_tag_id" INTEGER PRIMARY KEY AUTOINCREMENT, "l_blog_id" INTEGER NOT NULL, "r_tag_id" INTEGER NOT NULL);
 CREATE INDEX "blog_x_tag_lhs_0" ON "blog_x_tag" ("l_blog_id" ASC);
 CREATE INDEX "blog_x_tag_rhs_0" ON "blog_x_tag" ("r_tag_id" ASC);

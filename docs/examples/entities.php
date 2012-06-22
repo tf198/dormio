@@ -48,8 +48,8 @@ return array(
 			'string' => array('type' => 'string'),
 			'integer' => array('type' => 'integer'),
 			'float' => array('type' => 'float'),
-			'foreignkey' => array('type' => 'foreignkey', 'model' => 'User'),
-			'onetoone' => array('type' => 'onetoone', 'model' => '')
+			'foreignkey' => array('type' => 'foreignkey', 'entity' => 'User'),
+			'onetoone' => array('type' => 'onetoone', 'entity' => 'Profile'),
 		),
 	)
 );
