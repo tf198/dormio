@@ -50,7 +50,7 @@ class Dormio_Form extends Phorm_Phorm {
 		'string' => 'Phorm_Field_Text',
 		'text' => 'Phorm_Field_Textarea',
 		'password' => 'Phorm_Field_Password',
-		'timestamp' => 'Phorm_Field_Integer',
+		'timestamp' => 'Phorm_Field_DateTime',
 		'foreignkey' => 'Dormio_Field_Related',
 		'onetoone' => 'Dormio_Field_Related',
 		'manytomany' => 'Dormio_Field_ManyToMany',
@@ -65,7 +65,7 @@ class Dormio_Form extends Phorm_Phorm {
 		'Phorm_Field_Text' => array('label' => '', 'size' => 25, 'max_length' => 255),
 		'Phorm_Field_Password' => array('label' => '', 'size' => 25, 'max_length' => 255, 'hash' => 'trim'), // dont want it to hash our passwords
 		'Phorm_Field_Textarea' => array('label' => '', 'rows' => 5, 'cols' => 40),
-		'Phorm_Field_Integer' => array('label' => '', 'max_digits' => 10, 'size' => 10),
+		'Phorm_Field_Integer' => array('label' => '', 'size' => '5', 'max_digits' => 10),
 		'Phorm_Field_Decimal' => array('label' => '', 'size' => 5, 'precision' => 10),
 		'Phorm_Field_Checkbox' => array('label' => ''),
 		'Phorm_Field_IPv4Address' => array('label' => '', 'subnet' => null, 'as_long' => false),

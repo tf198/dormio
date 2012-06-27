@@ -1,6 +1,7 @@
 <?php
 return array(
 	'User' => array(
+		'extra' => array('display_field' => 'name'),
 		'fields' => array(
 			'name' => array('type' => 'text', 'max_length' => 3),
 		),
@@ -31,6 +32,7 @@ return array(
 		),
 	),
 	'Tag' => array(
+		'extra' => array('display_field' => 'tag'),
 		'fields' => array(
 			'tag' => array('type' => 'string'),
 		),
