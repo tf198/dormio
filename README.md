@@ -5,8 +5,8 @@
 
 ### Introduction (or 'Why another PHP database library')
 
-1) Because I want to interact with my data in as clean and simple a way as Django models.
-2) Because I don't think you should have to run an OpCache to get a decent featureset.
+1. Because I want to interact with my data in as clean and simple a way as Django models.
+2. Because I don't think you should have to run an OpCache to get a decent featureset.
 
 Dormio is a lightweight but fully featured database library designed to take the pain out of dealing with your data.
 It uses a powerful query syntax similar to [Django](https://www.djangoproject.com/) that generates efficient SQL, joining tables as necessary and supports 
@@ -21,8 +21,8 @@ description so when you change your database you only have to update one config 
 * Memory concious - under 900KB in memory.
 * Config in PHP - no XML or YAML config or compilation.
 * PHP5+ compatible.
-* <del>Well unit tested (PHPUnit).</del>
-* <del>Well documented code.</del>
+* <del>Fully</del> unit tested (PHPUnit).
+* <del>Fully</del> documented code.
 
 ### Alternatives
 
@@ -30,7 +30,7 @@ While looking for a lightweight alternative to Doctrine/Propel I found the follo
 while not suitable for my project may be of interest:
 
 * [OutletORM](http://www.outlet-orm.org/site/) - Nice hibernate inspired library
-* [NotORM])(http://www.notorm.com/) - Interesting approach to database interaction
+* [NotORM](http://www.notorm.com/) - Interesting approach to database interaction
 
 ### Documentation
 Currently limited to the phpDocumentor generated API docs at http://www.tfconsulting.com.au/~tris/dormio/0.8/api, though
@@ -99,20 +99,25 @@ $admin->syncdb();
 ```
 
 ### 4) Manipulate your data: [usage.php](/tf198/dormio/blob/0.8/docs/examples/usage.php)
+All the standard object interaction methods with support for eager loading, aggregation and cross
+table queries.
 ```php
 <?
 $blogs = $dormio->getManager('Blog');
-foreach($blogs->filter('user__profile__age', '<', 18) as $blog {
+foreach($blogs->filter('author__profile__age', '<', 18) as $blog {
    $blog->title = "## This blog has been censored ##";
    $blog->save();
 }
 
 // you can actually achieve the above in a single query
-$blogs->filter('user__profile__age', '<', 18)->update('title' => '## This blog has been censored ##');
+$blogs->filter('author__profile__age', '<', 18)->update('title' => '## This blog has been censored ##');
 ?>
 ```
 
 ### 5) Create forms from objects: [forms.php](/tf198/dormio/blob/0.8/docs/examples/forms.php)
+Automatically generate a form to interact with your record including the relationships.  Data is validated
+against the database type and also custom validators. Subclass Dormio_Form to get infinite control over the 
+fields and add more complex multi-field validation rules.
 ```php
 <?
 $blog = $dormio->getObject('Blog', 1);
