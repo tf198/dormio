@@ -11,7 +11,7 @@ return array(
 			'title' => array('type' => 'string', 'max_length' => 30),
 			'body' => array('type' => 'text'),
 			'author' => array('type' => 'foreignkey', 'entity' => 'User'),
-			'tags' => array('type' => 'manytomany', 'entity' => 'Tag'),
+			'tags' => array('type' => 'manytomany', 'entity' => 'Tag', 'widget' => 'Phorm_Widget_Checkbox', 'null_ok' => true),
 		),
 	),
 	'Comment' => array(
@@ -19,6 +19,7 @@ return array(
 			'blog' => array('type' => 'foreignkey', 'entity' => 'Blog', 'related_name' => 'comments'),
 			'body' => array('type' => 'text'),
 			'author' => array('type' => 'foreignkey', 'entity' => 'User'),
+			'tags' => array('type' => 'manytomany', 'entity' => 'Tag'),
 		),
 	),
 	'User' => array(
@@ -43,13 +44,15 @@ return array(
 		),
 	),
 	'FieldTest' => array(
-		'extra' => array(),
 		'fields' => array(
 			'string' => array('type' => 'string'),
 			'integer' => array('type' => 'integer'),
 			'float' => array('type' => 'float'),
-			'foreignkey' => array('type' => 'foreignkey', 'entity' => 'User'),
+			'password' => array('type' => 'password'),
+			'timestamp' => array('type' => 'timestamp'),
+			'foreignkey' => array('type' => 'foreignkey', 'entity' => 'Blog'),
 			'onetoone' => array('type' => 'onetoone', 'entity' => 'Profile'),
+			//'manytomany' => array('type' => 'manytomany', 'entity' => 'Tag'),
 		),
 	)
 );
