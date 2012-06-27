@@ -324,6 +324,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 			array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t1."comment_x_tag_id" FROM "comment_x_tag" AS t1 INNER JOIN "comment" AS t2 ON t1."l_comment_id"=t2."comment_id" WHERE t2."the_comment_user" = ?)', array(1)),
 			array('DELETE FROM "comment" WHERE "the_comment_user" = ?', array(1)),
 			array('UPDATE "profile" SET "user_id"=? WHERE "user_id" = ?', array(null, 1)),
+			array('DELETE FROM "tag_x_user" WHERE "l_user_id" = ?', array(1)),
 			array('DELETE FROM "user" WHERE "user_id" = ?', array(1)),
 		));
 

@@ -4,6 +4,7 @@ return array(
 		'extra' => array('display_field' => 'name'),
 		'fields' => array(
 			'name' => array('type' => 'text', 'max_length' => 3),
+			'tags' => array('type' => 'manytomany', 'entity' => 'Tag'),
 		),
 	),
 	'Blog' => array(

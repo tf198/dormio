@@ -478,12 +478,13 @@ class Dormio_Config_Entity {
 
 		// Ensure we always get the same name
 		$key = ($l_entity < $r_entity) ? "{$l_entity}_X_{$r_entity}" : "{$r_entity}_X_{$l_entity}";
-
+		$table = strtolower($key);
+		
 		$through = array(
-			'table' => strtolower($key),
+			'table' => $table,
 			'fields' => array(
-				"lhs" => array('type' => 'foreignkey', 'entity' => $l_entity, 'related_name' => 'through_left', 'db_column' => 'l_' . strtolower($l_entity). "_id"),
-				"rhs" => array('type' => 'foreignkey', 'entity' => $r_entity, 'related_name' => 'through_right', 'db_column' => 'r_' . strtolower($r_entity). "_id"),
+				"lhs" => array('type' => 'foreignkey', 'entity' => $l_entity, 'related_name' => $table . '_left', 'db_column' => 'l_' . strtolower($l_entity). "_id"),
+				"rhs" => array('type' => 'foreignkey', 'entity' => $r_entity, 'related_name' => $table . '_right', 'db_column' => 'r_' . strtolower($r_entity). "_id"),
 			),
 			'verbose' => "{$l_entity} > {$r_entity}",
 			);

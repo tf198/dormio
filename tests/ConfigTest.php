@@ -13,18 +13,18 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 	
 	function testAddEntities() {
 		// check the auto relations have been flagged correctly
-		$this->assertEquals(array('Comment', 'MultiDep'), $this->config->_relations['auto']);
+		$this->assertEquals(array('User', 'Comment', 'MultiDep'), $this->config->_relations['auto']);
 		
 		// check the reverse relations have been correctly defined
 		$this->assertEquals(array('my_blog_tag_set', 'comments'), array_keys($this->config->_relations['Blog']));
-		$this->assertEquals(array('blog_set', 'my_blog_tag_set', 'comment_set'), array_keys($this->config->_relations['Tag']));
+		$this->assertEquals(array('user_set', 'blog_set', 'my_blog_tag_set', 'comment_set'), array_keys($this->config->_relations['Tag']));
 	}
 	
 	function testFindRelations() {
 		$reverse = $this->config->_relations;
-		$this->assertEquals(array('auto', 'User', 'Tag', 'Blog', 'MultiDep', 'Tree'), array_keys($reverse));
+		$this->assertEquals(array('auto', 'Tag', 'User', 'Blog', 'MultiDep', 'Tree'), array_keys($reverse));
 		$this->assertEquals(array('my_blog_tag_set', 'comments'), array_keys($reverse['Blog']));
-		$this->assertEquals(array('blog_set', 'my_blog_tag_set', 'comment_set'), array_keys($reverse['Tag']));
+		$this->assertEquals(array('user_set', 'blog_set', 'my_blog_tag_set', 'comment_set'), array_keys($reverse['Tag']));
 	}
 	
 	function testGetEntities() {
@@ -33,7 +33,7 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 	
 	function testGenerateAutoEntities() {
 		$this->config->generateAutoEntities();
-		$this->assertEquals(array('User', 'Blog', 'My_Blog_Tag', 'Comment', 'Tag', 'Profile', 'MultiDep', 'Tree', 'Comment_X_Tag', 'MultiDep_X_MultiDep'), $this->config->getEntities());
+		$this->assertEquals(array('User', 'Blog', 'My_Blog_Tag', 'Comment', 'Tag', 'Profile', 'MultiDep', 'Tree', 'Tag_X_User', 'Comment_X_Tag', 'MultiDep_X_MultiDep'), $this->config->getEntities());
 	}
 	
 	function testGetReverseField() {
@@ -107,7 +107,7 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 		
 		// should be about 14KB
 		//var_dump($start, $mid, $end, $diff);
-		$this->assertApprox(-14, $diff);
+		$this->assertApprox(-15, $diff);
 	}
 	
 	function assertApprox($expected, $actual, $diff=1, $message='') {

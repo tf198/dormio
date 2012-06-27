@@ -50,7 +50,7 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		// delete
 		$this->assertEquals($u2->delete(),1);
-		$this->assertQueryCount(8);
+		$this->assertQueryCount(9);
 		//$this->dumpAllSQL();
 		
 	}
