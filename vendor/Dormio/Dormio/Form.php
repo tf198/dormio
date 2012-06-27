@@ -26,13 +26,13 @@ class Dormio_Form extends Phorm_Phorm {
 	
 	/**
 	 * 
-	 * @var unknown_type
+	 * @var multitype:mixed
 	 */
 	public $source_data = array();
 	
 	/**
 	 * 
-	 * @var unknown_type
+	 * @var multitype:string
 	 */
 	private $auto_fields = array();
 	
@@ -46,7 +46,7 @@ class Dormio_Form extends Phorm_Phorm {
 		'float' => 'Phorm_Field_Decimal',
 		'double' => 'Phorm_Field_Decimal',
 		'boolean' => 'Phorm_Field_Checkbox',
-		//'ipv4address' => 'Form_Field_IPv4Address',
+		'ipv4address' => 'Phorm_Field_IPv4Address',
 		'string' => 'Phorm_Field_Text',
 		'text' => 'Phorm_Field_Textarea',
 		'password' => 'Phorm_Field_Password',
@@ -66,16 +66,21 @@ class Dormio_Form extends Phorm_Phorm {
 		'Phorm_Field_Password' => array('label' => '', 'size' => 25, 'max_length' => 255, 'hash' => 'trim'), // dont want it to hash our passwords
 		'Phorm_Field_Textarea' => array('label' => '', 'rows' => 5, 'cols' => 40),
 		'Phorm_Field_Integer' => array('label' => '', 'max_digits' => 10, 'size' => 10),
-		'Phorm_Field_Decimal' => array('label' => '', 'precision' => 10),
+		'Phorm_Field_Decimal' => array('label' => '', 'size' => 5, 'precision' => 10),
 		'Phorm_Field_Checkbox' => array('label' => ''),
-		'Form_Field_IPv4Address' => array('label' => '', 'flags' => 0),
+		'Phorm_Field_IPv4Address' => array('label' => '', 'subnet' => null, 'as_long' => false),
 		'Phorm_Field_DropDown' => array('label' => '', 'choices' => array('No options')),
 		'Phorm_Field_Url' => array('label' => '', 'size' => 25, 'max_length' => 255),
 		'Phorm_Field_Email' => array('label' => '', 'size' => 25, 'max_length' => 255),
-		'Phorm_Field_DateTime' => array('label' => ''),
+		'Phorm_Field_DateTime' => array('label' => '', 'format' => 'd/m/Y'),
+		'Phorm_Field_URL' => array('label' => '', 'size' => 25, 'max_length' => 255),
+		'Phorm_Field_Email' => array('label' => '', 'size' =>25, 'max_length' => 255),
+		'Phorm_Field_Range' => array('label' => '', 'min' => 0, 'max' => 100, 'slider' => true),
+	
 		'Dormio_Field_Related' => array('label' => '', 'manager' => array()),
 		'Dormio_Field_ManyToMany' => array('label' => '', 'manager' => array(), 'selected' => ''),
 		'Dormio_Field_Choice' => array('label' => '', 'choices' => array('No options')),
+		'Dormio_Field_Date' => array('label' => '', 'size' => 10, 'max_length' => '8'),
 	);
 	
 	public $buttons = array(
@@ -153,9 +158,9 @@ class Dormio_Form extends Phorm_Phorm {
 	
 	function field_for($spec) {
 		if(!isset($spec['label'])) $spec['label'] = $spec['verbose'];
-	
-		if(isset($spec['field'])) {
-			$klass = $spec['field'];
+		
+		if(isset($spec['form_field'])) {
+			$klass = $spec['form_field'];
 		} else {
 			if(!isset(self::$field_classes[$spec['type']])) {
 				throw new RuntimeException("No Phorm class mapper for {$spec['type']}");
@@ -164,15 +169,17 @@ class Dormio_Form extends Phorm_Phorm {
 		}
 	
 		$params = $this->params_for($klass, $spec);
-	
+		
 		$rc = new ReflectionClass($klass);
 		$field = $rc->newInstanceArgs($params);
 	
 		$this->auto_fields[] = $spec['name'];
+		
 		return $field;
 	}
 	
 	function params_for($type, $spec) {
+		if(!isset(self::$field_defaults[$type])) throw new Dormio_Exception("No defaults defined for {$type}");
 		$defaults = self::$field_defaults[$type];
 	
 		// run through overrides
@@ -191,7 +198,7 @@ class Dormio_Form extends Phorm_Phorm {
 		}
 		$params[] = $validators;
 	
-		$attributes = array('class' => $type);
+		$attributes = array('class' => 'dormio_' . $spec['type']);
 		if(isset($spec['attributes'])) $attributes = array_merge($attributes, $spec['attributes']);
 		$params[] = $attributes;
 	
