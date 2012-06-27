@@ -21,6 +21,9 @@ CREATE INDEX "blog_x_tag_rhs_0" ON "blog_x_tag" ("r_tag_id" ASC)
 CREATE TABLE "comment_x_tag" ("comment_x_tag_id" INTEGER PRIMARY KEY AUTOINCREMENT, "l_comment_id" INTEGER NOT NULL, "r_tag_id" INTEGER NOT NULL)
 CREATE INDEX "comment_x_tag_lhs_0" ON "comment_x_tag" ("l_comment_id" ASC)
 CREATE INDEX "comment_x_tag_rhs_0" ON "comment_x_tag" ("r_tag_id" ASC)
+CREATE TABLE "fieldtest_x_tag" ("fieldtest_x_tag_id" INTEGER PRIMARY KEY AUTOINCREMENT, "l_fieldtest_id" INTEGER NOT NULL, "r_tag_id" INTEGER NOT NULL)
+CREATE INDEX "fieldtest_x_tag_lhs_0" ON "fieldtest_x_tag" ("l_fieldtest_id" ASC)
+CREATE INDEX "fieldtest_x_tag_rhs_0" ON "fieldtest_x_tag" ("r_tag_id" ASC)
 
 
 MySQL statements that would be used
@@ -43,3 +46,6 @@ CREATE INDEX `blog_x_tag_rhs_0` ON `blog_x_tag` (`r_tag_id` ASC);
 CREATE TABLE `comment_x_tag` (`comment_x_tag_id` SERIAL, `l_comment_id` INTEGER NOT NULL, `r_tag_id` INTEGER NOT NULL);
 CREATE INDEX `comment_x_tag_lhs_0` ON `comment_x_tag` (`l_comment_id` ASC);
 CREATE INDEX `comment_x_tag_rhs_0` ON `comment_x_tag` (`r_tag_id` ASC);
+CREATE TABLE `fieldtest_x_tag` (`fieldtest_x_tag_id` SERIAL, `l_fieldtest_id` INTEGER NOT NULL, `r_tag_id` INTEGER NOT NULL);
+CREATE INDEX `fieldtest_x_tag_lhs_0` ON `fieldtest_x_tag` (`l_fieldtest_id` ASC);
+CREATE INDEX `fieldtest_x_tag_rhs_0` ON `fieldtest_x_tag` (`r_tag_id` ASC);

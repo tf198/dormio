@@ -52,7 +52,7 @@ return array(
 			'timestamp' => array('type' => 'timestamp'),
 			'foreignkey' => array('type' => 'foreignkey', 'entity' => 'Blog'),
 			'onetoone' => array('type' => 'onetoone', 'entity' => 'Profile'),
-			//'manytomany' => array('type' => 'manytomany', 'entity' => 'Tag'),
+			'manytomany' => array('type' => 'manytomany', 'entity' => 'Tag', 'widget' => 'Phorm_Widget_Checkbox'),
 		),
 	)
 );

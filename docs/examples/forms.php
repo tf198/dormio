@@ -14,6 +14,7 @@
 * This just registers the autoloader and creates an example database in memory
 * @example example_base.php
 */ 
+//define('DEBUG', true);
 include "example_base.php";
 
 // lets fake some POST data so we can test from the command line

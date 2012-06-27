@@ -22,7 +22,7 @@ class ExampleTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(0, $ret, "Failed to run benchmark script");
 		$scores = sscanf(array_pop($output), "%f %f | %f %f");
 		$this->assertLessThan(180, $scores[0], "Execution time");
-		$this->assertLessThan(1310, $scores[2], "Memory usage");
+		$this->assertLessThan(1320, $scores[2], "Memory usage");
 	}
 	
 	function assertOutput($example) {

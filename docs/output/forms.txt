@@ -15,30 +15,30 @@
   <body>
 	<div class="example-form well">
 	  	<form method="post" action="" id="dormio_form">
-<input value="1" class="Phorm_Field_Hidden phorm_field_hidden" maxlength="255" size="25" id="id_pk" name="pk" type="hidden" />
+<input value="1" class="dormio_ident phorm_field_hidden" maxlength="255" size="25" id="id_pk" name="pk" type="hidden" />
 <div class="phorm_element">
 <label for="id_title">Title</label>
-<input value="Andy Blog 1" class="Phorm_Field_Text phorm_field_text" maxlength="30" size="25" id="id_title" name="title" type="text" />
+<input value="Andy Blog 1" class="dormio_string phorm_field_text" maxlength="30" size="25" id="id_title" name="title" type="text" />
 </div>
 <div class="phorm_element">
 <label for="id_body">Body</label>
-<textarea  class="Phorm_Field_Textarea phorm_field_textarea" cols="40" rows="5" id="id_body" name="body" >My first blog</textarea>
+<textarea  class="dormio_text phorm_field_textarea" cols="40" rows="5" id="id_body" name="body" >My first blog</textarea>
 </div>
 <div class="phorm_element">
 <label for="id_author">Author</label>
-<select  class="Dormio_Field_Related dormio_field_related" id="id_author" name="author" ><option  value="-" >Select...</option>
-<option  value="1" selected="selected" >Andy Andrews</option>
-<option  value="2" >Bobby Brown</option>
-<option  value="3" >Charlie Chalk</option>
+<select class="dormio_foreignkey dormio_field_related" id="id_author" name="author" ><option value="-" >Select...</option>
+<option value="1" selected="selected" >Andy Andrews</option>
+<option value="2" >Bobby Brown</option>
+<option value="3" >Charlie Chalk</option>
 </select>
 </div>
 <div class="phorm_element">
 <label for="id_tags">Tags</label>
-<select multiple="multiple"  class="Dormio_Field_ManyToMany dormio_field_manytomany" id="id_tags" name="tags[]" ><option  value="1" >Red</option>
-<option  value="2" selected="selected" >Orange</option>
-<option  value="3" selected="selected" >Yellow</option>
-<option  value="4" >Green</option>
-</select>
+<label><input value="1" class="dormio_manytomany dormio_field_manytomany" id="id_tags" name="tags[]" type="checkbox" /> Red</label>
+<label><input value="2" class="dormio_manytomany dormio_field_manytomany" id="id_tags" name="tags[]" type="checkbox" checked="checked" /> Orange</label>
+<label><input value="3" class="dormio_manytomany dormio_field_manytomany" id="id_tags" name="tags[]" type="checkbox" checked="checked" /> Yellow</label>
+<label><input value="4" class="dormio_manytomany dormio_field_manytomany" id="id_tags" name="tags[]" type="checkbox" /> Green</label>
+
 </div><div class="df-buttons">
 <input class="btn btn-reset" type="reset" value="Clear"/>
 <input class="btn btn-submit" type="submit" value="Save"/>
