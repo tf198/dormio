@@ -8,8 +8,8 @@ class Dormio_Field_Related extends Phorm_Field_DropDown {
     parent::__construct($label, $choices, $validators, $attributes);
   }
   
-	public function validate_required_field($value) {
-		if ($value == '-') {
+	public function validate_required($value) {
+		if ( $value == '' || $value == '-' ) {
 			throw new Phorm_ValidationError('validation_required');
 		}
 	}

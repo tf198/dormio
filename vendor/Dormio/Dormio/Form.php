@@ -78,9 +78,8 @@ class Dormio_Form extends Phorm_Phorm {
 		'Phorm_Field_Range' => array('label' => '', 'min' => 0, 'max' => 100, 'slider' => true),
 	
 		'Dormio_Field_Related' => array('label' => '', 'manager' => array()),
-		'Dormio_Field_ManyToMany' => array('label' => '', 'manager' => array(), 'selected' => ''),
+		'Dormio_Field_ManyToMany' => array('label' => '', 'manager' => array(), 'selected' => '', 'widget' => 'Phorm_Widget_SelectMultiple'),
 		'Dormio_Field_Choice' => array('label' => '', 'choices' => array('No options')),
-		'Dormio_Field_Date' => array('label' => '', 'size' => 10, 'max_length' => '8'),
 	);
 	
 	public $buttons = array(
@@ -133,11 +132,9 @@ class Dormio_Form extends Phorm_Phorm {
 			}
 		}
 		
-		// only add manytomany fields if we have an ident
-		if($this->obj->ident()) {
-			foreach($manytomany as $key=>$spec) {
-				$this->$key = $this->field_for($spec);
-			}
+		// add the manytomany fields at the end 
+		foreach($manytomany as $key=>$spec) {
+			$this->$key = $this->field_for($spec);
 		}
 		
 	}
