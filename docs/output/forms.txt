@@ -2,6 +2,14 @@
 <html>
   <head><title>Example Form</title></head>
   <link type="text/css" rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css"/>
+  <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css"/>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+  <script type="text/javascript">
+$(document).ready(function(){
+	$('.phorm_field_datetime').datepicker( { 'dateFormat': 'dd/mm/yy' } );
+});
+  </script>
   <style type="text/css">
 .example-form {
 	margin: 2em auto;
@@ -10,6 +18,9 @@
 .validation-advice {
 	color: red;
 	font-style:italic;
+}
+.ui-widget {
+	font-size: 0.9em;
 }
     </style>
   <body>
@@ -44,5 +55,17 @@
 <input class="btn btn-submit" type="submit" value="Save"/>
 </div></form>
   	</div>
+  	<pre>
+  		array(4) {
+  ["pk"]=>
+  string(1) "1"
+  ["title"]=>
+  string(11) "Andy Blog 1"
+  ["body"]=>
+  string(13) "My first blog"
+  ["author"]=>
+  string(1) "1"
+}
+  	</pre>
   </body>
 </html>
