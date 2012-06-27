@@ -20,4 +20,4 @@ INSERT INTO blog_x_tag VALUES (1, 1, 2);
 INSERT INTO blog_x_tag VALUES (2, 1, 3);
 INSERT INTO blog_x_tag VALUES (3, 2, 1);
 INSERT INTO blog_x_tag VALUES (4, 3, 2);
-INSERT INTO fieldtest VALUES (1, 'Hello, world', 2, 3.14159, 'secret', 1340632800, 2, 1);
+INSERT INTO fieldtest VALUES (1, 'Hello, world', 2, 3.14159, 1340632800, 'secret', '192.168.56.3', 2, 1);

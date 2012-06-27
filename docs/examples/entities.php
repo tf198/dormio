@@ -46,10 +46,11 @@ return array(
 	'FieldTest' => array(
 		'fields' => array(
 			'string' => array('type' => 'string'),
-			'integer' => array('type' => 'integer'),
+			'integer' => array('type' => 'integer', 'form_field' => 'Phorm_Field_Range', 'max' => 10, 'slider' => false),
 			'float' => array('type' => 'float'),
+			'timestamp' => array('type' => 'timestamp', 'form_field' => 'Phorm_Field_DateTime'),
 			'password' => array('type' => 'password'),
-			'timestamp' => array('type' => 'timestamp'),
+			'ip_address' => array('type' => 'ipv4address', 'subnet' => '10.0.0.0/24'),
 			'foreignkey' => array('type' => 'foreignkey', 'entity' => 'Blog'),
 			'onetoone' => array('type' => 'onetoone', 'entity' => 'Profile'),
 			'manytomany' => array('type' => 'manytomany', 'entity' => 'Tag', 'widget' => 'Phorm_Widget_Checkbox'),
