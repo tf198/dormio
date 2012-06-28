@@ -24,7 +24,7 @@ $config->addEntities(include $example_path . '/entities.php');
 $dormio = new Dormio($pdo, $config);
 
 $admin = new Dormio_Admin($dormio);
-$admin->syncdb();
+$admin->syncDB();
 
 // have a look at the result
 $stmt = $pdo->prepare('SELECT sql FROM SQLITE_MASTER');

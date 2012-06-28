@@ -94,7 +94,7 @@ $dormio = new Dormio($pdo, $config);
 ```php
 <?
 $admin = new Dormio_Admin($dormio);
-$admin->syncdb();
+$admin->syncDB();
 ?>
 ```
 
