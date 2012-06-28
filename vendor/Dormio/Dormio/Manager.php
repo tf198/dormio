@@ -96,14 +96,16 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	/**
 	 * Execute the query and return a single data array
 	 * Optionally you can give it a primary key.
-	 * @param string $id
+	 * 
+	 * @param mixed $id value to load
+	 * @param string $field use a different field to pk
 	 * @throws Dormio_Manager_MultipleResultsException if more than one record matches
 	 * @throws Dormio_Manager_NoResultException if no records match
 	 * @return multitype:string
 	 */
-	function findOneArray($id=null) {
+	function findOneArray($id=null, $field='pk') {
 		$query = $this->limit(2);
-		if($id !== null) $query->filter('pk', '=', $id, false);
+		if($id !== null) $query->filter($field, '=', $id, false);
 		$data = $query->findArray();
 		if(!$data) throw new Dormio_Manager_NoResultException("Query returned no records");
 		if(count($data) > 1) throw new Dormio_Manager_MultipleResultsException("Query returned more than one record");
@@ -129,17 +131,29 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 
 	/**
 	 * Execute the query and return a single row
-	 * Optionally you can give it a primary key to load
+	 * Optionally you can give it a primary key to load.
+	 * 
+	 * @param mixed $id value to load
+	 * @param string $field use a different field to pk
 	 * @throws Dormio_Manager_NoResultException if no records match
 	 * @throws Dormio_Manager_MultipleResultsException if more than one records match
-	 * @return multitype:Dormio_Object
+	 * @return Dormio_Object
 	 */
-	function findOne($id=null) {
-		//$mapper = new Dormio_ResultMapper(array_flip($this->reverse));
-		//$mapper->setRawData($this->_findOne($id));
+	function findOne($id=null, $field='pk') {
 		$obj = $this->dormio->getObjectFromEntity($this->entity);
-		$obj->setData($this->findOneArray($id));
+		$obj->setData($this->findOneArray($id, $field));
 		return $obj;
+	}
+	
+	/**
+	 * Find a row by any unique field
+	 * 
+	 * @param string $field unique field
+	 * @param mixed $value
+	 * @return Dormio_Object
+	 */
+	function findOneByField($field, $value) {
+		return $this->findOne($value, $field);
 	}
 
 	/**
