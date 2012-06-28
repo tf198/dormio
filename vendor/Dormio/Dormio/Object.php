@@ -178,12 +178,12 @@ class Dormio_Object implements ArrayAccess, Countable{
 		Dormio::$logger && Dormio::$logger->log("getFieldValue {$this->_entity}->{$field}", LOG_DEBUG);
 		
 		// changed values
-		if(isset($this->_updated[$field])) {
+		if( array_key_exists($field, $this->_updated) ) {
 			return $this->_updated[$field];
 		}
 		
 		// from database
-		if(isset($this->_data[$field])) {
+		if( array_key_exists($field, $this->_data) ) {
 			$value = $this->_data[$field];
 			//Dormio::$logger && Dormio::$logger->log("Got value {$value}");
 			return $value;
