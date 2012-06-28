@@ -210,9 +210,9 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 			$stmt = $this->dormio->executeQuery($o->select());
 			$value = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
 		}
-		//var_dump("FILTERBIND: " . $value);
-		$this->filters[$key] = &$value;
-		return parent::filterBind($key, $op, $value, $clone);
+		$o = parent::filterBind($key, $op, $value, $clone);
+		$o->filters[$key] = &$value;
+		return $o;
 	}
 
 	/**
