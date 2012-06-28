@@ -61,6 +61,8 @@ class Dormio {
 	 */
 	public static $profiler;
 
+	private static $instances = array();
+	
 	/**
 	 * 
 	 * @param PDO $pdo
@@ -77,6 +79,27 @@ class Dormio {
 		// use a basic cache unless a better one is available
 		if(!$cache) $cache = new Dormio_Cache;
 		$this->cache = $cache;
+	}
+	
+	/**
+	 * Act as an instance manager for easy framework integration
+	 * @param string $name
+	 * @throws Dormio_Exception
+	 * @return Dormio
+	 */
+	public static function instance($name='default') {
+		if(!isset(self::$instances[$name])) throw new Dormio_Exception("Instance [{$name}] not configured");
+		return self::$instances[$name];
+	}
+	
+	/**
+	 * Register an instance
+	 * @param string $name
+	 * @param PDO $pdo
+	 * @param Dormio_Config $config
+	 */
+	public static function createInstance($name, PDO $pdo, Dormio_Config $config) {
+		self::$instances[$name] = new Dormio($pdo, $config);
 	}
 
 	/**
@@ -335,6 +358,7 @@ class Dormio {
 	static  function URL($params=array()) {
 	  	$params = array_merge($_GET, $params);
 	  	$url = $_SERVER['SCRIPT_NAME'];
+	  	if(isset($_SERVER['PATH_INFO'])) $url .= $_SERVER['PATH_INFO'];
 	  	
 	  	foreach($params as $key=>&$value) $value = urlencode($key) . "=" . urlencode($value);
 	  	if($params) $url .= "?" . implode('&', $params);
