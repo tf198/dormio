@@ -164,7 +164,7 @@ class Dormio_Table_Array implements Iterator, Countable{
 	}
 
 	public function getColumnHeading($field) {
-		return (array_key_exists($field, $this->column_headings)) ? $this->column_headings[$field] : self::make_heading($field);
+		return (array_key_exists($field, $this->column_headings)) ? $this->column_headings[$field] : Dormio::title($field);
 	}
 
 	public function getRowHeading() {
@@ -209,7 +209,7 @@ class Dormio_Table_Array implements Iterator, Countable{
 		try {
 			return $this->render();
 		} catch(Exception $e) {
-			return "Table render error: {$e->getMessage()}";
+			return "<pre>Table render error:\n{$e->getMessage()}\n{$e->getTraceAsString()}</pre>";
 		}
 	}
 

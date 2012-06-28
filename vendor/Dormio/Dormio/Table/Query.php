@@ -66,7 +66,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	}
 
 	function getValue($field) {
-		if(isset($this->entity_fields[$field])) {
+		if(isset($this->entity_fields[$field]) && $this->entity_fields[$field]['type'] != 'manytomany') {
 			return $this->row->getFieldValue($field);
 		}
 	}
