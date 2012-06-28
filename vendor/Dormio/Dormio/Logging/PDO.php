@@ -91,12 +91,9 @@ class Dormio_Logging_PDO extends PDO {
 	}
 
 	function getSQL() {
-		$result = array();
-		while($this->stack) {
-			$pair = $this->digest();
-			$exec_params = array();
-			foreach($pair[1] as &$p) $p = self::formatParams($p);
-			$result[] = $pair;
+		$result = $this->stack;
+		foreach($result as &$pair) {
+			$pair[1] = self::formatParams($pair[1]);
 		}
 		return $result;
 	}
