@@ -59,7 +59,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 	/**
 	 * @var bool
 	 */
-	private $_hydrated;
+	public $_hydrated;
 	
 	/**
 	 * Create a new Dormio_Object

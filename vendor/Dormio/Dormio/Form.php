@@ -90,7 +90,7 @@ class Dormio_Form extends Phorm_Phorm {
 	function __construct($obj, $method='post', $multi_part=false, $lang='en') {
 		$this->obj = $obj;
 		
-		if($this->obj->ident()) $this->obj->hydrate();
+		if( $this->obj->ident() && !$this->obj->_hydrated ) $this->obj->hydrate();
 		$this->source_data = $this->obj->getData();
 		foreach($this->obj->_entity->getAllFields() as $field=>$spec) {
 			if($spec['is_field']) {
@@ -190,8 +190,16 @@ class Dormio_Form extends Phorm_Phorm {
 	
 		$validators = array();
 		if(isset($spec['validators'])) $validators = array_merge($validators, $spec['validators']);
-		if(!isset($spec['null_ok']) || !$spec['null_ok']) {
-			if($spec['type']!='ident' && $spec['type']!='boolean' && $spec['type']!='password') $validators[] = "required";
+		if( !isset($spec['null_ok']) || !$spec['null_ok']) {
+			switch($spec['type']) {
+				case 'ident':
+				case 'boolean':
+				case 'password':
+				case 'manytomany':
+					break;
+				default:
+					$validators[] = 'required';
+			}
 		}
 		$params[] = $validators;
 	
