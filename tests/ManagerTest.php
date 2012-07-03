@@ -115,7 +115,7 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 			$b3 = $blogs->create(array('rubbish' => 'duff'));
 			$this->fail("Should have thrown exception");
 		} catch(Dormio_Config_Exception $e) {
-			$this->assertEquals($e->getMessage(), "Entity [Blog] has no reverse field [rubbish]");
+			$this->assertEquals($e->getMessage(), "Entity [Blog] has no field [rubbish]");
 		}
 	}
 /*

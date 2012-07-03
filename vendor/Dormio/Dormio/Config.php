@@ -241,7 +241,11 @@ class Dormio_Config_Entity {
 	function getField($field) {
 		$field = strtolower($field);
 		if(!isset($this->fields[$field])) {
-			return $this->config->getReverseField($this->name, $field);
+			try {
+				return $this->config->getReverseField($this->name, $field);
+			} catch(Dormio_Config_Exception $dce) {
+				throw new Dormio_Config_Exception("Entity [{$this->name}] has no field [{$field}]");
+			}
 		}
 		return $this->fields[$field];
 	}
