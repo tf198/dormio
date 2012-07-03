@@ -19,62 +19,65 @@
  */
 
 /**
-* @package Dormio
-* @subpackage Schema
-*/
+ * @package Dormio
+ * @subpackage Schema
+ */
 class Dormio_Schema_sqlite extends Dormio_Schema_Generic {
 
 	protected $version='sqlite';
-	
+
 	public function quoteIdentifier($identifier) {
 		return '"'.$identifier.'"';
 	}
-	
+
 	public function getPrimitive($colspec) {
 		switch($colspec['type']) {
 			case 'ident':
 				return 'INTEGER PRIMARY KEY AUTOINCREMENT';
 			case 'integer':
 			case 'boolean':
-      case 'foreignkey':
-      case 'onetoone':
+			case 'foreignkey':
+			case 'onetoone':
 				return 'INTEGER';
 			case 'float':
 			case 'double':
 				return 'REAL';
 			case 'string':
 			case 'text':
-      case 'password':
+			case 'password':
 				return 'TEXT';
 			case 'timestamp':
 				return 'INTEGER';
+			case 'date':
+			case 'datetime':
+				return 'TEXT';
 			default:
-        return parent::getPrimitive($colspec);
+				return parent::getPrimitive($colspec);
 		}
 	}
-	
-  public function startUpgrade($spec) {
-    parent::startUpgrade($spec);
-    $this->oldspec = $this->spec;
-    $this->can_upgrade = true;
-    $this->map = array();
-  }
-  
-  public function finishUpgrade($newspec) {
+
+	public function startUpgrade($spec) {
+		parent::startUpgrade($spec);
+		$this->oldspec = $this->spec;
+		$this->can_upgrade = true;
+		$this->map = array();
+	}
+
+	public function finishUpgrade($newspec) {
 		if($this->can_upgrade) return parent::finishUpgrade($newspec);
-		
-    // need to rewrite the sql
-    $this->sql = array();
-    
+
+		// need to rewrite the sql
+		$this->sql = array();
+
 		// create the new table
 		$this->spec=$newspec;
 		if($this->spec['table']==$this->oldspec['table']) $this->spec['table'].='_new';
 		$this->createTable();
-		
-    // create a select statement for the data copy
+
+		// create a select statement for the data copy
 		$columns=array();
 		foreach($this->spec['columns'] as $key=>$spec) {
-      if(isset($this->map[$key])) {
+			if(isset($this->map[$key])) {
 				$columns[]=$this->quoteIdentifier($this->map[$key]);
 			} else if(isset($this->oldspec['columns'][$key])) { // straight data copy
 				$columns[]=$this->quoteIdentifier($spec['db_column']);
@@ -83,33 +86,33 @@ class Dormio_Schema_sqlite extends Dormio_Schema_Generic {
 			}
 		}
 		$this->sql[] = "INSERT INTO {$this->quoteIdentifier($this->spec['table'])} SELECT ".implode(', ',$columns)." FROM {$this->quoteIdentifier($this->oldspec['table'])}";
-		
+
 		// drop the old table
 		$this->sql[] = "DROP TABLE {$this->quoteIdentifier($this->oldspec['table'])}";
-		
+
 		// rename the new table if required
 		if($this->spec['table']!=$newspec['table']) {
 			$this->renameTable($newspec['table']);
 		}
-    
-    parent::finishUpgrade($newspec);
+
+		parent::finishUpgrade($newspec);
 	}
-  
+
 	public function addColumn($columnname, $newspec, $after=false) {
 		$this->can_upgrade=false;
 	}
-	
+
 	public function alterColumn($columnname, $newspec) {
 		// stuff will map anyway so we just set the flag
 		$this->can_upgrade=false;
 	}
-	
+
 	public function renameColumn($oldcolumnname, $newcolumnname) {
-    // remember the old to new column mappings
+		// remember the old to new column mappings
 		$this->map[$newcolumnname]=$oldcolumnname;
 		$this->can_upgrade=false;
 	}
-	
+
 	public function dropColumn($columnname) {
 		$this->can_upgrade=false;
 	}

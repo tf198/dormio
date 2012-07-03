@@ -1,0 +1,1 @@
+CREATE TABLE "basictypes" ("basictypes_id" INTEGER PRIMARY KEY AUTOINCREMENT, "string" TEXT NOT NULL, "integer" INTEGER NOT NULL, "float" REAL NOT NULL, "double" REAL NOT NULL, "boolean" INTEGER NOT NULL, "password" TEXT NOT NULL, "ipv4address" INTEGER(32) NOT NULL, "timestamp" INTEGER NOT NULL, "date" TEXT NOT NULL, "datetime" TEXT NOT NULL);

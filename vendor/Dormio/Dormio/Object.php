@@ -186,7 +186,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 		if( array_key_exists($field, $this->_data) ) {
 			$value = $this->_data[$field];
 			//Dormio::$logger && Dormio::$logger->log("Got value {$value}");
-			return $value;
+			return $this->_dormio->dialect->fromDB($value, $this->_entity->getParam($field, 'type'));
 		}
 		
 		if($field == 'pk') throw new Dormio_Exception("{$this->_entity} has no primary key set");
@@ -197,7 +197,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 			$this->hydrate();
 			$value = $this->_data[$field];
 			Dormio::$logger && Dormio::$logger->log("Got value {$value}");
-			return $value;
+			return $this->_dormio->dialect->fromDB($value, $this->_entity->getParam($field, 'type'));
 		}
 		
 		if($throw) throw new Dormio_Exception("{$this->_entity} has no field {$field}");

@@ -185,6 +185,48 @@ class Dormio_Dialect_Generic {
 	function tableNames() {
 		return "SELECT name FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence' ORDER BY name";
 	}
+	
+	/**
+	 * Convert value stored in database to PHP native type
+	 * 
+	 * @param string $value	value returned from database
+	 * @param string $type Dormio type
+	 * @return mixed
+	 */
+	function fromDB($value, $type) {
+		//everything is nullable
+		if($value === null) return null;
+		
+		switch($type) {
+			case 'datetime': // ISO-8601
+			case 'date':
+				return new DateTime($value);
+			case 'integer':
+				return (int) $value;
+			case 'boolean':
+				return (bool) $value;
+		}
+		return $value;
+	}
+	
+	/**
+	 * Convert PHP native type to database storable type
+	 * 
+	 * @param mixed $value PHP variable
+	 * @param string $type Dormio type
+	 * @return mixed
+	 */
+	function toDB($value, $type) {
+		// everything is nullable
+		if($value === null) return null;
+		
+		switch($type) {
+			case 'datetime': // ISO-8601
+			case 'date':
+				if($value instanceof DateTime) return $value->format('c');
+		}
+		return $value;
+	}
 }
 
 /**

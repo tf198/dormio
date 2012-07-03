@@ -153,8 +153,8 @@ class Dormio {
 		$params = array();
 		foreach($fields as $key=>$value) {
 			$spec = $entity->getField($key);
-			if(is_object($value)) $value = $value->getFieldValue($spec['remote_field']);
-			$params[$spec['db_column']] = $value;
+			if($value instanceof Dormio_Object) $value = $value->getFieldValue($spec['remote_field']);
+			$params[$spec['db_column']] = $this->dialect->toDB($value, $spec['type']);
 		}
 		return $params;
 	}

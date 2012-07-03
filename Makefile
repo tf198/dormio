@@ -30,7 +30,7 @@ docs/api: vendor/Dormio check
 check: tests/data/entities.sql docs/examples/entities.sql
 	${PHPUNIT}
 
-%/entities.sql: %/entities.php
+%.sql: %.php
 	${PHP} tools/generate_sql.php $< > $@
   
 clean:

@@ -312,6 +312,42 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 
 		$this->assertDigestedAll();
 	}
+	
+	function testGetValue() {
+		$this->config->addEntities(include 'data/basic_types.php');
+		$this->load("data/basic_types.sql");
+		
+		$obj = $this->dormio->getObject('BasicTypes');
+		$obj->setData(array('pk' => 1, 'string' => 'the string', 'integer' => '27', 'float' => '3.1', 'double' => '2.3446', 'boolean' => '1', 'timestamp' => '0', 'datetime' => '2012-06-26T12:36:09+10:00'));
+		
+		$this->assertSame('the string', $obj->string);
+		$this->assertSame(27, $obj->integer);
+		$this->assertSame(true, $obj->boolean);
+		$this->assertEquals('2012_06_26 12,36,09 _GMT+1000_', $obj->datetime->format('Y_m_d H,i,s _T_'));
+	}
+	
+	function testFieldsToColumns() {
+		$this->config->addEntities(include 'data/basic_types.php');
+		$this->load("data/basic_types.sql");
+		
+		$obj = $this->dormio->getObject('BasicTypes');
+		$obj->string = 'Hello, world';
+		$obj->integer = 3;
+		$obj->float = pi();
+		$obj->double = pi()*2;
+		$obj->boolean = false;
+		$obj->password = 'secret';
+		$obj->ipv4address = '192.168.54.6';
+		$obj->timestamp = 3600;
+		$obj->date = new DateTime();
+		$obj->datetime = new DateTime();
+		$now = date('c');
+		
+		$updated = $this->dormio->fieldsToColumns($obj->_updated, $obj->_entity);
+		
+		// only datetimes are modified
+		$this->assertEquals($now, $updated['datetime']);
+	}
 /*
 	function testFromDB() {
 		$blog = $this->dormio->getObject('Blog');
