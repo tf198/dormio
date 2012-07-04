@@ -108,12 +108,7 @@ class Dormio {
 	 * @return Dormio_Manager
 	 */
 	function getManager($name) {
-		$key = "_{$name}_MANAGER";
-		if(!$stored = $this->cache->get($key)) {
-			$stored = new Dormio_Manager($this->config->getEntity($name), $this);
-			$this->cache->set($key, $stored);
-		}
-		return $stored;
+		return new Dormio_Manager($this->config->getEntity($name), $this);
 	}
 	
 	/**

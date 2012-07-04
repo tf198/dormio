@@ -422,5 +422,30 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 
 
 	}
+	
+	/**
+	 * Have removed Manager caching now but will leave the tests in anyway for future reference
+	 */
+	function testCachedManagers() {
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
+		
+		$blogs = $this->dormio->getManager('Blog');
+		
+		// count
+		count($blogs);
+		
+		// filter
+		$blogs->filter('title', '=', 'Hello');
+		
+		// find
+		$blogs->find(1, 'the_user');
+		
+		
+		$check = $this->dormio->getManager('Blog');
+		
+		$expected = new Dormio_Manager($this->config->getEntity('Blog'), $this->dormio);
+		$this->assertEquals($expected, $check);
+	}
 
 }
