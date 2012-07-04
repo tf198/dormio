@@ -334,6 +334,15 @@ class Dormio_Object implements ArrayAccess, Countable{
 	}
 	
 	/**
+	 * Get a manager for the current object
+	 * 
+	 * @return Dormio_Manager
+	 */
+	function objects() {
+		return $this->_dormio->getManager($this->_entity->name);
+	}
+	
+	/**
 	 * New accessor for related types
 	 * @param string $field
 	 * @return Dormio_Manager_Related|Dormio_Object

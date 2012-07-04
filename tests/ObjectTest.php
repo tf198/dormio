@@ -348,6 +348,13 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 		// only datetimes are modified
 		$this->assertEquals($now, $updated['datetime']);
 	}
+	
+	function testObjects() {
+		$obj = $this->dormio->getObject('Blog');
+		
+		$manager = $obj->objects();
+		$this->assertEquals('Blog', $manager->entity->name);
+	}
 /*
 	function testFromDB() {
 		$blog = $this->dormio->getObject('Blog');
