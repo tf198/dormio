@@ -36,6 +36,7 @@ class Dormio_Table_Array implements Iterator, Countable{
 	public $caption = null;
 
 	public $classes = array(
+		'div' => 'dt-div',
 		'table' => 'dt-table',
 		'sortable' => 'dt-sort',
 		'sort-asc' => 'dt-sort-asc',

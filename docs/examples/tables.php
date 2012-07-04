@@ -16,12 +16,12 @@ $table->setClasses(array(
 		<title>Dormio Table Example</title>
 		<link type="text/css" rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css"/>
 		<style type="text/css">
-.table {
-	width: auto;
+.dt-div {
 	margin: 2em auto;
 }
-.table tfoot td {
-	text-align: right;
+.dt-div .pagination a {
+	padding: 0 10px;
+	line-height: 30px;
 }
 		</style>
 	</head>

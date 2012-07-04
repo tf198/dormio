@@ -152,18 +152,18 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	}
 
 	function pageLinks() {
-		$output = "";
+		$output = array();
+		$output[] = '<ul>';
 		for($i=1; $i<=$this->page_count; $i++) {
-			$output .= '<span class="dt-page-no">';
 			if($i === $this->page_number) {
-				$output .= $i;
+				$output[] = "<li class=\"active\"><a href=\"#\">$i</a></li>";
 			} else {
 				$url = Dormio::URL(array('page' => $i));
-				$output .= "<a href=\"{$url}\">{$i}</a>";
+				$output[] = "<li><a href=\"{$url}\">{$i}</a></li>";
 			}
-			$output .= "</span>\n";
 		}
-		return $output;
+		$output[] = '</ul>';
+		return implode(PHP_EOL, $output);
 	}
 }
 
