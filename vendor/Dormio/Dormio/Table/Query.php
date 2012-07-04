@@ -19,6 +19,8 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	private $choices = array();
 
 	public $entity_fields;
+	
+	public $exclude_fields = array();
 
 	function setData($queryset) {
 		$this->queryset = $this->auto_filter($queryset);
@@ -26,7 +28,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		 
 		if(!$this->fields) {
 			foreach($this->entity_fields as $key=>$spec) {
-				if($spec['type'] != 'manytomany') $this->fields[] = $key;
+				if(array_search($key, $this->exclude_fields)===false && $spec['type'] != 'manytomany') $this->fields[] = $key;
 			}
 		}
 		if($this->auto_sort) $this->setSortable();
