@@ -46,6 +46,11 @@ class Dormio_Table_Array implements Iterator, Countable{
 		'bool-false' => 'dt-bool-false',
 		'bool-true' => 'dt-bool-true',
 	);
+	
+	public $icons = array(
+		'sort-asc' => "&dArr;",
+		'sort-desc' => "&uArr;",
+	);
 
 	public $row_number;
 
@@ -153,10 +158,10 @@ class Dormio_Table_Array implements Iterator, Countable{
 		if($this->sort_field!==null && $field == $this->sort_field) {
 			if($this->sort_desc) {
 				$class = $this->classes['sort-desc'];
-				$icon = "&nbsp;<span class=\"{$this->classes['sort-desc']}\">&uArr;</span>";
+				$icon = "&nbsp;<span class=\"{$this->classes['sort-desc']}\">{$this->icons['sort-desc']}</span>";
 			} else {
 				$sort = "-" . $sort;
-				$icon = "&nbsp;<span class=\"{$this->classes['sort-asc']}\">&dArr;</span>";
+				$icon = "&nbsp;<span class=\"{$this->classes['sort-asc']}\">{$this->icons['sort-asc']}</span>";
 			}
 			
 		}
