@@ -352,8 +352,15 @@ class Dormio_ObjectTest extends Dormio_DBTest{
 	function testObjects() {
 		$obj = $this->dormio->getObject('Blog');
 		
-		$manager = $obj->objects();
+		$manager = $obj->getObjects();
 		$this->assertEquals('Blog', $manager->entity->name);
+	}
+	
+	function testAccessors() {
+		$obj = $this->dormio->getObject('Blog');
+		
+		$this->assertInstanceOf('Dormio', $obj->getDormio());
+		$this->assertEquals('Blog', $obj->getEntity()->name);
 	}
 /*
 	function testFromDB() {

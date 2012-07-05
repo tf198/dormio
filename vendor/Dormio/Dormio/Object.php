@@ -338,7 +338,7 @@ class Dormio_Object implements ArrayAccess, Countable{
 	 * 
 	 * @return Dormio_Manager
 	 */
-	function objects() {
+	function getObjects() {
 		return $this->_dormio->getManager($this->_entity->name);
 	}
 	
@@ -350,6 +350,14 @@ class Dormio_Object implements ArrayAccess, Countable{
 	 */
 	function related($field) {
 		return $this->getRelated($field);
+	}
+	
+	function getDormio() {
+		return $this->_dormio;
+	}
+	
+	function getEntity() {
+		return $this->_entity;
 	}
 	
 	/* ArrayAccess */
