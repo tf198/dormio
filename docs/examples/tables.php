@@ -18,6 +18,7 @@ $table->setClasses(array(
 		<style type="text/css">
 .dt-div {
 	margin: 2em auto;
+	display: table;
 }
 .dt-div .pagination a {
 	padding: 0 10px;
