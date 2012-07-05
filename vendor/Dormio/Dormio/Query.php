@@ -234,6 +234,9 @@ class Dormio_Query {
 	function where($clause, $params=array()) {
 		$o = clone $this;
 		$o->query['where'][] = $o->_resolveString($clause);
+		foreach($params as $key=>&$value) {
+			if($value instanceof Dormio_Object) $value = $value->ident();
+		}
 		$o->params = array_merge($o->params, $params);
 		return $o;
 	}
