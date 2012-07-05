@@ -163,6 +163,10 @@ class Dormio_Form extends Phorm_Phorm {
 				throw new RuntimeException("No Phorm class mapper for {$spec['type']}");
 			}
 			$klass = self::$field_classes[$spec['type']];
+			// identify choice fields
+			if(isset($spec['choices'])) {
+				$klass = 'Dormio_Field_Choice';
+			}
 		}
 	
 		$params = $this->params_for($klass, $spec);
