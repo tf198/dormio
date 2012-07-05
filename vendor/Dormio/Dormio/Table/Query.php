@@ -89,14 +89,15 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	return $renderer;
 	}
 
-	function render_type_choice($value, $field) {
-	if(!isset($this->choices[$field])) {
-	$method = 'choices_field_' . $field;
-	$this->choices[$field] = $this->row->$method();
-	}
-	return Arr::get($this->choices[$field], $value, $value);
-	}
 	*/
+	
+	function getRenderer($field) {
+		if(isset($this->entity_fields[$field]['choices'])) {
+			return 'render_type_choice';
+		}
+		return parent::getRenderer($field);
+	}
+	
 	function render_default($value, $field) {
 		return htmlentities($value);
 	}
@@ -105,6 +106,12 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		return htmlentities($value);
 	}
 
+	public function render_type_choice($value, $field) {
+		$choices = $this->entity_fields[$field]['choices'];
+		if(isset($choices[$value])) return $choices[$value];
+		return $value;
+	}
+	
 	function render_type_text($value) {
 		$short = substr($value, 0, 50);
 		if($short != $value) $short .= '...';

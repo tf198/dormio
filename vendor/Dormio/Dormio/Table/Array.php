@@ -55,7 +55,9 @@ class Dormio_Table_Array implements Iterator, Countable{
 	public $row_number;
 
 	public $field_count = 0;
-
+	
+	public $row;
+	
 	public function __construct($data=null) {
 		$this->parseParams();
 		if($data) $this->setData($data);
