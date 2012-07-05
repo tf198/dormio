@@ -168,7 +168,7 @@ class Dormio_Query {
 			$v = '(' . implode(', ', array_fill(0, count($value), '?')) . ')';
 		}
 		$o->query['where'][] = "{$f} {$op} {$v}";
-		if($value instanceof Dormio_Model) $value = $value->ident();
+		if($value instanceof Dormio_Object) $value = $value->ident();
 		if($op == 'IN') {
 			$o->params = array_merge($o->params, $value);
 		} else {
