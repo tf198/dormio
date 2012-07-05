@@ -67,12 +67,6 @@ class Dormio_Query {
 	public $alias;
 
 	/**
-	 * Store path mappings as we go
-	 * @var multitype:string
-	 */
-	public $reverse;
-
-	/**
 	 * The base entity for this query
 	 * @var Dormio_Config_Entity
 	 */
@@ -83,6 +77,12 @@ class Dormio_Query {
 	 * @var multitype:mixed
 	 */
 	public $params;
+	
+	/**
+	 * Keep track of the field types selected
+	 * @var multitype:string
+	 */
+	public $types;
 
 	/**
 	 * Next table alias
@@ -110,7 +110,7 @@ class Dormio_Query {
 
 		$this->dialect = is_object($dialect) ? $dialect : Dormio_Dialect::factory($dialect);
 		$this->params = array();
-		$this->reverse = array();
+		$this->types = array();
 
 		$this->setAlias($alias);
 
@@ -136,8 +136,9 @@ class Dormio_Query {
 	 * @return Dormio_Query
 	 */
 	function selectIdent() {
-		$this->query['select'] = array("<@{$this->alias}.@>{{$this->entity->pk['db_column']}}");
-		$this->reverse = array();
+		$db_col = $this->entity->pk['db_column'];
+		$this->query['select'] = array("<@{$this->alias}.@>{{$db_col}}");
+		$this->types = array($db_col => $this->entity->pk['type']);
 		return $this;
 	}
 
@@ -201,10 +202,11 @@ class Dormio_Query {
 		// this needs to left join
 		$o = clone $this;
 		$p = $o->_resolvePath($path, 'LEFT');
-		if($alias) $alias = $this->alias . "_" . $alias;
+		if(!$alias) $alias = $path;
 		//$as = $o->_addField($p[2], $p[1], $alias);
 		//$o->reverse[$as] = $path;
-		$o->query['select'][] = "{$p[2]}.{{$p[1]}} AS {{$path}}";
+		$o->query['select'][] = "{$p[2]}.{{$p[1]}} AS {{$alias}}";
+		$o->types[$alias] = $p[0]->getParam($p[3], 'type');
 		return $o;
 	}
 
@@ -299,6 +301,7 @@ class Dormio_Query {
 			if($spec['is_field']) {
 				$accessor = $path . $key;
 				$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$accessor}}";
+				$this->types[$accessor] = $spec['type'];
 				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
 				//$as = $this->_addField($alias, $spec['db_column']);
 				//$accessor = $path . $key;
@@ -376,7 +379,7 @@ class Dormio_Query {
 	 * @param string $path
 	 * @param string $type 		force a specific join (INNER, LEFT) [default: null]
 	 * @param boolean $strip_pk dont join unless we have to [default: true]
-	 * @return array array($parent_meta, $field, $alias);
+	 * @return array array($parent_meta, $db_column, $alias, $field_name);
 	 * @access private
 	 */
 	function _resolvePath($path, $type=null, $strip_pk=true) {
@@ -389,7 +392,7 @@ class Dormio_Query {
 		}
 
 		//if(!isset($meta->fields[$field])) throw new Dormio_Queryset_Exception('No such field: ' . $field);
-		return array($meta, $meta->fields[$field]['db_column'], $alias);
+		return array($meta, $meta->fields[$field]['db_column'], $alias, $field);
 	}
 
 	/**
@@ -644,6 +647,13 @@ class Dormio_Query {
 		return $result;
 	}
 	*/
+	
+	function castResults($row) {
+		foreach($row as $key=>&$value) {
+			$value = $this->dialect->fromDB($value, $this->types[$key]);
+		}
+		return $row;
+	}
 }
 
 /**

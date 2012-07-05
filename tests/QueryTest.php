@@ -373,6 +373,22 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$qs = $this->getQuery('Blog');
 		$this->assertEquals($this->all_blogs[0] . '; ()', (string)$qs);
 	}
+	
+	function testTypes() {
+		$qs =$this->getQuery('Blog');
+		
+		// default fields
+		$this->assertEquals(array('pk' => 'ident', 'title' => 'string', 'the_user' => 'foreignkey'), $qs->types);
+		
+		$this->assertEquals(array('pk' => 'ident', 'title' => 'string', 'the_user' => 'foreignkey', 'the_user__pk' => 'ident', 'the_user__name' => 'text'), $qs->with('the_user')->types);
+		
+		// selectIdent is destructive
+		$qs->selectIdent();
+		$this->assertEquals(array('blog_id' => 'ident'), $qs->types);
+		
+		$o = $qs->field('the_user__profile__age');
+		$this->assertEquals(array('blog_id' => 'ident', 'the_user__profile__age' => 'integer'), $o->types);
+	}
 
 }
 

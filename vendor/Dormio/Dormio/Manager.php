@@ -118,7 +118,7 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	 * @return multitype:Object
 	 */
 	function findObjects($obj) {
-		return new Dormio_ObjectSet($this->findArray(), $obj, array_flip($this->reverse));
+		return new Dormio_ObjectSet($this->findArray(), $obj);
 	}
 
 	/**

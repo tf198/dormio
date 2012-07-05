@@ -1,4 +1,4 @@
-<div class="<?php echo $classes['div']?>" style="display: table">
+<div class="<?php echo $classes['div']?>">
 	<table class="<? echo $classes['table']?>">
 		<? if($table->caption) echo "<caption>{$table->caption}</caption>\n" ?>
 		<? if($table->show_headings): ?>

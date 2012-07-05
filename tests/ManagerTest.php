@@ -447,5 +447,16 @@ class Dormio_ManagerTest extends Dormio_DBTest{
 		$expected = new Dormio_Manager($this->config->getEntity('Blog'), $this->dormio);
 		$this->assertEquals($expected, $check);
 	}
+	
+	function testCastResults() {
+		$this->load("data/entities.sql");
+		$this->load("data/test_data.sql");
+		
+		$profiles = $this->dormio->getManager('Profile');
+		$data = $profiles->findOneArray(1);
+		
+		$cast = $profiles->castResults($data);
+		$this->assertSame(23, $cast['age']);
+	}
 
 }

@@ -350,7 +350,7 @@ class Dormio {
 		return ucwords(str_replace('_', ' ', $input));
 	}
 	
-	static  function URL($params=array()) {
+	static function URL($params=array()) {
 	  	$params = array_merge($_GET, $params);
 	  	$url = $_SERVER['SCRIPT_NAME'];
 	  	if(isset($_SERVER['PATH_INFO'])) $url .= $_SERVER['PATH_INFO'];
@@ -359,6 +359,8 @@ class Dormio {
 	  	if($params) $url .= "?" . implode('&', $params);
 	  	return $url;
 	}
+	
+	
 }
 
 /**
