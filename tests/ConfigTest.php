@@ -110,6 +110,20 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 		$this->assertApprox(-15, $diff);
 	}
 	
+	function testGetRelatedEntity() {
+		$blog = $this->config->getEntity('Blog');
+		$this->assertEquals('User', $blog->getRelatedEntity('the_user')->name);
+		$this->assertEquals('Comment', $blog->getRelatedEntity('comments')->name);
+	}
+	
+	function testResolvePath() {
+		$blog = $this->config->getEntity('Blog');
+		
+		list($entity, $field) = $blog->resolvePath('the_user__pk');
+		$this->assertEquals('User', $entity->name);
+		$this->assertEquals('pk', $field);
+	}
+	
 	function assertApprox($expected, $actual, $diff=1, $message='') {
 		$result = abs($expected-$actual);
 		$this->assertTrue($result <= $diff, "Expected within {$diff} of {$expected}: got {$actual}");

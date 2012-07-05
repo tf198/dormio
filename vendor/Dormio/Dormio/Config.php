@@ -355,6 +355,35 @@ class Dormio_Config_Entity {
 		return $result;
 	}
 	
+	/**
+	 * Get meta information about an entity
+	 * 
+	 * @param string $meta name of meta entry
+	 * @param mixed $default if meta entry not set
+	 * @return string
+	 */
+	function getMeta($meta, $default=null) {
+		if(isset($this->extra[$meta])) {
+			return $this->extra[$meta];
+		}
+		return $default;
+	}
+	
+	/**
+	 * Resolve a path to an entity and field
+	 * 
+	 * @param string $path
+	 * @return multitype:mixed array($entity, $field)
+	 */
+	function resolvePath($path) {
+		$o = $this;
+		$parts = explode('__', $path);
+		while(count($parts) > 1) {
+			$o = $o->getRelatedEntity(array_shift($parts));
+		}
+		return array($o, $parts[0]);
+	}
+	
 	function asArray() {
 		return array(
 			'name' => $this->name,
