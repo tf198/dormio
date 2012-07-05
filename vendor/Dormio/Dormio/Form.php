@@ -92,9 +92,9 @@ class Dormio_Form extends Phorm_Phorm {
 		
 		if( $this->obj->ident() && !$this->obj->_hydrated ) $this->obj->hydrate();
 		$this->source_data = $this->obj->getData();
-		foreach($this->obj->_entity->getAllFields() as $field=>$spec) {
+		foreach($this->obj->_entity->getFields() as $field=>$spec) {
 			if($spec['is_field']) {
-				if(!isset($this->source_data[$field])) {
+				if(!array_key_exists($field, $this->source_data)) {
 					$this->source_data[$field] =  isset($spec['default']) ? $spec['default'] : null;
 				}
 			}
@@ -106,13 +106,12 @@ class Dormio_Form extends Phorm_Phorm {
 				$this->source_data[$field] = $selected;
 			}
 		}
-		
+
 		if(!isset($this->include_fields)) {
 			$this->include_fields = array_keys($this->source_data);
 		}
 		
-		parent::__construct($method, $multi_part, $this->source_data, $lang);
-	
+		parent::__construct($method, $multi_part, $this->source_data, $lang);	
 	}
 	
 	function define_fields() {
@@ -232,7 +231,7 @@ class Dormio_Form extends Phorm_Phorm {
 	function params_for_type_dormio_field_choice($params) {
 		// load the choices from the model
 		$method = "choices_field_" . $params['name'];
-		if(method_exists($this->object, $method)) $params['choices'] = $this->object->$method();
+		if(method_exists($this->obj, $method)) $params['choices'] = $this->object->$method();
 		return $params;
 	}
 	
