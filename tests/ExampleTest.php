@@ -12,6 +12,10 @@ class ExampleTest extends PHPUnit_Framework_TestCase {
 		$this->assertOutput('forms');
 	}
 	
+	function testTables() {
+		$this->assertOutput('tables');
+	}
+	
 	/**
 	 * Check we haven't introduced any memory leaks
 	 */
@@ -26,9 +30,10 @@ class ExampleTest extends PHPUnit_Framework_TestCase {
 	}
 	
 	function assertOutput($example) {
-		exec("php docs/examples/{$example}.php", $output, $ret);
+		ob_start();
+		passthru("php docs/examples/{$example}.php", $ret);
+		$output = ob_get_clean();
 		$this->assertEquals(0, $ret, "Failed to run {$example}.php");
-		$expected = file("docs/output/{$example}.txt", FILE_IGNORE_NEW_LINES);
-		$this->assertTrue($expected == $output, "Output from '{$example}.php' differs from expected");
+		$this->assertStringEqualsFile("docs/output/{$example}.txt", $output);
 	}
 }

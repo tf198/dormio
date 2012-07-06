@@ -2,38 +2,112 @@
 
 class Dormio_Table_Query extends Dormio_Table_Array {
 
+	/**
+	 * Maximum number of results per page
+	 * @var integer
+	 */
 	public $page_size = null;
 
+	/**
+	 * GET parameter for this table
+	 * @var string
+	 */
 	public $page_param = 'page';
 
-	public $page_number, $page_count;
+	/**
+	 * Current page number
+	 * @var integer
+	 */
+	public $page_number;
+	
+	/**
+	 * Total number of pages
+	 * @var integer
+	 */
+	public $page_count;
 
 	/**
-	 *
+	 * Source query
 	 * @var Dormio_Query
 	 */
 	public $queryset;
 
+	/**
+	 * Whether to apply sorting to all entity fields
+	 * @var boolean
+	 */
 	public $auto_sort = true;
-
-	private $choices = array();
-
-	public $entity_fields;
 	
+	/**
+	 * Whether to resolve related entities to their display field
+	 * @var boolean
+	 */
+	public $auto_related = true;
+
+	/**
+	 * Cache for field specs
+	 * @var multitype:multitype:string
+	 */
+	private $spec_cache;
+
+	/**
+	 * A list of entity fields to exclude
+	 * @var multitype:string
+	 */
 	public $exclude_fields = array();
 
+	/**
+	 * Set the table data
+	 * 
+	 * @param Dormio_Query
+	 * @return Dormio_Table_Query
+	 */
 	function setData($queryset) {
+		// allow subclasses to modify the queryset
 		$this->queryset = $this->auto_filter($queryset);
-		$this->entity_fields = $this->queryset->entity->getFields();
 		 
 		if(!$this->fields) {
-			foreach($this->entity_fields as $key=>$spec) {
-				if(array_search($key, $this->exclude_fields)===false && $spec['type'] != 'manytomany') $this->fields[] = $key;
-			}
+			// get field list from the queryset
+			$this->fields = array_keys($this->queryset->types);
 		}
-		if($this->auto_sort) $this->setSortable();
+		$this->excludeFields($this->exclude_fields);
+		$this->setFields($this->fields);
 
 		return $this;
+	}
+	
+	function excludeFields(array $fields) {
+		foreach($fields as $field) {
+			unset($this->fields[$field]);
+		}
+	}
+	
+	/**
+	 * @see Dormio_Table_Array::setFields()
+	 */
+	function setFields(array $fields) {
+		$this->spec_cache = array();
+		foreach($fields as &$field) {
+			try {
+				list($entity, $f) = $this->queryset->entity->resolvePath($field);
+				$spec = $entity->getField($f);
+				// modify onetoone and foreignkey fields
+				if($this->auto_related) {
+					if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
+						$entity = $entity->getRelatedEntity($f);
+						if($display = $entity->getMeta('display_field')) {
+							$field .= '__' . $display;
+							$f = $display;
+							$this->column_headings[$field] = $entity->verbose;
+						}
+					}
+				}
+				$this->spec_cache[$field] = $entity->getField($f);
+			} catch(Dormio_Config_Exception $e) {
+				// not an entity field - ignore
+			}
+		}
+		$this->fields = $fields;
 	}
 
 	function setPageSize($i) {
@@ -46,14 +120,17 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	}
 
 	function getColumnHeading($field) {
+		// explicit heading
 		if(isset($this->column_headings[$field])) {
 			return $this->column_headings[$field];
 		}
-
-		if(isset($this->entity_fields[$field])) {
-			return $this->entity_fields[$field]['verbose'];
+		
+		// verbose from entity
+		if(isset($this->spec_cache[$field])) {
+			return $this->spec_cache[$field]['verbose'];
 		}
-
+		
+		// defer to parent
 		return parent::getColumnHeading($field);
 	}
 
@@ -63,39 +140,29 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	}
 
 	function getRows() {
-		$this->data = $this->queryset->getIterator();
+		$this->data = new ArrayIterator($this->queryset->findArray());
+		//var_dump($this->data);
 		return parent::getRows();
 	}
 
-	function getValue($field) {
-		if(isset($this->entity_fields[$field]) && $this->entity_fields[$field]['type'] != 'manytomany') {
-			return $this->row->getFieldValue($field);
-		}
-	}
-
 	function getType($field) {
-		if(isset($this->entity_fields[$field])) {
-			return $this->entity_fields[$field]['type'];
+		if(isset($this->spec_cache[$field])) {
+			return $this->spec_cache[$field]['type'];
 		}
 		return parent::getType($field);
 	}
-	/*
-	 function getRenderer($field) {
-	$renderer = parent::getRenderer($field);
-	if(substr($renderer, 0, 12) == 'render_field') return $renderer;
-	#if($this->queryset->entity->isField($field) && isset($this->queryset->_meta->fields[$field]['field'])) {
-	#	return 'render_type_choice';
-	#}
-	return $renderer;
-	}
-
-	*/
 	
 	function getRenderer($field) {
+		// check if a custom renderer has been set
+		$renderer = parent::getRenderer($field);
+		if(substr($renderer, 0, 12) == 'render_field') return $renderer;
+		
+		// catch fields with choices set
 		if(isset($this->entity_fields[$field]['choices'])) {
 			return 'render_type_choice';
 		}
-		return parent::getRenderer($field);
+		
+		return $renderer;
 	}
 	
 	function render_default($value, $field) {
@@ -107,7 +174,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	}
 
 	public function render_type_choice($value, $field) {
-		$choices = $this->entity_fields[$field]['choices'];
+		$choices = $this->spec_cache[$field]['choices'];
 		if(isset($choices[$value])) return $choices[$value];
 		return $value;
 	}
@@ -126,7 +193,8 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 
 	function render_type_foreignkey($value, $key) {
 		if(!$value) return null;
-		return $this->row->__get($key);
+		
+		return "[ {$this->spec_cache[$key]['entity']} {$value} ]";
 	}
 
 	function render_type_onetoone($value, $key) {
@@ -134,16 +202,16 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	}
 
 	function render() {
+		// auto sorting
+		if($this->auto_sort) $this->setSortable(array_keys($this->spec_cache));
+		
 		// add any related fields
 		foreach($this->fields as $field) {
-			if(isset($this->entity_fields[$field])) {
-				$spec = $this->entity_fields[$field];
-				if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
-					$this->queryset = $this->queryset->with($field);
-				}
+			if(strpos($field, '__')) {
+				$this->queryset = $this->queryset->field($field);
 			}
 		}
-
+		
 		// do pagination if required
 		if($this->page_size) $this->queryset = $this->pagenate($this->queryset);
 
@@ -163,6 +231,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	function pageLinks() {
 		$output = array();
 		$output[] = '<ul>';
+		$output[] = '<li class="disabled"><a href="#">Page</a></li>';
 		for($i=1; $i<=$this->page_count; $i++) {
 			if($i === $this->page_number) {
 				$output[] = "<li class=\"active\"><a href=\"#\">$i</a></li>";

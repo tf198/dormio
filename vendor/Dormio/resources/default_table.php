@@ -35,10 +35,10 @@
 			</tr>
 			<? endif ?>
 		</tbody>
-	
-		
 	</table>
-<? if(isset($table->page_size) && $table->row_number>1): ?>
-	<div class="pagination pagination-right"><?php echo $table->pageLinks()?></div>
-<? endif ?>
+	
+	<? if(isset($table->page_size) && $table->page_count>1): ?>
+		<div class="pagination pagination-right"><?php echo $table->pageLinks()?></div>
+	<? endif ?>
+
 </div>
