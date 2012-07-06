@@ -28,7 +28,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 
 	/**
 	 * Source query
-	 * @var Dormio_Query
+	 * @var Dormio_Manager
 	 */
 	public $queryset;
 
@@ -55,6 +55,8 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	 * @var multitype:string
 	 */
 	public $exclude_fields = array();
+	
+	private $obj;
 
 	/**
 	 * Set the table data
@@ -127,9 +129,18 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		return parent::getType($field);
 	}
 	
+	function getObject() {
+		if(!$this->obj) {
+			$this->obj = $this->queryset->dormio->getObjectFromEntity($this->queryset->entity);
+		}
+		$this->obj->setData($this->row);
+		return $this->obj;
+	}
+	
 	function getRenderer($field) {
 		// check if a custom renderer has been set
 		$renderer = parent::getRenderer($field);
+		if(!is_string($renderer)) return $renderer;
 		if(substr($renderer, 0, 12) == 'render_field') return $renderer;
 		
 		// catch fields with choices set

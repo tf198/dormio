@@ -311,11 +311,6 @@ class Dormio_Config_Entity {
 		return $f['db_column'];
 	}
 	
-	function getObject() {
-		$class_name = $this->model_class;
-		return new $class_name;
-	}
-	
 	function isField($field) {
 		return isset($this->fields[$field]);
 	}

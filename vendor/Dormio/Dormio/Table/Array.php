@@ -259,9 +259,16 @@ class Dormio_Table_Array implements Iterator, Countable{
 	}
 
 	function getRenderer($field) {
+		// explicit callbacks
+		if(isset($this->renderers[$field])) {
+			return $this->renderers[$field];
+		}
+		
+		// field renderer
 		$method = "render_field_{$field}";
 		if(method_exists($this, $method)) return $method;
 
+		// type renderer
 		$method = "render_type_" . $this->getType($field);
 		if(method_exists($this, $method)) return $method;
 
@@ -276,7 +283,15 @@ class Dormio_Table_Array implements Iterator, Countable{
 		$value = $this->getValue($field);
 		$renderer = (isset($this->renderers[$field])) ? $this->renderers[$field] : 'render_default';
 
-		return $this->$renderer($value, $field);
+		if(is_callable($renderer)) {
+			return $renderer($value, $field, $this);
+		} else {
+			return $this->$renderer($value, $field);
+		}
+	}
+	
+	function setRenderer($field, $callable) {
+		$this->renderers[$field] = $callable;
 	}
 
 	function render_default($value, $field) {
