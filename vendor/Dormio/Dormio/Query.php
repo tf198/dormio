@@ -160,7 +160,23 @@ class Dormio_Query {
 		return $this->filterBind($key, $op, $value, $clone);
 	}
 
+	/**
+	 * Filter based on an operator.
+	 * Operators can be '=', '<', '>', '>=', '<=', 'IN', 'LIKE'.
+	 * Multiple filters are AND'd together.
+	 * Binds the value to the query by reference
+	 * <code>
+	 * $qs->filter('age', '>=', '18);
+	 * $qs->filter('author__profile_set__fav_colour', 'IN', array('red', 'green', 'blue'));
+	 * </code>
+	 * @param  string  $key    Field descriptor
+	 * @param  string  $op     Comparison operator
+	 * @param  mixed   $value  variable to compare to
+	 * @return Dormio_Query
+	 * @todo validate IN and LIKE behaviour
+	 */
 	function filterBind($key, $op, &$value, $clone=true) {
+		$op = strtoupper($op);
 		$o = ($clone) ? clone $this : $this;
 		$f = $o->_resolveField($key);
 		$v = '?';
@@ -194,19 +210,44 @@ class Dormio_Query {
 	/**
 	 * Add a single field to the SELECT
 	 * This should not be used if you are planning to hydrate an object with this query
+	 * WARNING: does not clone
+	 * 
 	 * @param string $path
 	 * @param string $alias
 	 * @return Dormio_Query
 	 */
-	function field($path, $alias=null) {
-		// this needs to left join
-		$o = clone $this;
-		$p = $o->_resolvePath($path, 'LEFT');
+	function _addField($path, $alias=null) {
+		$p = $this->_resolvePath($path, 'LEFT');
 		if(!$alias) $alias = $path;
-		//$as = $o->_addField($p[2], $p[1], $alias);
-		//$o->reverse[$as] = $path;
-		$o->query['select'][] = "{$p[2]}.{{$p[1]}} AS {{$alias}}";
-		$o->types[$alias] = $p[0]->getParam($p[3], 'type');
+		$this->query['select'][] = "{$p[2]}.{{$p[1]}} AS {{$alias}}";
+		$this->types[$alias] = $p[0]->getParam($p[3], 'type');
+		return $this;
+	}
+	
+	/**
+	 * Remove all fields from this query (except 'pk')
+	 * 
+	 * @return Dormio_Query
+	 */
+	function clear() {
+		$o = clone $this;
+		$o->query['select'] = array();
+		$o->types = array();
+		$o->_addField('pk');
+		return $o;
+	}
+	
+	/**
+	 * Add fields to the query
+	 * 
+	 * @param string $field multiple field paths
+	 * @return Dormio_Query
+	 */
+	function fields() {
+		$o = clone $this;
+		foreach(func_get_args() as $field) {
+			$o->_addField($field);
+		}
 		return $o;
 	}
 
@@ -305,28 +346,10 @@ class Dormio_Query {
 				$accessor = $path . $key;
 				$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$accessor}}";
 				$this->types[$accessor] = $spec['type'];
-				//$this->query['select'][] = "{$alias}.{{$spec['db_column']}} AS {{$alias}_{$spec['db_column']}}";
-				//$as = $this->_addField($alias, $spec['db_column']);
-				//$accessor = $path . $key;
-				//$this->reverse[$as] = $accessor;
 			}
 		}
 	}
 
-	/**
-	 * Adds a field to the SELECT
-	 * @param string $table_alias
-	 * @param string $db_column
-	 * @param string $as	override default result key
-	 * @return string		key in the result
-	 */
-	/*
-	function _addField($table_alias, $db_column, $as=null) {
-		if(!$as) $as = "{$table_alias}_{$db_column}";
-		$this->query['select'][] = "{$table_alias}.{{$db_column}} AS {{$as}}";
-		return $as;
-	}
-	*/
 	/**
 	 * Resolves bracketed terms in a string.
 	 * eg "{comment__blog__title} = ?" becomes "{blog}.{title} = ?"

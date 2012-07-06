@@ -202,7 +202,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 							$this->column_headings[$field] = $entity->getMeta('verbose');
 							
 							// add the field to the query
-							$this->queryset = $this->queryset->field($field);
+							$this->queryset->_addField($field);
 						}
 					}
 				}

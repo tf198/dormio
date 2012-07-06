@@ -128,9 +128,9 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 				array('LEFT JOIN {multidep_x_multidep} AS t2 ON t1.{multidep_id}=t2.{r_multidep_id}', 'INNER JOIN {multidep} AS t3 ON t2.{l_multidep_id}=t3.{multidep_id}'));
 	}
 
-	function testField() {
+	function testFields() {
 		$blogs = $this->getQuery('Blog');
-		$this->assertEquals($blogs->field('comments__title')->select(),
+		$this->assertEquals($blogs->fields('comments__title')->select(),
 				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", t2."title" AS "comments__title" FROM "blog" AS t1 LEFT JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id"', array()));
 	}
 
@@ -386,7 +386,7 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$qs->selectIdent();
 		$this->assertEquals(array('blog_id' => 'ident'), $qs->types);
 		
-		$o = $qs->field('the_user__profile__age');
+		$o = $qs->fields('the_user__profile__age');
 		$this->assertEquals(array('blog_id' => 'ident', 'the_user__profile__age' => 'integer'), $o->types);
 	}
 
