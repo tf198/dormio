@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Dormio Table Example</title>
+		<link type="text/css" rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css"/>
+		<style type="text/css">
+.dt-div {
+	margin: 2em auto;
+	display: table;
+}
+.dt-div .pagination a {
+	padding: 0 10px;
+	line-height: 30px;
+}
+		</style>
+	</head>
+	<body>
+		<div class="dt-div">
+	<table class="table table-bordered table-condensed">
+						<thead>
+			<tr>
+												<th class="dt-heading"><a href="docs/examples/tables.php?sort=pk">ID</a>				</th>
+								<th class="dt-heading"><a href="docs/examples/tables.php?sort=title">Title</a>				</th>
+								<th class="dt-heading"><a href="docs/examples/tables.php?sort=body">Body</a>				</th>
+								<th class="dt-heading"><a href="docs/examples/tables.php?sort=author__display_name">User</a>				</th>
+							</tr>
+		</thead>
+			
+		<tbody>
+						<tr>
+				<td class="dt-field field-pk">1</td>
+<td class="dt-field field-title">Andy Blog 1</td>
+<td class="dt-field field-body">My first blog</td>
+<td class="dt-field field-author__display_name">Andy Andrews</td>
+				
+			</tr>
+						<tr>
+				<td class="dt-field field-pk">2</td>
+<td class="dt-field field-title">Andy Blog 2</td>
+<td class="dt-field field-body">My second entry</td>
+<td class="dt-field field-author__display_name">Andy Andrews</td>
+				
+			</tr>
+								</tbody>
+	</table>
+	
+			<div class="pagination pagination-right"><ul>
+<li class="disabled"><a href="#">Page</a></li>
+<li class="active"><a href="#">1</a></li>
+<li><a href="docs/examples/tables.php?page=2">2</a></li>
+</ul></div>
+	
+</div>	</body>
+</html>
