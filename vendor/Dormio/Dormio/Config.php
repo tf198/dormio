@@ -381,6 +381,9 @@ class Dormio_Config_Entity {
 		while(count($parts) > 1) {
 			$o = $o->getRelatedEntity(array_shift($parts));
 		}
+		if(!$o->isField($parts[0])) {
+			throw new Dormio_Config_Exception("No field [{$parts[0]}] on entity [{$o->name}]");
+		}
 		return array($o, $parts[0]);
 	}
 	

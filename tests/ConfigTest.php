@@ -122,6 +122,10 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 		list($entity, $field) = $blog->resolvePath('the_user__pk');
 		$this->assertEquals('User', $entity->name);
 		$this->assertEquals('pk', $field);
+		
+		list($entity, $field) = $blog->resolvePath('the_user__profile__age');
+		$this->assertEquals('Profile', $entity->name);
+		$this->assertEquals('age', $field);
 	}
 	
 	function assertApprox($expected, $actual, $diff=1, $message='') {
