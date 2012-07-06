@@ -84,36 +84,6 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	function excludeFields(array $fields) {
 		$this->fields = array_diff($this->fields, $fields);
 	}
-	
-	/**
-	 * @see Dormio_Table_Array::setFields()
-	 */
-	function setFields(array $fields) {
-		$this->spec_cache = array();
-		foreach($fields as &$field) {
-			try {
-				list($entity, $f) = $this->queryset->entity->resolvePath($field);
-				$spec = $entity->getField($f);
-				// modify onetoone and foreignkey fields
-				if($this->auto_related) {
-					if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
-						$related = $entity->getRelatedEntity($f);
-						if($display = $related->getMeta('display_field')) {
-							$field .= '__' . $display;
-							$f = $display;
-							$entity = $related;
-							$this->column_headings[$field] = $entity->getMeta('verbose');
-						}
-					}
-				}
-				$this->spec_cache[$field] = $entity->getField($f);
-			} catch(Dormio_Config_Exception $e) {
-				// not an entity field - ignore
-				Dormio::$logger && Dormio::$logger->log($e->getMessage(), LOG_WARNING);
-			}
-		}
-		$this->fields = $fields;
-	}
 
 	function setPageSize($i) {
 		$this->page_size = $i;
@@ -169,14 +139,6 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		
 		return $renderer;
 	}
-	
-	function render_default($value, $field) {
-		return htmlentities($value);
-	}
-
-	function render_type_string($value) {
-		return htmlentities($value);
-	}
 
 	public function render_type_choice($value, $field) {
 		$choices = $this->spec_cache[$field]['choices'];
@@ -195,6 +157,11 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		if(time()-$value < 86400) return date('H:i:s', $value);
 		return date('d/m/y H:i', $value);
 	}
+	
+	function render_type_password($value) {
+		if($value === null) return "";
+		return "********";
+	}
 
 	function render_type_foreignkey($value, $key) {
 		if(!$value) return null;
@@ -207,15 +174,36 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 	}
 
 	function render() {
-		// auto sorting
-		if($this->auto_sort) $this->setSortable(array_keys($this->spec_cache));
-		
-		// add any related fields
-		foreach($this->fields as $field) {
-			if(strpos($field, '__')) {
-				$this->queryset = $this->queryset->field($field);
+		// prepare fields for rendering
+		$this->spec_cache = array();
+		foreach($this->fields as &$field) {
+			try {
+				list($entity, $f) = $this->queryset->entity->resolvePath($field);
+				$spec = $entity->getField($f);
+				// modify onetoone and foreignkey fields
+				if($this->auto_related) {
+					if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
+						$related = $entity->getRelatedEntity($f);
+						if($display = $related->getMeta('display_field')) {
+							$field .= '__' . $display;
+							$f = $display;
+							$entity = $related;
+							$this->column_headings[$field] = $entity->getMeta('verbose');
+							
+							// add the field to the query
+							$this->queryset = $this->queryset->field($field);
+						}
+					}
+				}
+				$this->spec_cache[$field] = $entity->getField($f);
+			} catch(Dormio_Config_Exception $e) {
+				// not an entity field - ignore
+				Dormio::$logger && Dormio::$logger->log($e->getMessage(), LOG_WARNING);
 			}
 		}
+		
+		// auto sorting
+		if($this->auto_sort) $this->setSortable(array_keys($this->spec_cache));
 		
 		// do pagination if required
 		if($this->page_size) $this->queryset = $this->pagenate($this->queryset);

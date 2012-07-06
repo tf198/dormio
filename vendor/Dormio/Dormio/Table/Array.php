@@ -279,9 +279,8 @@ class Dormio_Table_Array implements Iterator, Countable{
 		return $this->$renderer($value, $field);
 	}
 
-	public function render_default($value, $field=null) {
-		return HTML::chars($value);
-		
+	function render_default($value, $field) {
+		return htmlentities($value);
 	}
 
 	public function render_field_id() {
