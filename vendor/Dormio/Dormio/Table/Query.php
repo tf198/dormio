@@ -94,10 +94,11 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 				// modify onetoone and foreignkey fields
 				if($this->auto_related) {
 					if($spec['type'] == 'foreignkey' || $spec['type'] == 'onetoone') {
-						$entity = $entity->getRelatedEntity($f);
-						if($display = $entity->getMeta('display_field')) {
+						$related = $entity->getRelatedEntity($f);
+						if($display = $related->getMeta('display_field')) {
 							$field .= '__' . $display;
 							$f = $display;
+							$entity = $related;
 							$this->column_headings[$field] = $entity->getMeta('verbose');
 						}
 					}
@@ -105,6 +106,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 				$this->spec_cache[$field] = $entity->getField($f);
 			} catch(Dormio_Config_Exception $e) {
 				// not an entity field - ignore
+				Dormio::$logger && Dormio::$logger->log($e->getMessage(), LOG_WARNING);
 			}
 		}
 		$this->fields = $fields;
