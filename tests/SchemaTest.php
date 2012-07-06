@@ -49,7 +49,7 @@ class Dormio_SchemaTest extends PHPUnit_Framework_TestCase{
 			'TINYINT(1)', 'INTEGER'),
 		array(array('type' => 'string'),
 			'VARCHAR(255)', 'TEXT'),
-		array(array('type' => 'string', 'size' => 32),
+		array(array('type' => 'string', 'max_length' => 32),
 			'VARCHAR(32)', 'TEXT'),
 		array(array('type' => 'text'),
 			'TEXT', 'TEXT'),
