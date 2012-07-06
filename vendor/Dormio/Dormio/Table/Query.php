@@ -105,7 +105,6 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 				$this->spec_cache[$field] = $entity->getField($f);
 			} catch(Dormio_Config_Exception $e) {
 				// not an entity field - ignore
-				var_dump($e->getMessage());
 			}
 		}
 		$this->fields = $fields;
