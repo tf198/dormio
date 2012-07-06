@@ -11,6 +11,28 @@
  */
 class Dormio_Table_Array implements Iterator, Countable{
 
+	public static $default_classes = array(
+		'div' => 'dt-div',
+		'table' => 'dt-table',
+		'sortable' => 'dt-sort',
+		'sort-asc' => 'dt-sort-asc',
+		'sort-desc' => 'dt-sort-desc',
+		'th' => 'dt-heading',
+		'td' => 'dt-field',
+		'bool-false' => 'dt-bool-false',
+		'bool-true' => 'dt-bool-true',
+	);
+	
+	public static $default_icons = array(
+		'sort-asc' => "&dArr;",
+		'sort-desc' => "&uArr;",
+	);
+	
+	public static $default_boolean = array(
+		'true' => '&#x2713;',
+		'false' => '&#x2717;',
+	);
+	
 	public $template = null;
 
 	protected $data = null;
@@ -35,22 +57,7 @@ class Dormio_Table_Array implements Iterator, Countable{
 
 	public $caption = null;
 
-	public $classes = array(
-		'div' => 'dt-div',
-		'table' => 'dt-table',
-		'sortable' => 'dt-sort',
-		'sort-asc' => 'dt-sort-asc',
-		'sort-desc' => 'dt-sort-desc',
-		'th' => 'dt-heading',
-		'td' => 'dt-field',
-		'bool-false' => 'dt-bool-false',
-		'bool-true' => 'dt-bool-true',
-	);
-	
-	public $icons = array(
-		'sort-asc' => "&dArr;",
-		'sort-desc' => "&uArr;",
-	);
+	public $classes, $icons;
 
 	public $row_number;
 
@@ -60,6 +67,10 @@ class Dormio_Table_Array implements Iterator, Countable{
 	
 	public function __construct($data=null) {
 		$this->parseParams();
+		
+		$this->icons = self::$default_icons;
+		$this->classes = self::$default_classes;
+		
 		if($data) $this->setData($data);
 	}
 
@@ -278,8 +289,11 @@ class Dormio_Table_Array implements Iterator, Countable{
 	}
 
 	public function render_type_boolean($value) {
-		// think these entities are available on all browsers
-		return ($value) ? "<span class=\"{$this->classes['bool-true']}\">&#x2713;</span>" : "<span class=\"{$this->classes['bool-false']}\">&#x2717</span>";
+		if($value === null) return '';
+		
+		$b = ($value) ? "true" : "false";
+		
+		return "<span class=\"{$this->classes['bool-' . $b]}\">" . self::$default_boolean[$b] . "</span>";
 	}
 
 	function current() {

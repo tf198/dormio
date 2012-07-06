@@ -1,13 +1,15 @@
 <?php
 include "example_base.php";
 
+// override class defaults
+Dormio_Table_Query::$default_classes['table'] = 'table table-bordered table-condensed';
+
 $entity = isset($_GET['entity']) ? ucfirst($_GET['entity']) : 'Blog';
 $query = $dormio->getManager($entity);
 $table = new Dormio_Table_Query($query);
 
-$table->setClasses(array(
-			'table' => 'table table-bordered table-condensed',
-		))->setPageSize(2);
+// set our page size very small for this example
+$table->setPageSize(2);
 
 ?>
 <!DOCTYPE html>
