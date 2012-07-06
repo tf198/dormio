@@ -76,10 +76,13 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		return $this;
 	}
 	
+	/**
+	 * Exclude the given field names
+	 * 
+	 * @param array $fields
+	 */
 	function excludeFields(array $fields) {
-		foreach($fields as $field) {
-			unset($this->fields[$field]);
-		}
+		$this->fields = array_diff($this->fields, $fields);
 	}
 	
 	/**
