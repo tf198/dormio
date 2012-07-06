@@ -163,7 +163,7 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 		if(substr($renderer, 0, 12) == 'render_field') return $renderer;
 		
 		// catch fields with choices set
-		if(isset($this->entity_fields[$field]['choices'])) {
+		if(isset($this->spec_cache[$field]['choices'])) {
 			return 'render_type_choice';
 		}
 		

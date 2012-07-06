@@ -46,7 +46,7 @@ return array(
 	'FieldTest' => array(
 		'fields' => array(
 			'string' => array('type' => 'string'),
-			'integer' => array('type' => 'integer', 'form_field' => 'Phorm_Field_Range', 'max' => 10, 'slider' => false),
+			'integer' => array('type' => 'integer', 'form_field' => 'Phorm_Field_Range', 'max' => 10, 'slider' => false, 'choices' => array(1 => 'One', 2 => 'Two')),
 			'float' => array('type' => 'float'),
 			'timestamp' => array('type' => 'timestamp', 'form_field' => 'Phorm_Field_DateTime'),
 			'password' => array('type' => 'password'),
