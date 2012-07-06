@@ -1,0 +1,225 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Dormio by tf198</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Dormio</h1>
+        <p class="header">Lightweight but fully featured  PHP5 database interaction library.</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/tf198/dormio/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/tf198/dormio/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/tf198/dormio">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/tf198">tf198</a></p>
+
+
+      </header>
+      <section>
+        <h1>Dormio</h1>
+
+<p><strong>WARNING:</strong> Code still very much alpha - use at your own risk!</p>
+
+<h2>About</h2>
+
+<h3>Introduction (or 'Why another PHP database library')</h3>
+
+<ol>
+<li>Because I want to interact with my data in as clean and simple a way as Django models.</li>
+<li>Because I don't think you should have to run an OpCache to get a decent featureset.</li>
+</ol><p>Dormio is a lightweight but fully featured database library designed to take the pain out of dealing with your data.
+It uses a powerful query syntax similar to <a href="https://www.djangoproject.com/">Django</a> that generates efficient SQL, joining tables as necessary and supports 
+eager loading of objects for minimum queries.  It can also generate forms, tables and schema SQL all from the one entitiy
+description so when you change your database you only have to update one config array.</p>
+
+<h3>Design Features</h3>
+
+<ul>
+<li>DRY - define your entities once. Full stop.</li>
+<li>No framework requirement but usable in any.</li>
+<li>Built directly on PDO - no separate abstraction layer.</li>
+<li>Memory concious - under 900KB in memory.</li>
+<li>Config in PHP - no XML or YAML config or compilation.</li>
+<li>PHP5+ compatible.</li>
+<li>
+<del>Fully</del> unit tested (PHPUnit).</li>
+<li>
+<del>Fully</del> documented code.</li>
+</ul><h3>Alternatives</h3>
+
+<p>While looking for a lightweight alternative to Doctrine/Propel I found the following projects which
+while not suitable for my project may be of interest:</p>
+
+<ul>
+<li>
+<a href="http://www.outlet-orm.org/site/">OutletORM</a> - Nice hibernate inspired library</li>
+<li>
+<a href="http://www.notorm.com/">NotORM</a> - Interesting approach to database interaction</li>
+</ul><h3>Documentation</h3>
+
+<p>Currently limited to the phpDocumentor generated API docs at <a href="http://www.tfconsulting.com.au/%7Etris/dormio/0.8/api">http://www.tfconsulting.com.au/~tris/dormio/0.8/api</a>, though
+you can get a good idea of the functionality by looking at the <a href="/tf198/dormio/blob/0.8/docs/examples">examples</a></p>
+
+<h2>Changelog</h2>
+
+<h3>0.9 planned features</h3>
+
+<ul>
+<li>Turbo runtime - compile queries once</li>
+<li>Global statement cache</li>
+<li>jQuery widget integration</li>
+<li>Finish documentation and unit tests</li>
+</ul><h3>0.8</h3>
+
+<p>This is a complete rewrite of the original project with the configuration system changed to array and
+a more object orientation approach.</p>
+
+<ul>
+<li>PSR-0 compatible structure</li>
+<li>Better class organisation - less <em>black magic</em>
+</li>
+<li>Performance improvements</li>
+<li>Removed all factory and singleton patterns</li>
+<li>Entities now declared in config instead of on the object</li>
+</ul><h3>0.6</h3>
+
+<p>The first real version that could be used in another project.  Contained a lot of black magic so proved
+to be unmaintainable.</p>
+
+<h2>Examples</h2>
+
+<h3>1) Define your entities: <a href="/tf198/dormio/blob/0.8/docs/examples/entities.php">entities.php</a>
+</h3>
+
+<div class="highlight">
+<pre><span class="cp">&lt;?</span>
+<span class="nv">$entities</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+   <span class="s1">'Blog'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+      <span class="s1">'fields'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span>
+        <span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'type'</span> <span class="o">=&gt;</span> <span class="s1">'string'</span><span class="p">,</span> <span class="s1">'max_length'</span> <span class="o">=&gt;</span> <span class="mi">30</span><span class="p">),</span>
+        <span class="s1">'author'</span> <span class="o">=&gt;</span> <span class="k">array</span><span class="p">(</span><span class="s1">'type'</span> <span class="o">=&gt;</span> <span class="s1">'foreignkey'</span><span class="p">,</span> <span class="nx">entity</span><span class="o">=</span><span class="s1">'User'</span><span class="p">),</span>
+      <span class="p">),</span>
+   <span class="p">),</span>
+   <span class="o">...</span>
+<span class="p">);</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+</div>
+
+
+<h3>2) Set up the connection</h3>
+
+<div class="highlight">
+<pre><span class="cp">&lt;?</span>
+<span class="c1">// database connection is just a plain old PDO</span>
+<span class="nv">$pdo</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PDO</span><span class="p">(</span><span class="s1">':sqlite::memory'</span><span class="p">);</span>
+
+<span class="nv">$config</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dormio_Config</span><span class="p">;</span>
+<span class="nv">$config</span><span class="o">-&gt;</span><span class="na">addEntities</span><span class="p">(</span><span class="nv">$entities</span><span class="p">);</span>
+
+<span class="nv">$dormio</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dormio</span><span class="p">(</span><span class="nv">$pdo</span><span class="p">,</span> <span class="nv">$config</span><span class="p">);</span>
+<span class="c1">// you are now ready to go</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+</div>
+
+
+<h3>3) Automatically create tables (optional): <a href="/tf198/dormio/blob/0.8/docs/examples/schema.php">schema.php</a>
+</h3>
+
+<div class="highlight">
+<pre><span class="cp">&lt;?</span>
+<span class="nv">$admin</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dormio_Admin</span><span class="p">(</span><span class="nv">$dormio</span><span class="p">);</span>
+<span class="nv">$admin</span><span class="o">-&gt;</span><span class="na">syncDB</span><span class="p">();</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+</div>
+
+
+<h3>4) Manipulate your data: <a href="/tf198/dormio/blob/0.8/docs/examples/usage.php">usage.php</a>
+</h3>
+
+<p>All the standard object interaction methods with support for eager loading, aggregation and cross
+table queries.</p>
+
+<div class="highlight">
+<pre><span class="cp">&lt;?</span>
+<span class="nv">$blogs</span> <span class="o">=</span> <span class="nv">$dormio</span><span class="o">-&gt;</span><span class="na">getManager</span><span class="p">(</span><span class="s1">'Blog'</span><span class="p">);</span>
+<span class="k">foreach</span><span class="p">(</span><span class="nv">$blogs</span><span class="o">-&gt;</span><span class="na">filter</span><span class="p">(</span><span class="s1">'author__profile__age'</span><span class="p">,</span> <span class="s1">'&lt;'</span><span class="p">,</span> <span class="mi">18</span><span class="p">)</span> <span class="k">as</span> <span class="nv">$blog</span> <span class="p">{</span>
+   <span class="nv">$blog</span><span class="o">-&gt;</span><span class="na">title</span> <span class="o">=</span> <span class="s2">"## This blog has been censored ##"</span><span class="p">;</span>
+   <span class="nv">$blog</span><span class="o">-&gt;</span><span class="na">save</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="c1">// you can actually achieve the above in a single query</span>
+<span class="nv">$blogs</span><span class="o">-&gt;</span><span class="na">filter</span><span class="p">(</span><span class="s1">'author__profile__age'</span><span class="p">,</span> <span class="s1">'&lt;'</span><span class="p">,</span> <span class="mi">18</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">update</span><span class="p">(</span><span class="s1">'title'</span> <span class="o">=&gt;</span> <span class="s1">'## This blog has been censored ##'</span><span class="p">);</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+</div>
+
+
+<h3>5) Create forms from objects: <a href="/tf198/dormio/blob/0.8/docs/examples/forms.php">forms.php</a>
+</h3>
+
+<p>Automatically generate a form to interact with your record including the relationships.  Data is validated
+against the database type and also custom validators. Subclass Dormio_Form to get infinite control over the 
+fields and add more complex multi-field validation rules.</p>
+
+<div class="highlight">
+<pre><span class="cp">&lt;?</span>
+<span class="nv">$blog</span> <span class="o">=</span> <span class="nv">$dormio</span><span class="o">-&gt;</span><span class="na">getObject</span><span class="p">(</span><span class="s1">'Blog'</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="nv">$form</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dormio_Form</span><span class="p">(</span><span class="nv">$blog</span><span class="p">);</span>
+
+<span class="k">echo</span> <span class="nv">$form</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+</div>
+
+
+<p><img src="/tf198/dormio/raw/0.8/docs/images/example_form.png" alt="Example Form"></p>
+
+<h3>6) Create tables from queries: <a href="/tf198/dormio/blob/0.8/docs/examples/tables.php">tables.php</a>
+</h3>
+
+<p>Generate paged, sortable tables from your entities in one line, or customise to your hearts content.</p>
+
+<div class="highlight">
+<pre><span class="cp">&lt;?</span>
+<span class="nv">$query</span> <span class="o">=</span> <span class="nv">$dormio</span><span class="o">-&gt;</span><span class="na">getManager</span><span class="p">(</span><span class="s1">'Comment'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">filter</span><span class="p">(</span><span class="s1">'tags__tag'</span><span class="p">,</span> <span class="s1">'IN'</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span><span class="s1">'Red'</span><span class="p">,</span> <span class="s1">'Green'</span><span class="p">));</span>
+<span class="nv">$table</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Dormio_Table_query</span><span class="p">(</span><span class="nv">$query</span><span class="p">);</span>
+
+<span class="k">echo</span> <span class="nv">$table</span><span class="p">;</span>
+<span class="cp">?&gt;</span><span class="x"></span>
+</pre>
+</div>
+
+
+<p><img src="/tf198/dormio/raw/0.8/docs/images/example_table.png" alt="Example Table">
+(Not the actual table from the above query)</p>
+
+<h2>Why Dormio?</h2>
+
+<p>Being so closely related to Django ('<em>I Awake</em>' in Roma) then Dormio ('<em>I Sleep</em>' in Latin) seemed appropriate,
+especially following in the footsteps of Java's Hibernate.</p>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+		
+  </body>
+</html>
