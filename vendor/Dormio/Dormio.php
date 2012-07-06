@@ -129,7 +129,7 @@ class Dormio {
 	 * @return Dormio_Object
 	 */
 	function getObjectFromEntity(Dormio_Config_Entity $entity, $id=null) {
-		$class_name = $entity->model_class;
+		$class_name = $entity->getMeta('model_class');
 		$obj = new $class_name($this, $entity);
 		
 		if($id) $obj->setPrimaryKey($id);

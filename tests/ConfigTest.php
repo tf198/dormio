@@ -83,6 +83,24 @@ class Dormio_ConfigTest extends PHPUnit_Framework_TestCase {
 			), $blog->getField('comments'));
 	}
 	
+	function testMeta() {
+		// defaults
+		$blog = $this->config->getEntity('Blog');
+		$this->assertEquals('Blog', $blog->getMeta('verbose'));
+		$this->assertEquals('Blogs', $blog->getMeta('plural'));
+		$this->assertEquals('Dormio_Object', $blog->getMeta('model_class'));
+		
+		// additional
+		$user = $this->config->getEntity('User');
+		$this->assertEquals('User', $user->getMeta('verbose'));
+		$this->assertEquals('name', $user->getMeta('display_field'));
+		
+		// overriden
+		$comment = $this->config->getEntity('Comment');
+		$this->assertEquals('Comments', $comment->getMeta('plural'));
+		$this->assertEquals('Comment', $comment->getMeta('model_class'));
+	}
+	
 	function assertThrows($expected, $callable) {
 		$params = array_slice(func_get_args(), 2);
 		try {

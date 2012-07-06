@@ -6,7 +6,7 @@
 
 return array(
 	'Blog' => array(
-		'extra' => array('display_field' => 'title'),
+		'meta' => array('display_field' => 'title'),
 		'fields' => array(
 			'title' => array('type' => 'string', 'max_length' => 30),
 			'body' => array('type' => 'text'),
@@ -23,7 +23,7 @@ return array(
 		),
 	),
 	'User' => array(
-		'extra' => array('display_field' => 'display_name'),
+		'meta' => array('display_field' => 'display_name'),
 		'fields' => array(
 			'username' => array('type' => 'string', 'max_length' => 50),
 			'password' => array('type' => 'password'),
@@ -38,7 +38,7 @@ return array(
 		),
 	),
 	'Tag' => array(
-		'extra' => array('display_field' => 'tag'),
+		'meta' => array('display_field' => 'tag'),
 		'fields' => array(
 			'tag' => array('type' => 'string', 'max_length' => 10),
 		),

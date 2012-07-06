@@ -1,7 +1,7 @@
 <?php
 return array(
 	'User' => array(
-		'extra' => array('display_field' => 'name'),
+		'meta' => array('display_field' => 'name'),
 		'fields' => array(
 			'name' => array('type' => 'text', 'max_length' => 3),
 			'tags' => array('type' => 'manytomany', 'entity' => 'Tag'),
@@ -24,7 +24,9 @@ return array(
 		),
 	),
 	'Comment' => array(
-		'model_class' => 'Comment',
+		'meta' => array(
+			'model_class' => 'Comment',
+		),
 		'fields' => array(
 			'title' => array('type' => 'string', 'max_length' => 30),
 			'user' => array('type' => 'foreignkey', 'entity' => 'User', 'db_column' => 'the_comment_user'),
@@ -33,7 +35,7 @@ return array(
 		),
 	),
 	'Tag' => array(
-		'extra' => array('display_field' => 'tag'),
+		'meta' => array('display_field' => 'tag'),
 		'fields' => array(
 			'tag' => array('type' => 'string'),
 		),

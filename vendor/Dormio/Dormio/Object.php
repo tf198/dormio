@@ -392,12 +392,13 @@ class Dormio_Object implements ArrayAccess, Countable{
 	function display() {
 		if(!isset($this->_entity)) return "[Unbound " . get_class($this) . "]";
 		if(isset($this->_data['pk'])) {
-			if(isset($this->_entity->extra['display_field'])) {
-				return $this->getFieldValue($this->_entity->extra['display_field']);
+			$display = $this->_entity->getMeta('display_field');
+			if($display) {
+				return $this->getFieldValue($display);
 			}
-			return "[{$this->_entity->name} {$this->_data['pk']}]";
+			return "[{$this->_entity->getMeta('verbose')} {$this->_data['pk']}]";
 		} else {
-			return "[New {$this->_entity->name}]";
+			return "[New {$this->_entity->getMeta('verbose')}]";
 		}
 	}
 	

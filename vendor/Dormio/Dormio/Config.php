@@ -165,18 +165,6 @@ class Dormio_Config_Entity {
 	 * @var multitype:string
 	 */
 	public $pk;
-	
-	/**
-	 * Object to map data onto
-	 * @var string
-	 */
-	public $model_class;
-	
-	/**
-	 * Verbose name for entity
-	 * @var string
-	 */
-	public $verbose;
 
 	/**
 	 * Indexes for this entity
@@ -200,7 +188,7 @@ class Dormio_Config_Entity {
 	 * Extra data about the table
 	 * @var multitype:string
 	 */
-	public $extra;
+	public $meta;
 
 	/**
 	 * Construct a new Dormio_Dormio_Config_Entity
@@ -218,10 +206,18 @@ class Dormio_Config_Entity {
 		
 		$this->name = $name;
 		$this->table = (isset($entity['table'])) ? $entity['table'] : strtolower($name);
-		$this->verbose = (isset($entity['verbose'])) ? $entity['verbose'] : Dormio::title($name);
 		$this->indexes = (isset($entity['indexes'])) ? $entity['indexes'] : array();
-		$this->model_class = (isset($entity['model_class'])) ? $entity['model_class'] : 'Dormio_Object';
-		$this->extra = (isset($entity['extra'])) ? $entity['extra'] : array();
+		
+		// table metadata
+		$title = Dormio::title($name);
+		$meta = array(
+			'verbose' => $title,
+			'plural' => $title . 's',
+			'model_class' => 'Dormio_Object',
+		);
+		if(isset($entity['meta'])) $meta = array_merge($meta, $entity['meta']);
+		
+		$this->meta = $meta;
 		
 		// set a primary key field (can be overridden)
 		$this->fields['pk'] = array('type' => 'ident', 'db_column' => strtolower($name) . "_id", 'is_field' => true, 'verbose' => 'ID', 'validated' => true);
@@ -358,13 +354,13 @@ class Dormio_Config_Entity {
 	/**
 	 * Get meta information about an entity
 	 * 
-	 * @param string $meta name of meta entry
+	 * @param string $name name of meta entry
 	 * @param mixed $default if meta entry not set
 	 * @return string
 	 */
-	function getMeta($meta, $default=null) {
-		if(isset($this->extra[$meta])) {
-			return $this->extra[$meta];
+	function getMeta($name, $default=null) {
+		if(isset($this->meta[$name])) {
+			return $this->meta[$name];
 		}
 		return $default;
 	}
@@ -391,10 +387,9 @@ class Dormio_Config_Entity {
 		return array(
 			'name' => $this->name,
 			'table' => $this->table,
-			'verbose' => $this->verbose,
 			'indexes' => $this->indexes,
-			'model_class' => $this->model_class,
 			'fields' => $this->fields,
+			'meta' => $this->meta,
 		);
 	}
 
@@ -503,7 +498,7 @@ class Dormio_Config_Entity {
 			'map_local_field' => $spec['map_remote_field'],
 			'map_remote_field' => $spec['map_local_field'],
 			'is_field' => false,
-			'verbose' => $this->verbose,
+			'verbose' => $this->meta['verbose'],
 		);
 
 		return $spec;

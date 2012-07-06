@@ -98,13 +98,14 @@ class Dormio_Table_Query extends Dormio_Table_Array {
 						if($display = $entity->getMeta('display_field')) {
 							$field .= '__' . $display;
 							$f = $display;
-							$this->column_headings[$field] = $entity->verbose;
+							$this->column_headings[$field] = $entity->getMeta('verbose');
 						}
 					}
 				}
 				$this->spec_cache[$field] = $entity->getField($f);
 			} catch(Dormio_Config_Exception $e) {
 				// not an entity field - ignore
+				var_dump($e->getMessage());
 			}
 		}
 		$this->fields = $fields;
