@@ -250,6 +250,21 @@ class Dormio_Query {
 		}
 		return $o;
 	}
+	
+	/**
+	 * Add a field to the select, expanding fields in curly brackets.
+	 * <code>
+	 * $blogs->selectField('COUNT({comments}) AS comment_count')
+	 * </code>
+	 * 
+	 * @param string $field
+	 * @return Dormio_Query
+	 */
+	function selectField($field) {
+		$o = clone $this;
+		$o->query['select'][] = $o->_resolveString($field);
+		return $o;
+	}
 
 	/**
 	 * Makes the query DISTINCT.
