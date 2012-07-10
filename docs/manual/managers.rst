@@ -65,8 +65,8 @@ Aggregation
 
 All ``Dormio_Manager`` querysets have a ``getAggregator()`` method which returns a ``Dormio_Aggregator`` object.  When you call
 the ``run()`` method on an Aggregator it returns an array of aggregate values for the underlying query.
-
-    <?php
+::
+	<?php
     $blogs = $dormio->getManger('Blog')
     $info = $blogs->getAggregator()->max('author__profile__age')->min('author__profile__age')->count();
     var_dump($info->run());
