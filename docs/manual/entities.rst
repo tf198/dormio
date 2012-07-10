@@ -3,7 +3,8 @@ Entities
 
 Example
 -------
-::
+Entities are just array descriptors for your existing or desired table structure::
+
    <?php
    $entities = array(
      'Blog' => array(
@@ -28,6 +29,7 @@ Basic structure
 ---------------
 
 Each entity must have a ``fields`` array but all others are optional.
+
 :table:
     Override the default table name (lower case entity name)
    
