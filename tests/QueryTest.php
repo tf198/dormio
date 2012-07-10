@@ -139,6 +139,12 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($blogs->selectField('COUNT({comments}) AS comment_count')->select(),
 			array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", COUNT(t2."comment_id") AS comment_count FROM "blog" AS t1 INNER JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id"', array()));
 	}
+	
+	function testFunc() {
+		$blogs = $this->getQuery('Blog');
+		$this->assertEquals($blogs->func('COUNT', 'comments')->select(),
+				array('SELECT t1."blog_id" AS "pk", t1."title" AS "title", t1."the_blog_user" AS "the_user", COUNT(t2."comment_id") AS "comments_count" FROM "blog" AS t1 LEFT JOIN "comment" AS t2 ON t1."blog_id"=t2."blog_id"', array()));
+	}
 
 	function testFilter() {
 		$blogs = $this->getQuery('Blog');
