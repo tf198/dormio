@@ -9,10 +9,10 @@ table relationships, adding JOINs as required.  They are constructed by using th
 (not database column) with a double underscore denoting a relation.  Using the *Blog* entity from the
 examples the following are all valid:
 
-comments
-author\_\_username
-author\_\_profile\_\_age
-comments\_\_author\_\_display_name
+* comments
+* author\_\_username
+* author\_\_profile\_\_age
+* comments\_\_author\_\_display_name
 
 Methods
 -------
@@ -54,7 +54,7 @@ Methods
    Add a field to the SELECT statement, expanding fields inside curly brackets
    ``$blogs->selectField('COUNT({comments}) AS comment_count);``
    
-:func:($func, $field):
+:func($func, $field):
    Adds an SQL function as a SELECT field.  This runs one function per row in contrast to
    the aggregation functions below which apply to the entire queryset.  So to get a count of the number of
    comments for each blog (as *author__profile__age__count*):
@@ -65,7 +65,7 @@ Aggregation
 
 All ``Dormio_Manager`` querysets have a ``getAggregator()`` method which returns a ``Dormio_Aggregator`` object.  When you call
 the ``run()`` method on an Aggregator it returns an array of aggregate values for the underlying query.
-::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	<?php
     $blogs = $dormio->getManger('Blog')
     $info = $blogs->getAggregator()->max('author__profile__age')->min('author__profile__age')->count();

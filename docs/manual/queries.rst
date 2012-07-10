@@ -3,6 +3,7 @@ Dormio Queries
 
 Creating objects
 ----------------
+::
     <?php
     // a fresh object
     $blog = $dormio->getObject('Blog');
@@ -19,7 +20,7 @@ Creating objects
     
 Fetching objects
 ----------------
-You can interact with your data as objects like any other ORM
+You can interact with your data as objects like any other ORM::
 
     <?php
     // by id
@@ -36,8 +37,7 @@ You can interact with your data as objects like any other ORM
 Fetching arrays
 ---------------
 Dorio tries to make it as easy to interact with the raw data as objects - much
-more efficient (and how Dormio_Tables works internally)
-
+more efficient (and how Dormio_Tables works internally)::
     <?php
     $blogs = $dormio->getManager('Blog')->with('author');
     foreach($blogs->fetchArray() as $data) {
@@ -47,7 +47,8 @@ more efficient (and how Dormio_Tables works internally)
 
 Modifiying objects
 ------------------
-    <?php
+::
+    <?php    
     // using objects
     $blog = $dormio->getObject('Blog', 23);
     $blog->body = str_replace('darn', '####', $blog->body);
