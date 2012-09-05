@@ -166,6 +166,7 @@ class Dormio {
 		
 		$data = $stmt->fetch(PDO::FETCH_ASSOC);
 		if(!$data) throw new Dormio_Exception("{$entity} has no record with primary key {$id}");
+		$stmt->closeCursor();
 		return $data;
 	}
 	
