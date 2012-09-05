@@ -289,6 +289,10 @@ class Dormio_Form extends Phorm_Phorm {
 		return $result;
 	}
 	
+	function header() {
+		return (string)$this->obj;
+	}
+	
 	function override($type, $name, $param) {
 		$method = $type . '_' . $name;
 		if(method_exists($this, $method)) $param = $this->$method($param);

@@ -163,7 +163,7 @@ class Dormio_Schema_Generic implements Dormio_Schema_Driver {
 				return 'DOUBLE' . ((isset($colspec['unsigned'])) ? ' UNSIGNED' : '');
 			case 'string':
 			case 'password':
-				$size = (isset($colspec['size'])) ? $colspec['size'] : 255;
+				$size = (isset($colspec['max_length'])) ? $colspec['max_length'] : 255;
 				return "VARCHAR({$size})";
 			case 'text':
 				return "TEXT";
