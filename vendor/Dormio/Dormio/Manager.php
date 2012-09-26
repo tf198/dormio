@@ -219,10 +219,25 @@ class Dormio_Manager extends Dormio_Query implements IteratorAggregate, Countabl
 	function filterBind($key, $op, &$value, $clone=true) {
 		// add the ability for IN to accept Dormio_Manager as well as arrays
 		if($op == 'IN' && $value instanceof Dormio_Manager) {
-			$o = clone $value;
-			$o->selectIdent();
-			$stmt = $this->dormio->executeQuery($o->select());
-			$value = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+			$subquery = clone $value;
+			$o = ($clone) ? clone $this : $this;
+			
+			// select the appropriate field on the target entity
+			$field = $this->entity->getField($key);
+			$col = $subquery->_resolveField($field['remote_field']);
+			$subquery->query['select'] = array($col);
+			$this->types = array();
+			
+			// have to hack the table names so they dont clash
+			$sql = $subquery->select();
+			foreach($subquery->aliases as $entity=>$alias) {
+				$sql[0] = str_replace(' '.$alias, ' sq_' . $alias, $sql[0]);
+			}
+			
+			$f = $o->_resolveField($key);
+			$o->query['where'][] = "{$f} IN ({$sql[0]})";
+			$o->params = array_merge($o->params, $sql[1]);
+			return $o;
 		}
 		$o = parent::filterBind($key, $op, $value, $clone);
 		$o->filters[$key] = &$value;
