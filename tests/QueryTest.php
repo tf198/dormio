@@ -339,6 +339,14 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 			array('DELETE FROM "tag_x_user" WHERE "l_user_id" = ?', array(1)),
 			array('DELETE FROM "user" WHERE "user_id" = ?', array(1)),
 		));
+		
+		$tags = $this->getQuery('Tag');
+		$this->assertEquals($tags->deleteById(1), array(
+			array('DELETE FROM "blog_tag" WHERE "the_tag_id" = ?', array(1)),
+			array('DELETE FROM "comment_x_tag" WHERE "r_tag_id" = ?', array(1)),
+			array('DELETE FROM "tag_x_user" WHERE "r_tag_id" = ?', array(1)),
+			array('DELETE FROM "tag" WHERE "tag_id" = ?', array(1)),
+		));
 
 	}
 
@@ -366,6 +374,15 @@ class Dormio_QueryTest extends PHPUnit_Framework_TestCase {
 			array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t5."comment_x_tag_id" FROM "comment_x_tag" AS t5 INNER JOIN "comment" AS t6 ON t5."l_comment_id"=t6."comment_id" INNER JOIN "blog" AS t1 ON t6."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
 			array('DELETE FROM "comment" WHERE "comment_id" IN (SELECT t3."comment_id" FROM "comment" AS t3 INNER JOIN "blog" AS t1 ON t3."blog_id"=t1."blog_id" INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
 			array('DELETE FROM "blog" WHERE "blog_id" IN (SELECT t1."blog_id" FROM "blog" AS t1 INNER JOIN "user" AS t2 ON t1."the_blog_user"=t2."user_id" WHERE t1."title" = ? AND t2."name" = ?)', array('My First Blog', 'Bob')),
+		));
+		
+		$tags = $this->getQuery('Tag');
+		$set = $tags->filter('tag', '=', 'Orange');
+		$this->assertEquals($set->delete(), array(
+			array('DELETE FROM "blog_tag" WHERE "blog_tag_id" IN (SELECT t2."blog_tag_id" FROM "blog_tag" AS t2 INNER JOIN "tag" AS t1 ON t2."the_tag_id"=t1."tag_id" WHERE t1."tag" = ?)', array('Orange')),
+			array('DELETE FROM "comment_x_tag" WHERE "comment_x_tag_id" IN (SELECT t2."comment_x_tag_id" FROM "comment_x_tag" AS t2 INNER JOIN "tag" AS t1 ON t2."r_tag_id"=t1."tag_id" WHERE t1."tag" = ?)', array('Orange')),
+			array('DELETE FROM "tag_x_user" WHERE "tag_x_user_id" IN (SELECT t2."tag_x_user_id" FROM "tag_x_user" AS t2 INNER JOIN "tag" AS t1 ON t2."r_tag_id"=t1."tag_id" WHERE t1."tag" = ?)', array('Orange')),
+			array('DELETE FROM "tag" WHERE "tag" = ?', array('Orange')),
 		));
 	}
 

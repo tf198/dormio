@@ -584,23 +584,26 @@ class Dormio_Query {
 		
 		foreach($this->entity->getRelatedFields() as $name) {
 			$spec = $this->entity->getField($name);
-			$child_entity = $this->entity->config->getEntity($spec['entity']);
-			$child = new Dormio_Query($child_entity, $this->dialect, $this->next_alias);
-
-			$child->query['where'] = $this->query['where'];
-			$child->params = $this->params;
-
-			$r = $resolved;
-			array_unshift($r, $spec['remote_field']);
-			$child->_resolveArray($r, 'INNER', true);
-
-			if($base->query['join']) {
-				$child->query['join'] = array_merge($child->query['join'], $base->query['join']);
-				$child->aliases = array_merge($child->aliases, $base->aliases);
+			
+			if($spec['type'] != 'manytomany') { // manytomany are taken care of through the reverse intermediate entries
+				$child_entity = $this->entity->config->getEntity($spec['entity']);
+				$child = new Dormio_Query($child_entity, $this->dialect, $this->next_alias);
+	
+				$child->query['where'] = $this->query['where'];
+				$child->params = $this->params;
+	
+				
+				$r = $resolved;
+				array_unshift($r, $spec['remote_field']);
+				$child->_resolveArray($r, 'INNER', true);
+	
+				if($base->query['join']) {
+					$child->query['join'] = array_merge($child->query['join'], $base->query['join']);
+					$child->aliases = array_merge($child->aliases, $base->aliases);
+				}
+	
+				$sql = array_merge($sql, $child->delete($r, $base));
 			}
-
-			$sql = array_merge($sql, $child->delete($r, $base));
-
 		}
 
 
@@ -632,16 +635,15 @@ class Dormio_Query {
 		
 		foreach($this->entity->getRelatedFields() as $name) {
 			$spec = $this->entity->getField($name);
-			$child_entity = $this->entity->config->getEntity($spec['entity']);
-			$child = new Dormio_Query($child_entity, $this->dialect);
-			$child->selectIdent();
-
-			$r = $resolved;
-			array_unshift($r, $spec['remote_field']);
 			
-			if($spec['type'] == 'manytomany') { // just delete the entry
-				// pass
-			} else {
+			if($spec['type'] != 'manytomany') { // manytomany are taken care of through the reverse intermediate entries
+				$child_entity = $this->entity->config->getEntity($spec['entity']);
+				$child = new Dormio_Query($child_entity, $this->dialect);
+				$child->selectIdent();
+			
+				$r = $resolved;
+				array_unshift($r, $spec['remote_field']);
+				
 				$q = implode('__', $r);
 				switch($spec['on_delete']) {
 	 			case "cascade":
