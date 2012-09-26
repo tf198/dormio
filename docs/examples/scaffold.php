@@ -11,6 +11,9 @@ Dormio_AutoLoader::register();
 
 // we need an actual on disk database for this example 
 $datafile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'scaffold_example.sq3';
+
+if(isset($_GET['reset'])) @unlink($datafile);
+
 $create = !file_exists($datafile);
 $pdo = new PDO('sqlite:' . $datafile);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -50,7 +53,11 @@ try {
 	<div class="navbar">
 	  <div class="navbar-inner">
 	    <div class="container">
-	      <a class="brand" href="scaffold.php">Dormio Scaffolding Example</a>
+	      <a class="brand" href="?entities">Dormio Scaffolding Example</a>
+	      <ul class="nav">
+	      	<li><a href="?entities">Entities</a></li>
+	      	<li><a href="?reset=true">Reset database</a></li>
+	      </ul>
 	    </div>
 	  </div>
 	</div>
