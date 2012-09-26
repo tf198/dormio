@@ -56,7 +56,7 @@ try {
 	      <a class="brand" href="?entities">Dormio Scaffolding Example</a>
 	      <ul class="nav">
 	      	<li><a href="?entities">Entities</a></li>
-	      	<li><a href="?reset=true">Reset database</a></li>
+	      	<li><a href="?reset=true" onclick="return confirm('Are you sure you want to reset the database?');">Reset database</a></li>
 	      </ul>
 	    </div>
 	  </div>
