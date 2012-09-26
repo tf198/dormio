@@ -189,6 +189,12 @@ class Dormio_Config_Entity {
 	 * @var multitype:string
 	 */
 	public $meta;
+	
+	/**
+	 * Entity name
+	 * @var string
+	 */
+	public $name;
 
 	/**
 	 * Construct a new Dormio_Dormio_Config_Entity
